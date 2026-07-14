@@ -23,9 +23,17 @@
                     <a href="/" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-house"></i></a>
                 </div>
                 
-                <form action="/ekle" method="POST">
+                <!-- enctype eklendi, böylece resim dosyası sunucuya gönderilebilecek -->
+                <form action="/ekle" method="POST" enctype="multipart/form-data">
                     <h5 class="text-white mb-3"><i class="fa-solid fa-id-card text-danger me-2"></i>Kişisel Bilgiler</h5>
                     
+                    <!-- YENİ: Fotoğraf Yükleme Alanı -->
+                    <div class="mb-4 bg-dark p-3 rounded border border-secondary">
+                        <label class="form-label text-white small fw-bold"><i class="fa-solid fa-image text-danger me-2"></i>Oyuncu Fotoğrafı</label>
+                        <input type="file" name="resim" class="form-control" accept="image/*">
+                        <div class="form-text text-muted">Lütfen dikey açılı bir portre fotoğrafı tercih edin.</div>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-bold">Adı Soyadı</label>
                         <input type="text" name="isim" class="form-control" placeholder="Oyuncunun Tam Adı" required>
@@ -85,7 +93,6 @@
                         <textarea name="deneyim" class="form-control" rows="3" placeholder="Yer aldığı projeler..."></textarea>
                     </div>
 
-                    <!-- BURASI YENİ: Oyuncu Hesap Bilgileri Alanı -->
                     <h5 class="text-white mb-3 border-top border-secondary pt-3"><i class="fa-solid fa-key text-danger me-2"></i>Oyuncu Hesap Giriş Bilgileri</h5>
                     <div class="row mb-4">
                         <div class="col-md-6">
