@@ -24,6 +24,8 @@
                 </div>
                 
                 <form action="/ekle" method="POST">
+                    <h5 class="text-white mb-3"><i class="fa-solid fa-id-card text-danger me-2"></i>Kişisel Bilgiler</h5>
+                    
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-bold">Adı Soyadı</label>
                         <input type="text" name="isim" class="form-control" placeholder="Oyuncunun Tam Adı" required>
@@ -80,7 +82,20 @@
 
                     <div class="mb-4">
                         <label class="form-label text-muted small fw-bold">Deneyim ve Biyografi</label>
-                        <textarea name="deneyim" class="form-control" rows="4" placeholder="Hangi projelerde yer aldı, özel yetenekleri neler..."></textarea>
+                        <textarea name="deneyim" class="form-control" rows="3" placeholder="Yer aldığı projeler..."></textarea>
+                    </div>
+
+                    <!-- BURASI YENİ: Oyuncu Hesap Bilgileri Alanı -->
+                    <h5 class="text-white mb-3 border-top border-secondary pt-3"><i class="fa-solid fa-key text-danger me-2"></i>Oyuncu Hesap Giriş Bilgileri</h5>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Giriş Kullanıcı Adı (Sadece bu oyuncuya özel)</label>
+                            <input type="text" name="kullanici_adi" class="form-control" placeholder="Örn: cagla_demir" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Şifre</label>
+                            <input type="password" name="sifre" class="form-control" placeholder="Oyuncunun şifresi" required>
+                        </div>
                     </div>
 
                     <div class="d-flex justify-content-between">

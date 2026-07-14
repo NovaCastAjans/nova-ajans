@@ -20,11 +20,25 @@
     <nav class="navbar navbar-expand-lg navbar-dark py-3">
         <div class="container">
             <a class="navbar-brand" href="/"><i class="fa-solid fa-clapperboard-play me-2"></i>NOVA CAST</a>
-            <a href="/" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-arrow-left me-1"></i>Ana Sayfa</a>
+            <div>
+                <!-- Profil Düzenleme Yetkisi Kontrolü (Admin ise veya Profilin Sahibi ise düzenleme butonunu göster) -->
+                {% if session.get('logged_in') and (session.get('role') == 'admin' or session.get('oyuncu_id') == oyuncu.id) %}
+                    <a href="/profil/duzenle/{{ oyuncu.id }}" class="btn btn-danger btn-sm me-2"><i class="fa-solid fa-user-pen me-1"></i>Profili Düzenle</a>
+                {% endif %}
+                <a href="/" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-house me-1"></i>Ana Sayfa</a>
+            </div>
         </div>
     </nav>
 
     <div class="container my-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-dark border-0 border-start border-4 border-info bg-dark text-light mb-4">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <div class="profile-card shadow-lg">
             <div class="row g-0">
                 <div class="col-md-5">
@@ -36,7 +50,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h1 class="fw-bold text-white mb-0">{{ oyuncu.isim }}</h1>
                     </div>
-                    <span class="badge bg-danger px-3 py-2 rounded-pill mb-4"><i class="fa-solid fa-location-dot me-1"></i>{{ oyuncu.sehir if oyuncu.sehir else 'Sehir Belirtilmemis' }}</span>
+                    <span class="badge bg-danger px-3 py-2 rounded-pill mb-4"><i class="fa-solid fa-location-dot me-1"></i>{{ oyuncu.sehir if oyuncu.sehir else 'Şehir Belirtilmemiş' }}</span>
                     
                     <div class="row g-3 mb-4">
                         <div class="col-4">
@@ -48,13 +62,13 @@
                         <div class="col-4">
                             <div class="info-box">
                                 <div class="info-label">Boy</div>
-                                <div class="info-value">{{ oyuncu.boy }} cm</div>
+                                <div class="info-value">{{ oyuncu.boy if oyuncu.boy else '-' }} cm</div>
                             </div>
                         </div>
                         <div class="col-4">
                             <div class="info-box">
                                 <div class="info-label">Kilo</div>
-                                <div class="info-value">{{ oyuncu.kilo }} kg</div>
+                                <div class="info-value">{{ oyuncu.kilo if oyuncu.kilo else '-' }} kg</div>
                             </div>
                         </div>
                     </div>
@@ -62,10 +76,10 @@
                     <h5 class="fw-bold mb-3 text-white">Fiziksel Detaylar</h5>
                     <div class="row mb-4">
                         <div class="col-md-6 mb-2">
-                            <span class="info-label">Göz Rengi:</span> <span class="info-value ms-1">{{ oyuncu.goz_rengi }}</span>
+                            <span class="info-label">Göz Rengi:</span> <span class="info-value ms-1">{{ oyuncu.goz_rengi if oyuncu.goz_rengi else '-' }}</span>
                         </div>
                         <div class="col-md-6 mb-2">
-                            <span class="info-label">Saç Rengi:</span> <span class="info-value ms-1">{{ oyuncu.sac_rengi }}</span>
+                            <span class="info-label">Saç Rengi:</span> <span class="info-value ms-1">{{ oyuncu.sac_rengi if oyuncu.sac_rengi else '-' }}</span>
                         </div>
                     </div>
 

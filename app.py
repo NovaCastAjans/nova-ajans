@@ -1,197 +1,205 @@
 import os
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "nova_gizli_anahtar_12345")
+app.secret_key = 'senin_cok_gizli_anahtarin'
 
-# Render üzerindeki kalıcı disk klasörü veya yerel klasör
-UPLOAD_FOLDER = os.path.join('static', 'uploads')
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB limit
-
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-# =========================================================================
-# VERİTABANI VE TABLOLARI SIFIRDAN OTOMATİK KURAN MEKANİZMA
-# =========================================================================
-def veritabanini_kur():
-    db_yolu = "ajans.db"
-    conn = sqlite3.connect(db_yolu)
-    cursor = conn.cursor()
-    
-    # 1. Oyuncular Tablosu (Sitenin ana tablosu)
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS oyuncular (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        isim TEXT NOT NULL,
-        yas INTEGER,
-        cinsiyet TEXT,
-        boy INTEGER,
-        kilo INTEGER,
-        goz_rengi TEXT,
-        sac_rengi TEXT,
-        deneyim TEXT,
-        foto_yolu TEXT,
-        telefon TEXT,
-        eposta TEXT,
-        sehir TEXT
-    )
-    """)
-    
-    # 2. Kullanıcılar/Yöneticiler Tablosu (Giriş paneli için)
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS kullanicilar (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        kullanici_adi TEXT UNIQUE NOT NULL,
-        sifre TEXT NOT NULL,
-        yetki TEXT DEFAULT 'user'
-    )
-    """)
-    
-    # Eğer hiç kullanıcı yoksa varsayılan admin ekleyelim
-    cursor.execute("SELECT * FROM kullanicilar WHERE kullanici_adi = 'admin'")
-    if not cursor.fetchone():
-        cursor.execute(
-            "INSERT INTO kullanicilar (kullanici_adi, sifre, yetki) VALUES (?, ?, ?)",
-            ("admin", "admin123", "admin")
-        )
-        
-    conn.commit()
-    conn.close()
-    print("Veritabanı ve tablolar başarıyla kuruldu!")
-
-# Uygulama açılırken veritabanını hazırla
-try:
-    veritabanini_kur()
-except Exception as e:
-    print("Veritabanı başlatılırken hata oluştu:", e)
-
+# Veritabanı bağlantısı ve tablo oluşturma/güncelleme fonksiyonu
 def get_db_connection():
-    conn = sqlite3.connect("ajans.db")
+    db_path = os.path.join(os.getcwd(), 'ajans.db')
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
 
-# =========================================================================
-# SAYFA YÖNLENDİRMELERİ (ROUTES)
-# =========================================================================
-
-# 1. Ana Sayfa (Oyuncu Listesi)
-@app.route('/')
-def ana_sayfa():
+def veritabani_hazirla():
     conn = get_db_connection()
-    oyuncular = conn.execute("SELECT * FROM oyuncular").fetchall()
+    cursor = conn.cursor()
+    
+    # Oyuncular tablosunu oluşturuyoruz (Eğer yoksa)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS oyuncular (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            isim TEXT NOT NULL,
+            yas INTEGER,
+            cinsiyet TEXT,
+            boy INTEGER,
+            kilo INTEGER,
+            goz_rengi TEXT,
+            sac_rengi TEXT,
+            sehir TEXT,
+            telefon TEXT,
+            eposta TEXT,
+            deneyim TEXT,
+            kullanici_adi TEXT UNIQUE,
+            sifre TEXT
+        )
+    ''')
+    
+    # Eğer tablo önceden varsa ama yeni kolonlar yoksa, onları ekliyoruz (Migration)
+    try:
+        cursor.execute("ALTER TABLE oyuncular ADD COLUMN kullanici_adi TEXT UNIQUE")
+    except sqlite3.OperationalError:
+        pass  # Zaten varsa hata vermesini engelle
+
+    try:
+        cursor.execute("ALTER TABLE oyuncular ADD COLUMN sifre TEXT")
+    except sqlite3.OperationalError:
+        pass
+        
+    conn.commit()
+    conn.close()
+
+veritabani_hazirla()
+
+@app.route('/')
+def index():
+    conn = get_db_connection()
+    oyuncular = conn.execute('SELECT * FROM oyuncular').fetchall()
     conn.close()
     return render_template('index.html', oyuncular=oyuncular)
 
-# 2. Oyuncu Detay Sayfası
-@app.route('/oyuncu/<int:id>')
-def oyuncu_detay(id):
-    conn = get_db_connection()
-    oyuncu = conn.execute("SELECT * FROM oyuncular WHERE id = ?", (id,)).fetchone()
-    conn.close()
-    if oyuncu is None:
-        flash("Oyuncu bulunamadı!", "danger")
-        return redirect(url_for('ana_sayfa'))
-    return render_template('profil.html', oyuncu=oyuncu)
-
-# 3. Yönetici Giriş Sayfası
+# Ortak Giriş Sayfası (Yönetici ve Oyuncu Girişi)
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        kullanici_adi = request.form['kullanici_adi']
-        sifre = request.form['sifre']
-        
-        conn = get_db_connection()
-        user = conn.execute(
-            "SELECT * FROM kullanicilar WHERE kullanici_adi = ? AND sifre = ?",
-            (kullanici_adi, sifre)
-        ).fetchone()
-        conn.close()
-        
-        # Çevre değişkenlerinden gelen admin kontrolü
-        env_admin = os.environ.get("ADMIN_USER", "emirhan")
-        env_pass = os.environ.get("ADMIN_PASS", "emirhan41")
-        
-        if user or (kullanici_adi == env_admin and sifre == env_pass):
+        kullanici_adi = request.form.get('kullanici_adi')
+        sifre = request.form.get('sifre')
+
+        # 1. Yönetici Giriş Kontrolü
+        if kullanici_adi == 'admin' and sifre == 'admin123':
             session['logged_in'] = True
-            session['username'] = kullanici_adi
-            flash("Başarıyla giriş yaptınız!", "success")
-            return redirect(url_for('ana_sayfa'))
+            session['role'] = 'admin'
+            flash('Yönetici olarak başarıyla giriş yaptınız!', 'success')
+            return redirect(url_for('index'))
+
+        # 2. Oyuncu Giriş Kontrolü
+        conn = get_db_connection()
+        oyuncu = conn.execute('SELECT * FROM oyuncular WHERE kullanici_adi = ? AND sifre = ?', 
+                              (kullanici_adi, sifre)).fetchone()
+        conn.close()
+
+        if oyuncu:
+            session['logged_in'] = True
+            session['role'] = 'oyuncu'
+            session['oyuncu_id'] = oyuncu['id']
+            session['oyuncu_isim'] = oyuncu['isim']
+            flash(f'Hoş geldiniz, {oyuncu["isim"]}!', 'success')
+            return redirect(url_for('profil', id=oyuncu['id']))
         else:
-            flash("Hatalı kullanıcı adı veya şifre!", "danger")
+            flash('Hatalı kullanıcı adı veya şifre!', 'danger')
             
     return render_template('login.html')
 
-# 4. Çıkış Yap
 @app.route('/logout')
 def logout():
     session.clear()
-    flash("Oturum kapatıldı.", "info")
-    return redirect(url_for('ana_sayfa'))
+    flash('Başarıyla çıkış yapıldı.', 'info')
+    return redirect(url_for('index'))
 
-# 5. Yeni Oyuncu Ekleme (Sadece Giriş Yapmış Kullanıcılar)
+# Oyuncu Detay / Profil Sayfası
+@app.route('/oyuncu/<int:id>')
+def profil(id):
+    conn = get_db_connection()
+    oyuncu = conn.execute('SELECT * FROM oyuncular WHERE id = ?', (id,)).fetchone()
+    conn.close()
+    if oyuncu is None:
+        flash('Oyuncu bulunamadı!', 'danger')
+        return redirect(url_for('index'))
+    return render_template('profil.html', oyuncu=oyuncu)
+
+# Yönetici: Oyuncu Ekleme (Kullanıcı Adı ve Şifre Alanlarıyla Birlikte)
 @app.route('/ekle', methods=['GET', 'POST'])
-def oyuncu_ekle():
-    if not session.get('logged_in'):
-        flash("Bu işlem için giriş yapmalısınız!", "warning")
+def ekle():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        flash('Bu işlem için yönetici yetkisi gerekiyor!', 'danger')
         return redirect(url_for('login'))
-        
+
     if request.method == 'POST':
-        isim = request.form['isim']
-        yas = request.form['yas']
-        cinsiyet = request.form['cinsiyet']
-        boy = request.form['boy']
-        kilo = request.form['kilo']
-        goz_rengi = request.form['goz_rengi']
-        sac_rengi = request.form['sac_rengi']
-        deneyim = request.form['deneyim']
-        telefon = request.form['telefon']
-        eposta = request.form['eposta']
-        sehir = request.form['sehir']
-        
-        # Fotoğraf yükleme işlemleri
-        foto_yolu = "default.jpg"
-        if 'foto' in request.files:
-            file = request.files['foto']
-            if file and allowed_file(file.filename):
-                os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                foto_yolu = filename
+        isim = request.form.get('isim')
+        yas = request.form.get('yas')
+        cinsiyet = request.form.get('cinsiyet')
+        boy = request.form.get('boy')
+        kilo = request.form.get('kilo')
+        goz_rengi = request.form.get('goz_rengi')
+        sac_rengi = request.form.get('sac_rengi')
+        sehir = request.form.get('sehir')
+        telefon = request.form.get('telefon')
+        eposta = request.form.get('eposta')
+        deneyim = request.form.get('deneyim')
+        kullanici_adi = request.form.get('kullanici_adi')
+        sifre = request.form.get('sifre')
 
         conn = get_db_connection()
-        conn.execute("""
-            INSERT INTO oyuncular (isim, yas, cinsiyet, boy, kilo, goz_rengi, sac_rengi, deneyim, foto_yolu, telefon, eposta, sehir)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (isim, yas, cinsiyet, boy, kilo, goz_rengi, sac_rengi, deneyim, foto_yolu, telefon, eposta, sehir))
-        conn.commit()
-        conn.close()
+        try:
+            conn.execute('''
+                INSERT INTO oyuncular (isim, yas, cinsiyet, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, kullanici_adi, sifre)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (isim, yas, cinsiyet, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, kullanici_adi, sifre))
+            conn.commit()
+            flash('Yeni oyuncu ve giriş bilgileri başarıyla eklendi!', 'success')
+        except sqlite3.IntegrityError:
+            flash('Bu kullanıcı adı zaten alınmış! Lütfen farklı bir kullanıcı adı deneyin.', 'danger')
+        finally:
+            conn.close()
         
-        flash("Yeni oyuncu başarıyla eklendi!", "success")
-        return redirect(url_for('ana_sayfa'))
-        
+        return redirect(url_for('index'))
+
     return render_template('ekle.html')
 
-# 6. Oyuncu Silme
-@app.route('/sil/<int:id>')
-def oyuncu_sil(id):
+# Oyuncu Kendi Profilini Düzenleme Fonksiyonu
+@app.route('/profil/duzenle/<int:id>', methods=['GET', 'POST'])
+def profil_duzenle(id):
+    # Güvenlik kontrolü: Sadece admin veya o profilin asıl sahibi olan oyuncu düzenleyebilir
     if not session.get('logged_in'):
-        flash("Bu işlem için yetkiniz yok!", "danger")
+        flash('Önce giriş yapmalısınız!', 'danger')
         return redirect(url_for('login'))
         
+    if session.get('role') == 'oyuncu' and session.get('oyuncu_id') != id:
+        flash('Sadece kendi profilinizi düzenleyebilirsiniz!', 'danger')
+        return redirect(url_for('index'))
+
     conn = get_db_connection()
-    conn.execute("DELETE FROM oyuncular WHERE id = ?", (id,))
+    oyuncu = conn.execute('SELECT * FROM oyuncular WHERE id = ?', (id,)).fetchone()
+
+    if request.method == 'POST':
+        yas = request.form.get('yas')
+        boy = request.form.get('boy')
+        kilo = request.form.get('kilo')
+        goz_rengi = request.form.get('goz_rengi')
+        sac_rengi = request.form.get('sac_rengi')
+        sehir = request.form.get('sehir')
+        telefon = request.form.get('telefon')
+        eposta = request.form.get('eposta')
+        deneyim = request.form.get('deneyim')
+        sifre = request.form.get('sifre') # Şifresini de değiştirebilsin
+
+        conn.execute('''
+            UPDATE oyuncular 
+            SET yas = ?, boy = ?, kilo = ?, goz_rengi = ?, sac_rengi = ?, sehir = ?, telefon = ?, eposta = ?, deneyim = ?, sifre = ?
+            WHERE id = ?
+        ''', (yas, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, sifre, id))
+        conn.commit()
+        conn.close()
+        flash('Profil başarıyla güncellendi!', 'success')
+        return redirect(url_for('profil', id=id))
+
+    conn.close()
+    return render_template('profil_duzenle.html', oyuncu=oyuncu)
+
+# Oyuncu Silme (Sadece Admin yapabilir)
+@app.route('/sil/<int:id>')
+def sil(id):
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        flash('Bu işlem için yetkiniz yok!', 'danger')
+        return redirect(url_for('index'))
+
+    conn = get_db_connection()
+    conn.execute('DELETE FROM oyuncular WHERE id = ?', (id,))
     conn.commit()
     conn.close()
-    flash("Oyuncu başarıyla silindi.", "success")
-    return redirect(url_for('ana_sayfa'))
+    flash('Oyuncu kaydı başarıyla silindi.', 'success')
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    # Render üzerinde PORT çevre değişkeni kullanılır, yerelde 5000 portu
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(debug=True)
