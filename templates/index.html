@@ -3,61 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nova Cast Ajans</title>
+    <title>Nova Cast | Dizi & Film Ajansı</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #0f1016; color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .navbar { background-color: #161824 !important; border-bottom: 2px solid #ff4a5a; }
+        .navbar-brand { font-weight: 800; letter-spacing: 1px; color: #ff4a5a !important; }
+        .hero-section { background: linear-gradient(135deg, #1e1b4b 0%, #0f1016 100%); padding: 60px 0; border-bottom: 1px solid #1e293b; text-align: center; }
+        .btn-brand { background-color: #ff4a5a; color: white; border: none; font-weight: 600; transition: 0.3s; }
+        .btn-brand:hover { background-color: #e03544; color: white; transform: translateY(-2px); }
+        .card-actor { background-color: #161824; border: 1px solid #23273a; border-radius: 12px; overflow: hidden; transition: 0.3s; }
+        .card-actor:hover { transform: translateY(-5px); border-color: #ff4a5a; box-shadow: 0 10px 20px rgba(255, 74, 90, 0.15); }
+        .actor-img-placeholder { height: 260px; background: linear-gradient(45deg, #1e1b4b, #312e81); display: flex; align-items: center; justify-content: center; color: #ff4a5a; font-size: 3rem; }
+        .badge-city { background-color: #1e1b4b; color: #ff4a5a; border: 1px solid #ff4a5a; }
+    </style>
 </head>
-<body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<body>
+    <!-- Navigasyon -->
+    <nav class="navbar navbar-expand-lg navbar-dark py-3">
         <div class="container">
-            <a class="navbar-brand" href="/">Nova Cast Ajans</a>
+            <a class="navbar-brand" href="/"><i class="fa-solid fa-clapperboard-play me-2"></i>NOVA CAST</a>
             <div>
                 {% if session.get('logged_in') %}
-                    <a href="/ekle" class="btn btn-success btn-sm">Oyuncu Ekle</a>
-                    <a href="/logout" class="btn btn-danger btn-sm">Çıkış Yap</a>
+                    <a href="/ekle" class="btn btn-brand btn-sm me-2"><i class="fa-solid fa-user-plus me-1"></i>Oyuncu Ekle</a>
+                    <a href="/logout" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-sign-out me-1"></i>Çıkış</a>
                 {% else %}
-                    <a href="/login" class="btn btn-primary btn-sm">Yönetici Girişi</a>
+                    <a href="/login" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-lock me-1"></i>Yönetici Girişi</a>
                 {% endif %}
             </div>
         </div>
     </nav>
 
-    <div class="container my-5">
-        <h1 class="text-center mb-4">Oyuncu Kadromuz</h1>
-        
+    <!-- Hero Bölümü -->
+    <header class="hero-section">
+        <div class="container">
+            <h1 class="display-4 fw-bold mb-3">Yeni Nesil Dizi & Film Ajansı</h1>
+            <p class="lead text-muted max-w-2xl mx-auto">Ekranların yeni yüzlerini, en büyük yapımlarla buluşturuyoruz. Sektörün öncü cast veritabanı.</p>
+        </div>
+    </header>
+
+    <!-- Oyuncu Listesi -->
+    <main class="container my-5">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                    <div class="alert alert-dark border-0 border-start border-4 border-info bg-dark text-light mb-4">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
 
+        <h3 class="fw-bold mb-4"><i class="fa-solid fa-users me-2 text-danger"></i>Aktif Cast Kadromuz</h3>
+        
         <div class="row">
             {% for oyuncu in oyuncular %}
-                <div class="col-md-4 mb-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ oyuncu.isim }}</h5>
-                            <p class="card-text">
-                                <strong>Şehir:</strong> {{ oyuncu.sehir }}<br>
-                                <strong>Yaş:</strong> {{ oyuncu.yas }}<br>
-                                <strong>Cinsiyet:</strong> {{ oyuncu.cinsiyet }}
-                            </p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <a href="/oyuncu/{{ oyuncu.id }}" class="btn btn-outline-primary btn-sm">Profili Gör</a>
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                    <div class="card card-actor h-100">
+                        <!-- Fotoğraf alanı -->
+                        <div class="position-relative">
+                            <div class="actor-img-placeholder">
+                                <i class="fa-solid fa-user-astronaut"></i>
+                            </div>
+                            <span class="position-absolute top-3 start-3 badge badge-city py-2 px-3 rounded-pill" style="top: 15px; left: 15px;">{{ oyuncu.sehir if oyuncu.sehir else 'Belirtilmemiş' }}</span>
+                        </div>
+                        
+                        <div class="card-body d-flex flex-column justify-content-between text-center">
+                            <div>
+                                <h5 class="card-title fw-bold mb-1 text-white">{{ oyuncu.isim }}</h5>
+                                <p class="text-muted small mb-3">{{ oyuncu.yas }} Yaşında • {{ oyuncu.cinsiyet }}</p>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <a href="/oyuncu/{{ oyuncu.id }}" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-address-card me-1"></i>Profili İncele</a>
                                 {% if session.get('logged_in') %}
-                                    <a href="/sil/{{ oyuncu.id }}" class="btn btn-danger btn-sm" onclick="return confirm('Bu oyuncuyu silmek istediğinize emin misiniz?')">Sil</a>
+                                    <a href="/sil/{{ oyuncu.id }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Bu oyuncuyu silmek istediğinize emin misiniz?')">
+                                        <i class="fa-solid fa-trash me-1"></i>Sil
+                                    </a>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
                 </div>
             {% else %}
-                <div class="col-12 text-center">
-                    <p class="text-muted">Henüz kayıtlı bir oyuncu yok. Yönetici girişi yaparak ekleyebilirsiniz!</p>
+                <div class="col-12 text-center py-5" style="background-color: #161824; border-radius: 12px; border: 1px dashed #23273a;">
+                    <i class="fa-solid fa-film fa-3x text-muted mb-3"></i>
+                    <h5 class="text-white">Henüz Kayıtlı Oyuncu Yok</h5>
+                    <p class="text-muted">Yönetici paneline giriş yaparak ilk oyuncuyu hemen ekleyebilirsiniz.</p>
                 </div>
             {% endfor %}
         </div>
-    </div>
+    </main>
 </body>
 </html>
