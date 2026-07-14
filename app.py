@@ -2,28 +2,26 @@ import os
 import psycopg2
 from psycopg2.extras import DictCursor
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+import requests # Supabase Storage API'sine resim göndermek için kullanacağız
 
 app = Flask(__name__)
 app.secret_key = 'senin_cok_gizli_anahtarin'
 
-# Render'a eklediğimiz DATABASE_URL linkini yakalıyoruz, bulamazsa hata vermemesi için geçici bir boşluk veriyoruz
 DATABASE_URL = os.environ.get('DATABASE_URL')
+# Supabase projenin ana URL'ini otomatik olarak yakalıyoruz (Linkten ayıklayarak)
+SUPABASE_URL = "https://hlalwpwuzokuuegculnv.supabase.co"
 
-# Supabase PostgreSQL Bağlantı Fonksiyonu
 def get_db_connection():
     if not DATABASE_URL:
-        # Eğer bilgisayarda denerken link yoksa hata vermesini önlemek için yerel kontrol
-        raise Exception("DATABASE_URL ortam değişkeni bulunamadı. Lütfen Render ortamını veya .env dosyasını kontrol edin.")
-    
+        raise Exception("DATABASE_URL ortam değişkeni bulunamadı.")
     conn = psycopg2.connect(DATABASE_URL)
     return conn
 
-# Supabase üzerinde tabloları otomatik hazırlayan fonksiyon
 def veritabani_hazirla():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Oyuncular tablosunu PostgreSQL uyumlu oluşturuyoruz
+    # Oyuncular tablosunu oluşturuyoruz
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS oyuncular (
             id SERIAL PRIMARY KEY,
@@ -39,41 +37,69 @@ def veritabani_hazirla():
             eposta TEXT,
             deneyim TEXT,
             kullanici_adi TEXT UNIQUE,
-            sifre TEXT
+            sifre TEXT,
+            resim_url TEXT
         )
     ''')
     
-    conn.commit()
+    # Eğer tablo daha önce oluştuysa ve resim_url sütunu yoksa otomatik ekliyoruz
+    try:
+        cursor.execute("ALTER TABLE oyuncular ADD COLUMN resim_url TEXT")
+    except psycopg2.errors.DuplicateColumn:
+        conn.rollback()
+    else:
+        conn.commit()
+        
     cursor.close()
     conn.close()
 
-# Uygulama ayağa kalktığında veritabanı otomatik tetiklensin
 try:
     veritabani_hazirla()
 except Exception as e:
     print(f"Veritabanı kurulum hatası: {e}")
 
+# Resimleri Supabase Storage'a yükleyen yardımcı fonksiyon
+def resim_yukle_supabase(file):
+    if not file or file.filename == '':
+        return None
+    
+    # Dosya adındaki Türkçe karakter ve boşluk risklerine karşı güvenli bir isim üretelim
+    uzanti = os.path.splitext(file.filename)[1]
+    import uuid
+    rastgele_isim = f"{uuid.uuid4()}{uzanti}"
+    
+    # Supabase Storage yükleme endpoint adresi (resimler bucket'ı için)
+    upload_url = f"{SUPABASE_URL}/storage/v1/object/resimler/{rastgele_isim}"
+    
+    # Dosya içeriğini okuyup API üzerinden gönderiyoruz
+    file_bytes = file.read()
+    headers = {
+        "Content-Type": file.content_type
+    }
+    
+    response = requests.post(upload_url, headers=headers, data=file_bytes)
+    
+    if response.status_code == 200:
+        # Başarılı yükleme sonrası resmin dışarıya açık (Public) linkini dönüyoruz
+        return f"{SUPABASE_URL}/storage/v1/object/public/resimler/{rastgele_isim}"
+    else:
+        print(f"Supabase Resim Yükleme Hatası: {response.text}")
+        return None
+
 @app.route('/')
 def index():
     arama_sorgusu = request.args.get('q', '').strip()
-    
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=DictCursor)
     
     if arama_sorgusu:
-        # PostgreSQL'de büyük/küçük harf duyarlılığını aşmak için ILIKE kullanıyoruz
-        cursor.execute(
-            'SELECT * FROM oyuncular WHERE isim ILIKE %s', 
-            ('%' + arama_sorgusu + '%',)
-        )
-        oyuncular = cursor.fetchall()
+        cursor.execute('SELECT * FROM oyuncular WHERE isim ILIKE %s', ('%' + arama_sorgusu + '%',))
     else:
         cursor.execute('SELECT * FROM oyuncular')
-        oyuncular = cursor.fetchall()
         
+    oyuncular = cursor.fetchall()
     cursor.close()
     conn.close()
-    
     return render_template('index.html', oyuncular=oyuncular, arama_sorgusu=arama_sorgusu)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -90,8 +116,7 @@ def login():
 
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=DictCursor)
-        cursor.execute('SELECT * FROM oyuncular WHERE kullanici_adi = %s AND sifre = %s', 
-                       (kullanici_adi, sifre))
+        cursor.execute('SELECT * FROM oyuncular WHERE kullanici_adi = %s AND sifre = %s', (kullanici_adi, sifre))
         oyuncu = cursor.fetchone()
         cursor.close()
         conn.close()
@@ -148,19 +173,23 @@ def ekle():
         deneyim = request.form.get('deneyim')
         kullanici_adi = request.form.get('kullanici_adi')
         sifre = request.form.get('sifre')
+        
+        # Formdan gelen resmi yakalayıp Supabase'e gönderiyoruz
+        resim_dosyası = request.files.get('resim')
+        resim_url = resim_yukle_supabase(resim_dosyası)
 
         conn = get_db_connection()
         cursor = conn.cursor()
         try:
             cursor.execute('''
-                INSERT INTO oyuncular (isim, yas, cinsiyet, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, kullanici_adi, sifre)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ''', (isim, yas, cinsiyet, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, kullanici_adi, sifre))
+                INSERT INTO oyuncular (isim, yas, cinsiyet, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, kullanici_adi, sifre, resim_url)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ''', (isim, yas, cinsiyet, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, kullanici_adi, sifre, resim_url))
             conn.commit()
-            flash('Yeni oyuncu ve giriş bilgileri başarıyla eklendi!', 'success')
+            flash('Yeni oyuncu başarıyla eklendi!', 'success')
         except psycopg2.errors.UniqueViolation:
             conn.rollback()
-            flash('Bu kullanıcı adı zaten alınmış! Lütfen farklı bir kullanıcı adı deneyin.', 'danger')
+            flash('Bu kullanıcı adı zaten alınmış!', 'danger')
         finally:
             cursor.close()
             conn.close()
@@ -195,12 +224,26 @@ def profil_duzenle(id):
         eposta = request.form.get('eposta')
         deneyim = request.form.get('deneyim')
         sifre = request.form.get('sifre')
+        
+        # Profil düzenlenirken yeni resim seçildiyse onu da yükleyelim
+        resim_dosyası = request.files.get('resim')
+        resim_url = resim_yukle_supabase(resim_dosyası)
 
-        cursor.execute('''
-            UPDATE oyuncular 
-            SET yas = %s, boy = %s, kilo = %s, goz_rengi = %s, sac_rengi = %s, sehir = %s, telefon = %s, eposta = %s, deneyim = %s, sifre = %s
-            WHERE id = %s
-        ''', (yas, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, sifre, id))
+        if resim_url:
+            # Yeni resim varsa URL'i güncelle
+            cursor.execute('''
+                UPDATE oyuncular 
+                SET yas = %s, boy = %s, kilo = %s, goz_rengi = %s, sac_rengi = %s, sehir = %s, telefon = %s, eposta = %s, deneyim = %s, sifre = %s, resim_url = %s
+                WHERE id = %s
+            ''', (yas, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, sifre, resim_url, id))
+        else:
+            # Resim seçilmediyse eski resim URL'ini koru
+            cursor.execute('''
+                UPDATE oyuncular 
+                SET yas = %s, boy = %s, kilo = %s, goz_rengi = %s, sac_rengi = %s, sehir = %s, telefon = %s, eposta = %s, deneyim = %s, sifre = %s
+                WHERE id = %s
+            ''', (yas, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, sifre, id))
+            
         conn.commit()
         cursor.close()
         conn.close()
