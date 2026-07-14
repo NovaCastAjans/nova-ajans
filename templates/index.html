@@ -26,7 +26,9 @@
             <a class="navbar-brand" href="/"><i class="fa-solid fa-clapperboard-play me-2"></i>NOVA CAST</a>
             <div>
                 {% if session.get('logged_in') %}
-                    <a href="/ekle" class="btn btn-brand btn-sm me-2"><i class="fa-solid fa-user-plus me-1"></i>Oyuncu Ekle</a>
+                    {% if session.get('role') == 'admin' %}
+                        <a href="/ekle" class="btn btn-brand btn-sm me-2"><i class="fa-solid fa-user-plus me-1"></i>Oyuncu Ekle</a>
+                    {% endif %}
                     <a href="/logout" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-sign-out me-1"></i>Çıkış</a>
                 {% else %}
                     <a href="/login" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-lock me-1"></i>Yönetici Girişi</a>
@@ -64,7 +66,7 @@
                             <div class="actor-img-placeholder">
                                 <i class="fa-solid fa-user-astronaut"></i>
                             </div>
-                            <span class="position-absolute top-3 start-3 badge badge-city py-2 px-3 rounded-pill" style="top: 15px; left: 15px;">{{ oyuncu.sehir if oyuncu.sehir else 'Belirtilmemiş' }}</span>
+                            <span class="position-absolute badge badge-city py-2 px-3 rounded-pill" style="top: 15px; left: 15px;">{{ oyuncu.sehir if oyuncu.sehir else 'Belirtilmemiş' }}</span>
                         </div>
                         
                         <div class="card-body d-flex flex-column justify-content-between text-center">
@@ -74,7 +76,8 @@
                             </div>
                             <div class="d-grid gap-2">
                                 <a href="/oyuncu/{{ oyuncu.id }}" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-address-card me-1"></i>Profili İncele</a>
-                                {% if session.get('logged_in') %}
+                                <!-- Sadece ADMIN olanlar SİL butonunu görebilir -->
+                                {% if session.get('logged_in') and session.get('role') == 'admin' %}
                                     <a href="/sil/{{ oyuncu.id }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Bu oyuncuyu silmek istediğinize emin misiniz?')">
                                         <i class="fa-solid fa-trash me-1"></i>Sil
                                     </a>
