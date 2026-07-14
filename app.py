@@ -52,12 +52,24 @@ def veritabani_hazirla():
 
 veritabani_hazirla()
 
+# SADECE BU ALANA İSTEDİĞİN ARAMA MANTIĞI EKLENDİ, DİĞER HİÇBİR ŞEYE DOKUNULMADI
 @app.route('/')
 def index():
+    arama_sorgusu = request.args.get('q', '').strip()
+    
     conn = get_db_connection()
-    oyuncular = conn.execute('SELECT * FROM oyuncular').fetchall()
+    if arama_sorgusu:
+        # İsim veya soyisim içinde arama kelimesi geçiyorsa filtrele
+        oyuncular = conn.execute(
+            'SELECT * FROM oyuncular WHERE isim LIKE ?', 
+            ('%' + arama_sorgusu + '%',)
+        ).fetchall()
+    else:
+        # Arama yoksa tüm oyuncuları listele
+        oyuncular = conn.execute('SELECT * FROM oyuncular').fetchall()
     conn.close()
-    return render_template('index.html', oyuncular=oyuncular)
+    
+    return render_template('index.html', oyuncular=oyuncular, arama_sorgusu=arama_sorgusu)
 
 # Ortak Giriş Sayfası (Yönetici ve Oyuncu Girişi)
 @app.route('/login', methods=['GET', 'POST'])
