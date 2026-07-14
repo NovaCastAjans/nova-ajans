@@ -26,19 +26,23 @@
         .marquee-wrapper { background-color: #131520; padding: 30px 0; overflow: hidden; position: relative; border-bottom: 1px solid #23273a; }
         .marquee-container { display: flex; width: max-content; animation: kaydirma 30s linear infinite; }
         
-        /* Fare ile üzerine gelindiğinde kayma durur */
         .marquee-wrapper:hover .marquee-container { animation-play-state: paused; }
 
         .marquee-card { width: 220px; background-color: #161824; border: 1px solid #23273a; border-radius: 12px; margin-right: 20px; overflow: hidden; transition: 0.3s; text-decoration: none; color: inherit; display: block; }
         .marquee-card:hover { border-color: #ff4a5a; transform: translateY(-3px); }
         .marquee-img-placeholder { height: 180px; background: linear-gradient(45deg, #1e1b4b, #312e81); display: flex; align-items: center; justify-content: center; color: #ff4a5a; font-size: 2.5rem; }
+        .marquee-img-real { width: 100%; height: 180px; object-fit: cover; }
+
+        /* Kadro Kartı Görsel Stili */
+        .card-img-container { width: 100%; height: 240px; overflow: hidden; border-radius: 8px; margin-bottom: 15px; background: linear-gradient(45deg, #161824, #23273a); display: flex; align-items: center; justify-content: center; }
+        .card-img-real { width: 100%; height: 100%; object-fit: cover; }
+        .card-img-placeholder { font-size: 3.5rem; color: #ff4a5a; }
 
         @keyframes kaydirma {
             0% { transform: translateX(0); }
             100% { transform: translateX(-50%); }
         }
 
-        /* Kurumsal Alt Bilgi (Footer) */
         footer { background-color: #0a0b0f; border-top: 1px solid #1e293b; color: #8a8f98; font-size: 0.95rem; margin-top: 60px; }
         footer h5 { color: white; font-weight: 700; margin-bottom: 20px; }
         footer a { color: #8a8f98; text-decoration: none; transition: 0.3s; }
@@ -47,7 +51,6 @@
     </style>
 </head>
 <body>
-    <!-- Navigasyon -->
     <nav class="navbar navbar-expand-lg navbar-dark py-3">
         <div class="container">
             <a class="navbar-brand" href="/"><i class="fa-solid fa-clapperboard-play me-2"></i>NOVA CAST</a>
@@ -64,7 +67,6 @@
         </div>
     </nav>
 
-    <!-- Üst Kısım ve ARAMA BUTONU -->
     <header class="hero-section">
         <div class="container">
             <h1 class="display-5 fw-bold mb-2">Yeni Nesil Cast Veritabanı</h1>
@@ -84,20 +86,23 @@
         </div>
     </header>
 
-    <!-- OTOMATİK DÖNGÜDE YAN YANA YAVAŞÇA KAYAN OYUNCULAR -->
     <section class="marquee-wrapper">
         <div class="container mb-2">
             <small class="text-muted fw-bold text-uppercase"><i class="fa-solid fa-fire text-danger me-1"></i> Öne Çıkan Yüzler</small>
         </div>
         <div class="marquee-container">
             {% if oyuncular %}
-                <!-- Kesintisiz görsel döngü için listeyi iki kez render ediyoruz -->
                 {% for i in range(2) %}
                     {% for oyuncu in oyuncular %}
                         <a href="/oyuncu/{{ oyuncu.id }}" class="marquee-card">
-                            <div class="marquee-img-placeholder">
-                                <i class="fa-solid fa-user-astronaut"></i>
-                            </div>
+                            <!-- YENİ: Kayan Şeritte Resim Kontrolü -->
+                            {% if oyuncu.resim_url %}
+                                <img src="{{ oyuncu.resim_url }}" class="marquee-img-real" alt="{{ oyuncu.isim }}">
+                            {% else %}
+                                <div class="marquee-img-placeholder">
+                                    <i class="fa-solid fa-user-astronaut"></i>
+                                </div>
+                            {% endif %}
                             <div class="p-3 text-center">
                                 <h6 class="fw-bold text-white text-truncate mb-1">{{ oyuncu.isim }}</h6>
                                 <small class="text-muted">{{ oyuncu.yas }} Yaş • {{ oyuncu.sehir if oyuncu.sehir else 'İstanbul' }}</small>
@@ -111,7 +116,6 @@
         </div>
     </section>
 
-    <!-- Normal Tüm Kadro Listesi Alanı -->
     <main class="container my-5 py-2">
         <h4 class="fw-bold mb-4">
             {% if arama_sorgusu %}
@@ -125,6 +129,18 @@
             {% for oyuncu in oyuncular %}
                 <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                     <div class="p-3" style="background-color: #161824; border: 1px solid #23273a; border-radius: 12px;">
+                        
+                        <!-- YENİ: Normal Listede Profil Resmi Alanı -->
+                        <div class="card-img-container">
+                            {% if oyuncu.resim_url %}
+                                <img src="{{ oyuncu.resim_url }}" class="card-img-real" alt="{{ oyuncu.isim }}">
+                            {% else %}
+                                <div class="card-img-placeholder">
+                                    <i class="fa-solid fa-user-tie"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+
                         <h6 class="text-white fw-bold mb-1">{{ oyuncu.isim }}</h6>
                         <p class="text-muted small mb-2">{{ oyuncu.cinsiyet }} • {{ oyuncu.yas }} Yaşında</p>
                         <div class="d-flex justify-content-between align-items-center mt-3">
@@ -139,17 +155,14 @@
         </div>
     </main>
 
-    <!-- SAYFA EN ALTI (FOOTER) - AJANS BİLGİLERİ -->
     <footer class="py-5">
         <div class="container">
             <div class="row g-4">
-                <!-- Ajans Tanımı -->
                 <div class="col-lg-5 col-md-10">
                     <h5 class="text-danger fw-bold"><i class="fa-solid fa-clapperboard-play me-2"></i>NOVA CAST AGENCY</h5>
                     <p class="pe-lg-5" style="line-height: 1.6;">Nova Cast, sinema, dizi, reklam ve dijital platform yapımlarına profesyonel oyuncu temini sağlayan modern bir cast ajansıdır. Sektörün en dinamik yüzlerini en prestijli yapımlarla tek çatı altında bir araya getiriyoruz.</p>
                 </div>
                 
-                <!-- Hızlı Menü -->
                 <div class="col-lg-3 col-sm-6">
                     <h5>Hızlı Menü</h5>
                     <ul class="list-unstyled">
@@ -158,7 +171,6 @@
                     </ul>
                 </div>
 
-                <!-- İletişim -->
                 <div class="col-lg-4 col-sm-6">
                     <h5>İletişim ve Adres</h5>
                     <ul class="list-unstyled text-muted">

@@ -23,7 +23,18 @@
                     <a href="/oyuncu/{{ oyuncu.id }}" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-arrow-left me-1"></i>Vazgeç</a>
                 </div>
                 
-                <form action="/profil/duzenle/{{ oyuncu.id }}" method="POST">
+                <!-- enctype eklendi, böylece güncellemede de resim dosyası gönderilebilir -->
+                <form action="/profil/duzenle/{{ oyuncu.id }}" method="POST" enctype="multipart/form-data">
+                    
+                    <!-- YENİ: Profil Fotoğrafını Güncelleme Alanı -->
+                    <div class="mb-4 bg-dark p-3 rounded border border-secondary">
+                        <label class="form-label text-white small fw-bold"><i class="fa-solid fa-image text-danger me-2"></i>Profil Fotoğrafını Değiştir</label>
+                        <input type="file" name="resim" class="form-control" accept="image/*">
+                        {% if oyuncu.resim_url %}
+                            <div class="form-text text-info mt-1">Mevcut bir fotoğrafınız var. Değiştirmek istemiyorsanız boş bırakın.</div>
+                        {% endif %}
+                    </div>
+
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label text-muted small fw-bold">Yaş</label>
