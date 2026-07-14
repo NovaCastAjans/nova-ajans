@@ -11,6 +11,9 @@ app.secret_key = 'senin_cok_gizli_anahtarin'
 DATABASE_URL = os.environ.get('DATABASE_URL')
 SUPABASE_URL = "https://hlalwpwuzokuuegculnv.supabase.co"
 
+# Bulduğun API anahtarını buraya entegre ettik
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsYWx3cHd1em9rdXVlZ2N1bG52Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwNTYzNjEsImV4cCI6MjA5OTYzMjM2MX0.T8uLVWSZ4upuEtA0x_RHrBxVbhnCTu7Y3kP3fSi2o24"
+
 def get_db_connection():
     if not DATABASE_URL:
         raise Exception("DATABASE_URL ortam değişkeni bulunamadı.")
@@ -41,7 +44,6 @@ def veritabani_hazirla():
         )
     ''')
     
-    # Sütunun varlığını kesinleştirmek için kontrolü garantiye alalım
     try:
         cursor.execute("ALTER TABLE oyuncular ADD COLUMN resim_url TEXT")
         conn.commit()
@@ -56,6 +58,7 @@ try:
 except Exception as e:
     print(f"Veritabanı kurulum hatası: {e}")
 
+# Artık bu fonksiyon Supabase'e şifreli ve güvenli şekilde istek atıyor
 def resim_yukle_supabase(file):
     if not file or file.filename == '':
         return None
@@ -65,13 +68,15 @@ def resim_yukle_supabase(file):
     
     upload_url = f"{SUPABASE_URL}/storage/v1/object/resimler/{rastgele_isim}"
     file_bytes = file.read()
+    
     headers = {
-        "Content-Type": file.content_type
+        "Content-Type": file.content_type,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "apikey": SUPABASE_KEY
     }
     
     try:
         response = requests.post(upload_url, headers=headers, data=file_bytes)
-        # 200 veya 201 (Created) başarılı yükleme durumunu temsil eder
         if response.status_code in [200, 201]:
             return f"{SUPABASE_URL}/storage/v1/object/public/resimler/{rastgele_isim}"
         else:
