@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ oyuncu.isim }} - Profil</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+    <div class="container my-5">
+        <div class="card shadow p-4">
+            <div class="row">
+                <div class="col-md-8">
+                    <h2>{{ oyuncu.isim }}</h2>
+                    <hr>
+                    <p><strong>Şehir:</strong> {{ oyuncu.sehir }}</p>
+                    <p><strong>Yaş:</strong> {{ oyuncu.yas }}</p>
+                    <p><strong>Cinsiyet:</strong> {{ oyuncu.cinsiyet }}</p>
+                    <p><strong>Boy / Kilo:</strong> {{ oyuncu.boy }} cm / {{ oyuncu.kilo }} kg</p>
+                    <p><strong>Göz / Saç Rengi:</strong> {{ oyuncu.goz_rengi }} / {{ oyuncu.sac_rengi }}</p>
+                    <p><strong>İletişim:</strong> {{ oyuncu.telefon }} - {{ oyuncu.eposta }}</p>
+                    <p><strong>Deneyim:</strong> {{ oyuncu.deneyim }}</p>
+                    <a href="/" class="btn btn-secondary mt-3">Geri Dön</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
