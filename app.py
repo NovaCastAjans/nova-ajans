@@ -1,7 +1,7 @@
 import os
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-
+# Supabase aktif edildi
 app = Flask(__name__)
 app.secret_key = 'senin_cok_gizli_anahtarin'
 
