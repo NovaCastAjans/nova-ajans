@@ -267,6 +267,8 @@ def sil(id):
     conn.close()
     flash('Oyuncu kaydı başarıyla silindi.', 'success')
     return redirect(url_for('index'))
-
+@app.route('/hakkimizda')
+def hakkimizda():
+    return render_template('hakkimizda.html')
 if __name__ == '__main__':
     app.run(debug=True)
