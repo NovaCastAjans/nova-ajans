@@ -182,9 +182,10 @@ def ekle():
         conn = get_db_connection()
         cursor = conn.cursor()
         try:
+            # Sütun sayısı (14 adet) ve %s sayısı (14 adet) birebir eşitlendi!
             cursor.execute('''
                 INSERT INTO oyuncular (isim, yas, cinsiyet, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, kullanici_adi, sifre, resim_url)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ''', (isim, yas, cinsiyet, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, kullanici_adi, sifre, resim_url))
             conn.commit()
             flash('Yeni oyuncu başarıyla eklendi!', 'success')
