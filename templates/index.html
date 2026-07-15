@@ -3,188 +3,225 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nova Cast | Dizi & Film Ajansı</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Nova Cast Ajans - Ana Sayfa</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts (Modern ve Okunaklı Yazı Tipi) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- TÜM SÖNÜK YAZILARI VE KONTRASTI DÜZELTEN CSS -->
     <style>
-        body { background-color: #0f1016; color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .navbar { background-color: #161824 !important; border-bottom: 2px solid #ff4a5a; }
-        .navbar-brand { font-weight: 800; letter-spacing: 1px; color: #ff4a5a !important; }
-        
-        /* Kahraman Alanı ve Arama Çubuğu */
-        .hero-section { background: linear-gradient(135deg, #1e1b4b 0%, #0f1016 100%); padding: 50px 0; border-bottom: 1px solid #1e293b; text-align: center; }
-        .search-container { max-w: 600px; margin: 25px auto 0 auto; }
-        .search-input { background-color: #161824; border: 2px solid #23273a; color: white; border-radius: 30px 0 0 30px; padding: 12px 25px; }
-        .search-input:focus { background-color: #161824; border-color: #ff4a5a; color: white; box-shadow: none; }
-        .search-btn { background-color: #ff4a5a; color: white; border-radius: 0 30px 30px 0; padding: 0 25px; font-weight: 600; border: none; }
-        .search-btn:hover { background-color: #e03544; color: white; }
-        
-        .btn-brand { background-color: #ff4a5a; color: white; border: none; font-weight: 600; transition: 0.3s; }
-        .btn-brand:hover { background-color: #e03544; color: white; }
-
-        /* --- OTOMATİK YAN YANA KAYAN OYUNCU ŞERİDİ (MARQUEE) --- */
-        .marquee-wrapper { background-color: #131520; padding: 30px 0; overflow: hidden; position: relative; border-bottom: 1px solid #23273a; }
-        .marquee-container { display: flex; width: max-content; animation: kaydirma 30s linear infinite; }
-        
-        .marquee-wrapper:hover .marquee-container { animation-play-state: paused; }
-
-        .marquee-card { width: 220px; background-color: #161824; border: 1px solid #23273a; border-radius: 12px; margin-right: 20px; overflow: hidden; transition: 0.3s; text-decoration: none; color: inherit; display: block; }
-        .marquee-card:hover { border-color: #ff4a5a; transform: translateY(-3px); }
-        .marquee-img-placeholder { height: 180px; background: linear-gradient(45deg, #1e1b4b, #312e81); display: flex; align-items: center; justify-content: center; color: #ff4a5a; font-size: 2.5rem; }
-        .marquee-img-real { width: 100%; height: 180px; object-fit: cover; }
-
-        /* Kadro Kartı Görsel Stili */
-        .card-img-container { width: 100%; height: 240px; overflow: hidden; border-radius: 8px; margin-bottom: 15px; background: linear-gradient(45deg, #161824, #23273a); display: flex; align-items: center; justify-content: center; }
-        .card-img-real { width: 100%; height: 100%; object-fit: cover; }
-        .card-img-placeholder { font-size: 3.5rem; color: #ff4a5a; }
-
-        @keyframes kaydirma {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
+        /* 1. Genel Sayfa Ayarları (Tüm sönük yazıları canlandırır) */
+        body {
+            background-color: #f8f9fa !important; /* Hafif kırık beyaz arka plan gözü yormaz */
+            color: #1a1a1a !important; /* Tüm temel yazıları sönük gri yerine koyu siyah yapar */
+            font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+            line-height: 1.6 !important;
+            -webkit-font-smoothing: antialiased;
         }
 
-        footer { background-color: #0a0b0f; border-top: 1px solid #1e293b; color: #8a8f98; font-size: 0.95rem; margin-top: 60px; }
-        footer h5 { color: white; font-weight: 700; margin-bottom: 20px; }
-        footer a { color: #8a8f98; text-decoration: none; transition: 0.3s; }
-        footer a:hover { color: #ff4a5a; }
-        .footer-bottom { border-top: 1px solid #161824; padding-top: 20px; margin-top: 40px; }
+        /* Navbar Ayarları */
+        .navbar {
+            background-color: #0f172a !important; /* Koyu lacivert şık arka plan */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            color: #ffffff !important;
+            font-weight: 800 !important;
+            font-size: 1.4rem !important;
+        }
+
+        .nav-link {
+            color: #e2e8f0 !important;
+            font-weight: 600 !important;
+        }
+
+        .nav-link:hover {
+            color: #ffffff !important;
+        }
+
+        /* Arama Kutusu ve Başlıklar */
+        h1, h2, h3, h4, h5, h6 {
+            color: #0b0c10 !important; /* Çok koyu, net başlıklar */
+            font-weight: 700 !important;
+            letter-spacing: -0.02em !important;
+        }
+
+        .arama-kutusu {
+            border: 2px solid #94a3b8 !important;
+            color: #0f172a !important;
+            font-weight: 500 !important;
+            background-color: #ffffff !important;
+        }
+
+        .arama-kutusu:focus {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25) !important;
+        }
+
+        /* 2. Oyuncu Kartları (Ana Sayfa Kart Tasarımı) */
+        .card {
+            background-color: #ffffff !important;
+            border: 1px solid #cbd5e1 !important; /* Kart sınırlarını belirginleştirir */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important; /* Kartı arka plandan ayırır */
+            border-radius: 12px !important;
+            overflow: hidden !important;
+            transition: transform 0.2s ease;
+            height: 100%;
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+        }
+
+        .card-img-top {
+            height: 280px;
+            object-fit: cover;
+            border-bottom: 1px solid #e2e8f0;
+            background-color: #f1f5f9; /* Fotoğraf yoksa gri arka plan */
+        }
+
+        .card-body {
+            padding: 1.25rem !important;
+        }
+
+        .card-title {
+            color: #0f172a !important;
+            font-size: 1.3rem !important;
+            font-weight: 700 !important;
+            margin-bottom: 0.75rem !important;
+        }
+
+        /* Oyuncu kartı içindeki detay yazıları */
+        .card-text, .oyuncu-detay {
+            color: #1e293b !important; /* Yazıları simsiyah yapar */
+            font-size: 0.95rem !important;
+            font-weight: 600 !important; /* Yazıları kalınlaştırır */
+            margin-bottom: 0.4rem !important;
+        }
+
+        .detay-etiket {
+            color: #475569 !important; /* Özellik başlıkları (Boy:, Kilo:) için belirgin gri */
+            font-weight: 700 !important;
+        }
+
+        /* Butonlar */
+        .btn-primary {
+            background-color: #2563eb !important;
+            border-color: #2563eb !important;
+            font-weight: 600 !important;
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8 !important;
+        }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark py-3">
+
+    <!-- Üst Menü (Navbar) -->
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
         <div class="container">
-            <a class="navbar-brand" href="/"><i class="fa-solid fa-clapperboard-play me-2"></i>NOVA CAST</a>
-            <div>
-                {% if session.get('logged_in') %}
-                    {% if session.get('role') == 'admin' %}
-                        <a href="/ekle" class="btn btn-brand btn-sm me-2"><i class="fa-solid fa-user-plus me-1"></i>Oyuncu Ekle</a>
+            <a class="navbar-brand" href="/">🎭 Nova Cast Ajans</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Ana Sayfa</a>
+                    </li>
+                    {% if session.get('logged_in') %}
+                        {% if session.get('role') == 'admin' %}
+                            <li class="nav-item">
+                                <a class="nav-link text-warning fw-bold" href="/ekle">➕ Oyuncu Ekle</a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="/oyuncu/{{ session.get('oyuncu_id') }}">Profilim</a>
+                            </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link text-danger fw-bold" href="/logout">Çıkış Yap</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/login">Giriş Yap</a>
+                        </li>
                     {% endif %}
-                    <a href="/logout" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-sign-out me-1"></i>Çıkış</a>
-                {% else %}
-                    <a href="/login" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-user me-1"></i>Giriş Yap</a>
-                {% endif %}
+                </ul>
             </div>
         </div>
     </nav>
 
-    <header class="hero-section">
-        <div class="container">
-            <h1 class="display-5 fw-bold mb-2">Yeni Nesil Cast Veritabanı</h1>
-            <p class="text-muted mx-auto" style="max-width: 500px;">Projeleriniz için en doğru yetenekleri tek tıkla arayın ve inceleyin.</p>
-            
-            <div class="search-container">
-                <form action="/" method="GET" class="input-group">
-                    <input type="text" name="q" class="form-control search-input" placeholder="Oyuncu Adı veya Soyadı ara..." value="{{ arama_sorgusu if arama_sorgusu else '' }}">
-                    <button class="btn search-btn" type="submit"><i class="fa-solid fa-magnifying-glass me-2"></i>Ara</button>
-                </form>
-                {% if arama_sorgusu %}
-                    <div class="text-start mt-2 ps-3">
-                        <a href="/" class="text-danger small text-decoration-none"><i class="fa-solid fa-circle-xmark me-1"></i>Aramayı Temizle</a>
+    <!-- Bildirim Mesajları -->
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show fw-bold" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
-                {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Ana İçerik Alanı -->
+    <div class="container mb-5">
+        <div class="row mb-4 align-items-center">
+            <div class="col-md-6">
+                <h1 class="display-6">Oyuncu Kadromuz</h1>
+            </div>
+            <!-- Arama Formu -->
+            <div class="col-md-6">
+                <form action="/" method="get" class="d-flex">
+                    <input type="text" name="q" class="form-control arama-kutusu me-2" placeholder="Oyuncu adı ara..." value="{{ arama_sorgusu or '' }}">
+                    <button class="btn btn-primary px-4" type="submit">Ara</button>
+                </form>
             </div>
         </div>
-    </header>
 
-    <section class="marquee-wrapper">
-        <div class="container mb-2">
-            <small class="text-muted fw-bold text-uppercase"><i class="fa-solid fa-fire text-danger me-1"></i> Öne Çıkan Yüzler</small>
-        </div>
-        <div class="marquee-container">
-            {% if oyuncular %}
-                {% for i in range(2) %}
-                    {% for oyuncu in oyuncular %}
-                        <a href="/oyuncu/{{ oyuncu.id }}" class="marquee-card">
-                            <!-- YENİ: Kayan Şeritte Resim Kontrolü -->
-                            {% if oyuncu.resim_url %}
-                                <img src="{{ oyuncu.resim_url }}" class="marquee-img-real" alt="{{ oyuncu.isim }}">
-                            {% else %}
-                                <div class="marquee-img-placeholder">
-                                    <i class="fa-solid fa-user-astronaut"></i>
-                                </div>
-                            {% endif %}
-                            <div class="p-3 text-center">
-                                <h6 class="fw-bold text-white text-truncate mb-1">{{ oyuncu.isim }}</h6>
-                                <small class="text-muted">{{ oyuncu.yas }} Yaş • {{ oyuncu.sehir if oyuncu.sehir else 'İstanbul' }}</small>
-                            </div>
-                        </a>
-                    {% endfor %}
-                {% endfor %}
-            {% else %}
-                <div class="text-muted ps-4">Kayıtlı veya arama kriterine uygun oyuncu bulunamadı.</div>
-            {% endif %}
-        </div>
-    </section>
-
-    <main class="container my-5 py-2">
-        <h4 class="fw-bold mb-4">
-            {% if arama_sorgusu %}
-                <i class="fa-solid fa-filter text-danger me-2"></i>Arama Sonuçları ({{ oyuncular|length }} Sonuç)
-            {% else %}
-                <i class="fa-solid fa-users text-danger me-2"></i>Tüm Kadro Listesi
-            {% endif %}
-        </h4>
-        
-        <div class="row">
+        <!-- Oyuncu Listesi -->
+        <div class="row row-cols-1 row-cols-md-3 g-4">
             {% for oyuncu in oyuncular %}
-                <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
-                    <div class="p-3" style="background-color: #161824; border: 1px solid #23273a; border-radius: 12px;">
+                <div class="col">
+                    <div class="card">
+                        <!-- Profil Resmi -->
+                        {% if oyuncu.resim_url %}
+                            <img src="{{ oyuncu.resim_url }}" class="card-img-top" alt="{{ oyuncu.isim }}">
+                        {% else %}
+                            <img src="https://via.placeholder.com/300x280?text=Fotoğraf+Yok" class="card-img-top" alt="Fotoğraf Yok">
+                        {% endif %}
                         
-                        <!-- YENİ: Normal Listede Profil Resmi Alanı -->
-                        <div class="card-img-container">
-                            {% if oyuncu.resim_url %}
-                                <img src="{{ oyuncu.resim_url }}" class="card-img-real" alt="{{ oyuncu.isim }}">
-                            {% else %}
-                                <div class="card-img-placeholder">
-                                    <i class="fa-solid fa-user-tie"></i>
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <h6 class="text-white fw-bold mb-1">{{ oyuncu.isim }}</h6>
-                        <p class="text-muted small mb-2">{{ oyuncu.cinsiyet }} • {{ oyuncu.yas }} Yaşında</p>
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <a href="/oyuncu/{{ oyuncu.id }}" class="btn btn-sm btn-outline-light px-3">Detay</a>
-                            {% if session.get('logged_in') and session.get('role') == 'admin' %}
-                                <a href="/sil/{{ oyuncu.id }}" class="text-danger small" onclick="return confirm('Silmek istediğinize emin misiniz?')"><i class="fa-solid fa-trash"></i></a>
-                            {% endif %}
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <div>
+                                <h5 class="card-title">{{ oyuncu.isim }}</h5>
+                                <p class="card-text"><span class="detay-etiket">Yaş:</span> {{ oyuncu.yas or 'Belirtilmemiş' }}</p>
+                                <p class="card-text"><span class="detay-etiket">Şehir:</span> {{ oyuncu.sehir or 'Belirtilmemiş' }}</p>
+                                <p class="card-text"><span class="detay-etiket">Boy:</span> {{ oyuncu.boy or '-' }} cm | <span class="detay-etiket">Kilo:</span> {{ oyuncu.kilo or '-' }} kg</p>
+                            </div>
+                            <div class="mt-3">
+                                <a href="/oyuncu/{{ oyuncu.id }}" class="btn btn-primary w-100">Profili Görüntüle</a>
+                            </div>
                         </div>
                     </div>
+                </div>
+            {% else %}
+                <div class="col-12 text-center py-5">
+                    <h3 class="text-muted">Kayıtlı oyuncu bulunamadı.</h3>
                 </div>
             {% endfor %}
         </div>
-    </main>
+    </div>
 
-    <footer class="py-5">
-        <div class="container">
-            <div class="row g-4">
-                <div class="col-lg-5 col-md-10">
-                    <h5 class="text-danger fw-bold"><i class="fa-solid fa-clapperboard-play me-2"></i>NOVA CAST AGENCY</h5>
-                    <p class="pe-lg-5" style="line-height: 1.6;">Nova Cast, sinema, dizi, reklam ve dijital platform yapımlarına profesyonel oyuncu temini sağlayan modern bir cast ajansıdır. Sektörün en dinamik yüzlerini en prestijli yapımlarla tek çatı altında bir araya getiriyoruz.</p>
-                </div>
-                
-                <div class="col-lg-3 col-sm-6">
-                    <h5>Hızlı Menü</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="/"><i class="fa-solid fa-chevron-right me-2 small"></i>Ana Sayfa</a></li>
-                        <li class="mb-2"><a href="/login"><i class="fa-solid fa-chevron-right me-2 small"></i>Giriş Yap</a></li>
-                    </ul>
-                </div>
-
-                <div class="col-lg-4 col-sm-6">
-                    <h5>İletişim ve Adres</h5>
-                    <ul class="list-unstyled text-muted">
-                        <li class="mb-2"><i class="fa-solid fa-location-dot text-danger me-2"></i> Levent Mah. Büyükdere Cad. No:120, Beşiktaş / İstanbul</li>
-                        <li class="mb-2"><i class="fa-solid fa-phone text-danger me-2"></i> +90 (212) 555 01 99</li>
-                        <li class="mb-2"><i class="fa-solid fa-envelope text-danger me-2"></i> info@novacastagency.com</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="footer-bottom text-center">
-                <p class="mb-0 small">&copy; 2026 Nova Cast Agency. Tüm Hakları Saklıdır.</p>
-            </div>
-        </div>
-    </footer>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

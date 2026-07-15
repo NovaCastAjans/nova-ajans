@@ -2,116 +2,184 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Yeni Cast Ekle | Nova Cast</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Cast Ajans - Oyuncu Ekle</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #0f1016; color: #f3f4f6; font-family: 'Segoe UI', sans-serif; }
-        .form-card { background-color: #161824; border: 1px solid #23273a; border-radius: 16px; padding: 40px; }
-        .form-control { background-color: #0f1016; border: 1px solid #23273a; color: white; }
-        .form-control:focus { background-color: #0f1016; border-color: #ff4a5a; color: white; box-shadow: none; }
-        .btn-brand { background-color: #ff4a5a; color: white; font-weight: 600; }
-        .btn-brand:hover { background-color: #e03544; color: white; }
+        body {
+            background-color: #f8f9fa !important;
+            color: #1a1a1a !important;
+            font-family: 'Inter', sans-serif !important;
+        }
+        .navbar {
+            background-color: #0f172a !important;
+        }
+        .navbar-brand {
+            color: #ffffff !important;
+            font-weight: 800 !important;
+        }
+        .nav-link {
+            color: #e2e8f0 !important;
+            font-weight: 600 !important;
+        }
+        .ekle-card {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 2.5rem;
+        }
+        h2 {
+            color: #0b0c10 !important;
+            font-weight: 800 !important;
+        }
+        label {
+            color: #0f172a !important;
+            font-weight: 700 !important;
+            margin-bottom: 0.5rem;
+        }
+        .form-control, .form-select {
+            color: #0f172a !important;
+            font-weight: 600 !important;
+            border: 2px solid #94a3b8 !important;
+            background-color: #ffffff !important;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25) !important;
+        }
+        .section-title {
+            color: #2563eb !important;
+            font-weight: 700 !important;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .btn-success {
+            background-color: #16a34a !important;
+            border-color: #16a34a !important;
+            font-weight: 700 !important;
+            padding: 0.75rem !important;
+        }
+        .btn-success:hover {
+            background-color: #15803d !important;
+        }
     </style>
 </head>
 <body>
-    <div class="container my-5">
-        <div class="col-lg-8 mx-auto">
-            <div class="form-card shadow-lg">
-                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary">
-                    <h2 class="fw-bold text-white mb-0"><i class="fa-solid fa-user-plus text-danger me-2"></i>Yeni Oyuncu Ekle</h2>
-                    <a href="/" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-house"></i></a>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark mb-5">
+        <div class="container">
+            <a class="navbar-brand" href="/">🎭 Nova Cast Ajans</a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/">Ana Sayfa</a></li>
+                    <li class="nav-item"><a class="nav-link text-danger fw-bold" href="/logout">Çıkış Yap</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Form -->
+    <div class="container mb-5">
+        <div class="row justify-content-center">
+            <div class="col-md-9">
+                <div class="ekle-card">
+                    <h2 class="mb-4 text-center">Yeni Oyuncu Kaydı</h2>
+                    <form action="/ekle" method="post" enctype="multipart/form-data">
+                        
+                        <!-- 1. Bölüm: Kişisel Bilgiler -->
+                        <h4 class="section-title">Kişisel Bilgiler</h4>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="isim">Adı Soyadı</label>
+                                <input type="text" class="form-control" id="isim" name="isim" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="yas">Yaş</label>
+                                <input type="number" class="form-control" id="yas" name="yas">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="cinsiyet">Cinsiyet</label>
+                                <select class="form-select" id="cinsiyet" name="cinsiyet">
+                                    <option value="">Seçiniz</option>
+                                    <option value="Kadın">Kadın</option>
+                                    <option value="Erkek">Erkek</option>
+                                    <option value="Diğer">Diğer</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 2. Bölüm: Fiziksel Özellikler -->
+                        <h4 class="section-title mt-4">Fiziksel Özellikler</h4>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label for="boy">Boy (cm)</label>
+                                <input type="number" class="form-control" id="boy" name="boy">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="kilo">Kilo (kg)</label>
+                                <input type="number" class="form-control" id="kilo" name="kilo">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="goz_rengi">Göz Rengi</label>
+                                <input type="text" class="form-control" id="goz_rengi" name="goz_rengi">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="sac_rengi">Saç Rengi</label>
+                                <input type="text" class="form-control" id="sac_rengi" name="sac_rengi">
+                            </div>
+                        </div>
+
+                        <!-- 3. Bölüm: İletişim ve Konum -->
+                        <h4 class="section-title mt-4">İletişim ve Konum</h4>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="sehir">Yaşadığı Şehir</label>
+                                <input type="text" class="form-control" id="sehir" name="sehir">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="telefon">Telefon Numarası</label>
+                                <input type="tel" class="form-control" id="telefon" name="telefon">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="eposta">E-posta Adresi</label>
+                                <input type="email" class="form-control" id="eposta" name="eposta">
+                            </div>
+                        </div>
+
+                        <!-- 4. Bölüm: Giriş Bilgileri ve Fotoğraf -->
+                        <h4 class="section-title mt-4">Giriş Bilgileri ve Fotoğraf</h4>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="kullanici_adi">Kullanıcı Adı (Oyuncunun kendi girişi için)</label>
+                                <input type="text" class="form-control" id="kullanici_adi" name="kullanici_adi" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="sifre">Şifre</label>
+                                <input type="text" class="form-control" id="sifre" name="sifre" required>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label for="resim" class="form-label">Profil Fotoğrafı</label>
+                                <input class="form-control" type="file" id="resim" name="resim" accept="image/*">
+                            </div>
+                        </div>
+
+                        <!-- 5. Bölüm: Deneyim -->
+                        <h4 class="section-title mt-4">Deneyim / Özgeçmiş</h4>
+                        <div class="mb-4">
+                            <textarea class="form-control" id="deneyim" name="deneyim" rows="4" placeholder="Daha önce yer aldığı projeleri, eğitimleri buraya yazabilirsiniz..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100 mt-2">Kaydet ve Oyuncuyu Ekle</button>
+                    </form>
                 </div>
-                
-                <!-- enctype eklendi, böylece resim dosyası sunucuya gönderilebilecek -->
-                <form action="/ekle" method="POST" enctype="multipart/form-data">
-                    <h5 class="text-white mb-3"><i class="fa-solid fa-id-card text-danger me-2"></i>Kişisel Bilgiler</h5>
-                    
-                    <!-- YENİ: Fotoğraf Yükleme Alanı -->
-                    <div class="mb-4 bg-dark p-3 rounded border border-secondary">
-                        <label class="form-label text-white small fw-bold"><i class="fa-solid fa-image text-danger me-2"></i>Oyuncu Fotoğrafı</label>
-                        <input type="file" name="resim" class="form-control" accept="image/*">
-                        <div class="form-text text-muted">Lütfen dikey açılı bir portre fotoğrafı tercih edin.</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label text-muted small fw-bold">Adı Soyadı</label>
-                        <input type="text" name="isim" class="form-control" placeholder="Oyuncunun Tam Adı" required>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label text-muted small fw-bold">Yaş</label>
-                            <input type="number" name="yas" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted small fw-bold">Cinsiyet</label>
-                            <input type="text" name="cinsiyet" class="form-control" placeholder="Kadın / Erkek" required>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label text-muted small fw-bold">Boy (cm)</label>
-                            <input type="number" name="boy" class="form-control" placeholder="Örn: 178">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted small fw-bold">Kilo (kg)</label>
-                            <input type="number" name="kilo" class="form-control" placeholder="Örn: 72">
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label text-muted small fw-bold">Göz Rengi</label>
-                            <input type="text" name="goz_rengi" class="form-control" placeholder="Kahverengi, Mavi vb.">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted small fw-bold">Saç Rengi</label>
-                            <input type="text" name="sac_rengi" class="form-control" placeholder="Siyah, Kumral vb.">
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label text-muted small fw-bold">Yaşadığı Şehir</label>
-                        <input type="text" name="sehir" class="form-control" placeholder="İstanbul, Kocaeli, Ankara vb.">
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label text-muted small fw-bold">Telefon Numarası</label>
-                            <input type="text" name="telefon" class="form-control" placeholder="05xx xxx xx xx">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted small fw-bold">E-Posta Adresi</label>
-                            <input type="email" name="eposta" class="form-control" placeholder="isim@eposta.com">
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label text-muted small fw-bold">Deneyim ve Biyografi</label>
-                        <textarea name="deneyim" class="form-control" rows="3" placeholder="Yer aldığı projeler..."></textarea>
-                    </div>
-
-                    <h5 class="text-white mb-3 border-top border-secondary pt-3"><i class="fa-solid fa-key text-danger me-2"></i>Oyuncu Hesap Giriş Bilgileri</h5>
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label text-muted small fw-bold">Giriş Kullanıcı Adı (Sadece bu oyuncuya özel)</label>
-                            <input type="text" name="kullanici_adi" class="form-control" placeholder="Örn: cagla_demir" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted small fw-bold">Şifre</label>
-                            <input type="password" name="sifre" class="form-control" placeholder="Oyuncunun şifresi" required>
-                        </div>
-                    </div>
-
-                    <div class="d-flex justify-content-between">
-                        <a href="/" class="btn btn-outline-secondary px-4">Vazgeç</a>
-                        <button type="submit" class="btn btn-brand px-4">Kaydet ve Yayınla</button>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
