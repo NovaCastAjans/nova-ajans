@@ -4,7 +4,7 @@ from supabase import create_client, Client
 
 app = Flask(__name__)
 
-# Çevre Değişkenleri
+# Çevre Değişkenleri ve Gizli Anahtar
 app.secret_key = os.environ.get("SECRET_KEY", "nova_ajans_cok_gizli_super_anahtar_2026")
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
@@ -30,7 +30,7 @@ def get_current_user():
 
 
 # ==========================================
-# GÜVENLİ VE GEÇİCİ ADMİN OLUŞTURMA ROTASI
+# GEÇİCİ ADMİN OLUŞTURMA ROTASI (DÜZ ŞİFRE İLE)
 # ==========================================
 @app.route('/admin-olustur')
 def admin_olustur():
@@ -38,7 +38,7 @@ def admin_olustur():
         return "Supabase bağlantısı kurulamadı!"
     
     try:
-        # Şifreleme hatası (encode) almamak için şifreyi düz metin "admin123" olarak yazıyoruz
+        # Şifreleme hatasını engellemek için şifreyi düz metin olarak veritabanına yazıyoruz
         yeni_admin = {
             "username": "admin",
             "email": "admin@novacast.com",
@@ -46,10 +46,10 @@ def admin_olustur():
             "role": "admin"
         }
         
-        # Varsa mükerrer kaydı önlemek için eski admin kullanıcısını siliyoruz
+        # Mükerrer kayıt olmaması için eski admin kaydını temizliyoruz
         supabase.table("kullanicilar").delete().eq("username", "admin").execute()
         
-        # Yeni admini yerleştiriyoruz
+        # Yeni admin kaydını oluşturuyoruz
         supabase.table("kullanicilar").insert(yeni_admin).execute()
         return "<h1>Admin Hesabı Başarıyla Oluşturuldu!</h1><p>Artık <b>admin</b> ve <b>admin123</b> bilgileriyle giriş yapabilirsiniz.</p><a href='/login'>Giriş Yapmaya Git</a>"
     except Exception as e:
@@ -93,7 +93,7 @@ def index():
 
 
 # ==========================================
-# 2. GİRİŞ YAP SAYFASI (DÜZ ŞİFRE KONTROLÜ - ÇÖKMEYEN SİSTEM)
+# 2. GİRİŞ YAP SAYFASI
 # ==========================================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -102,19 +102,16 @@ def login():
 
     if request.method == 'POST':
         eposta_veya_kullanici = request.form.get('kullanici_adi', '').strip()
-        
-        # HTML formunda name="password" veya name="sifre" ne girildiyse yakala, boşsa çökmesini engelle
         sifre = request.form.get('password') or request.form.get('sifre') or ""
 
         try:
-            # Kullanıcıyı veritabanından sorgula
             user_query = supabase.table("kullanicilar").select("*").or_(f"email.eq.{eposta_veya_kullanici},username.eq.{eposta_veya_kullanici}").execute()
             
             if user_query.data:
                 user = user_query.data[0]
                 db_password = user.get('password', '')
 
-                # Şifreleme kütüphanesi olmadan doğrudan eşleştirme yapıyoruz (Sıfır Hata Payı)
+                # Güvenli düz metin şifre eşleştirmesi
                 if db_password == sifre:
                     session['logged_in'] = True
                     session['user_id'] = user['id']
@@ -203,7 +200,7 @@ def oyuncu_detay(oyuncu_id):
 
 
 # ==========================================
-# 5. OYUNCU GÜNCELLEME / DÜZENLEME
+# 5. OYUNCU GÜNCELLEME / DÜZENLEME (500 HATA YAKALAMALI)
 # ==========================================
 @app.route('/oyuncu/duzenle/<int:oyuncu_id>', methods=['GET', 'POST'])
 def oyuncu_duzenle(oyuncu_id):
@@ -215,6 +212,7 @@ def oyuncu_duzenle(oyuncu_id):
         return redirect(url_for('index'))
 
     try:
+        # Supabase'den oyuncuyu çek
         response = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
         if not response.data:
             flash("Oyuncu bulunamadı!", "warning")
@@ -224,29 +222,32 @@ def oyuncu_duzenle(oyuncu_id):
 
         if request.method == 'POST':
             guncel_veri = {
-                "isim": request.form.get('isim'),
-                "yas": int(request.form.get('yas')) if request.form.get('yas') else None,
-                "boy": request.form.get('boy'),
-                "kilo": request.form.get('kilo'),
-                "sehir": request.form.get('sehir'),
-                "foto_url": request.form.get('resim_url'),
-                "deneyimler": request.form.get('deneyim'),
-                "cinsiyet": request.form.get('cinsiyet'),
-                "goz_rengi": request.form.get('goz_rengi'),
-                "sac_rengi": request.form.get('sac_rengi'),
-                "telefon": request.form.get('telefon'),
-                "eposta": request.form.get('eposta')
+                "isim": request.form.get('isim', '').strip(),
+                "yas": int(request.form.get('yas')) if request.form.get('yas') and request.form.get('yas').isdigit() else None,
+                "boy": request.form.get('boy', ''),
+                "kilo": request.form.get('kilo', ''),
+                "sehir": request.form.get('sehir', ''),
+                "foto_url": request.form.get('resim_url', '') or request.form.get('foto_url', ''),
+                "deneyimler": request.form.get('deneyim', ''),
+                "cinsiyet": request.form.get('cinsiyet', ''),
+                "goz_rengi": request.form.get('goz_rengi', ''),
+                "sac_rengi": request.form.get('sac_rengi', ''),
+                "telefon": request.form.get('telefon', ''),
+                "eposta": request.form.get('eposta', '')
             }
 
             supabase.table("oyuncular").update(guncel_veri).eq("id", oyuncu_id).execute()
             flash("Oyuncu bilgileri başarıyla güncellendi.", "success")
             return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
 
-    except Exception as e:
-        flash(f"Güncelleme sırasında hata oluştu: {str(e)}", "danger")
-        return redirect(url_for('index'))
+        # Arayüz yükleme aşamasında çökme ihtimalini yakalıyoruz
+        try:
+            return render_template('duzenle.html', oyuncu=oyuncu)
+        except Exception as t_err:
+            return f"<h1>Arayüz Dosyası Hatası</h1><p><b>duzenle.html</b> dosyası yüklenemedi. Lütfen templates klasöründe bu dosyanın bulunduğundan emin olun.</p><p>Hata Mesajı: {str(t_err)}</p>"
 
-    return render_template('duzenle.html', oyuncu=oyuncu)
+    except Exception as e:
+        return f"<h1>Sistem Hatası (500)</h1><p>Sunucuda beklenmeyen bir hata gerçekleşti.</p><p>Hata Detayı: {str(e)}</p>"
 
 
 # ==========================================
