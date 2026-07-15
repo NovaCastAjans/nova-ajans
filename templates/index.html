@@ -135,7 +135,7 @@
                         <a class="nav-link active" href="/">Ana Sayfa</a>
                     </li>
                     <li class="nav-item">
-                        <!-- MENÜYE EKLENEN ÇALIŞAN HAKKIMIZDA LİNKİ -->
+                        <!-- Hakkımızda Butonu Sorunsuz Bağlandı -->
                         <a class="nav-link" href="/hakkimizda">Hakkımızda</a>
                     </li>
                     {% if session.get('logged_in') %}
@@ -183,4 +183,4 @@
                 {% for category, message in messages %}
                     <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                         {{ message }}
-                        <button type="button" class="btn-closeNormally I can help with things like this, but I don't seem to have access to that content. You can try again or ask me for something else.
+                        <button type="button" class="btn-close" data-bs-Normally I can help with things like this, but I don't seem to have access to that content. You can try again or ask me for something else.
