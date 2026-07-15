@@ -1,274 +1,306 @@
 import os
-import psycopg2
-from psycopg2.extras import DictCursor
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-import requests
-import uuid
+from werkzeug.security import generate_password_hash, check_password_hash
+from supabase import create_client, Client
 
 app = Flask(__name__)
-app.secret_key = 'senin_cok_gizli_anahtarin'
 
-DATABASE_URL = os.environ.get('DATABASE_URL')
-SUPABASE_URL = "https://hlalwpwuzokuuegculnv.supabase.co"
+# Güvenlik Anahtarı ve Supabase Ayarları (Render Çevre Değişkenleri ile Tam Uyumlu)
+app.secret_key = os.environ.get("SECRET_KEY", "nova_cast_secret_key_987654")
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
-# Supabase API anahtarı
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsYWx3cHd1em9rdXVlZ2N1bG52Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwNTYzNjEsImV4cCI6MjA5OTYzMjM2MX0.T8uLVWSZ4upuEtA0x_RHrBxVbhnCTu7Y3kP3fSi2o24"
+if not SUPABASE_URL or not SUPABASE_KEY:
+    supabase: Client = None
+else:
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-def get_db_connection():
-    if not DATABASE_URL:
-        raise Exception("DATABASE_URL ortam değişkeni bulunamadı.")
-    conn = psycopg2.connect(DATABASE_URL)
-    return conn
 
-def veritabani_hazirla():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS oyuncular (
-            id SERIAL PRIMARY KEY,
-            isim TEXT NOT NULL,
-            yas INTEGER,
-            cinsiyet TEXT,
-            boy INTEGER,
-            kilo INTEGER,
-            goz_rengi TEXT,
-            sac_rengi TEXT,
-            sehir TEXT,
-            telefon TEXT,
-            eposta TEXT,
-            deneyim TEXT,
-            kullanici_adi TEXT UNIQUE,
-            sifre TEXT,
-            resim_url TEXT
-        )
-    ''')
-    
+# --- ORTAK KULLANICI BULMA FONKSİYONU ---
+def get_current_user():
+    if not session.get('logged_in'):
+        return None
     try:
-        cursor.execute("ALTER TABLE oyuncular ADD COLUMN resim_url TEXT")
-        conn.commit()
+        user_id = session.get('user_id')
+        if user_id:
+            response = supabase.table("kullanicilar").select("*").eq("id", user_id).execute()
+            if response.data:
+                return response.data[0]
     except Exception:
-        conn.rollback()
-        
-    cursor.close()
-    conn.close()
+        pass
+    return None
 
-try:
-    veritabani_hazirla()
-except Exception as e:
-    print(f"Veritabanı kurulum hatası: {e}")
 
-# Supabase Storage standartlarına tam uyumlu çalışan resim yükleme fonksiyonu
-def resim_yukle_supabase(file):
-    if not file or file.filename == '':
-        return None
-    
-    uzanti = os.path.splitext(file.filename)[1].lower()
-    rastgele_isim = f"{uuid.uuid4()}{uzanti}"
-    
-    # URL yapısı tam olarak Supabase standartlarına çekildi
-    upload_url = f"{SUPABASE_URL}/storage/v1/object/resimler/{rastgele_isim}"
-    file_bytes = file.read()
-    
-    headers = {
-        "Content-Type": file.content_type or "image/jpeg",
-        "Authorization": f"Bearer {SUPABASE_KEY}",
-        "apikey": SUPABASE_KEY
-    }
-    
-    try:
-        response = requests.post(upload_url, headers=headers, data=file_bytes)
-        if response.status_code in [200, 201]:
-            # Dışarıya açık public URL döner
-            return f"{SUPABASE_URL}/storage/v1/object/public/resimler/{rastgele_isim}"
-        else:
-            print(f"Supabase Resim Yükleme Hatası ({response.status_code}): {response.text}")
-            return None
-    except Exception as e:
-        print(f"İstek Hatası: {e}")
-        return None
-
+# ==========================================
+# 1. ANA SAYFA (SIRALAMA KURALI EKLENMİŞ HALİ)
+# ==========================================
 @app.route('/')
 def index():
     arama_sorgusu = request.args.get('q', '').strip()
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=DictCursor)
-    
-    if arama_sorgusu:
-        cursor.execute('SELECT id, isim, yas, cinsiyet, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, kullanici_adi, sifre, resim_url FROM oyuncular WHERE isim ILIKE %s', ('%' + arama_sorgusu + '%',))
-    else:
-        cursor.execute('SELECT id, isim, yas, cinsiyet, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, kullanici_adi, sifre, resim_url FROM oyuncular')
+    oyuncular = []
+
+    if not supabase:
+        flash("Veri tabanı bağlantısı kurulamadı. Lütfen ortam değişkenlerini kontrol edin.", "danger")
+        return render_template('index.html', oyuncular=[], arama_sorgusu=arama_sorgusu)
+
+    try:
+        # Arama sorgusu varsa filtreleyip en yeni eklenenden en eskiye doğru sıralıyoruz
+        if arama_sorgusu:
+            response = (
+                supabase.table("oyuncular")
+                .select("*")
+                .ilike("ad", f"%{arama_sorgusu}%")
+                .order("id", desc=True)
+                .execute()
+            )
+        # Arama sorgusu yoksa tüm oyuncuları en yeni eklenenden en eskiye sıralayarak getiriyoruz
+        else:
+            response = (
+                supabase.table("oyuncular")
+                .select("*")
+                .order("id", desc=True)
+                .execute()
+            )
         
-    oyuncular = cursor.fetchall()
-    cursor.close()
-    conn.close()
+        oyuncular = response.data if response.data else []
+    except Exception as e:
+        flash(f"Oyuncular listelenirken bir hata oluştu: {str(e)}", "danger")
+
     return render_template('index.html', oyuncular=oyuncular, arama_sorgusu=arama_sorgusu)
 
+
+# ==========================================
+# 2. ÜYE OL / KAYIT OL SAYFASI
+# ==========================================
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if session.get('logged_in'):
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        kullanici_adi = request.form.get('username', '').strip()
+        eposta = request.form.get('email', '').strip()
+        sifre = request.form.get('password')
+        sifre_tekrar = request.form.get('password_confirm')
+
+        if not kullanici_adi or not eposta or not sifre:
+            flash("Lütfen tüm alanları doldurun.", "warning")
+            return render_template('register.html')
+
+        if sifre != sifre_tekrar:
+            flash("Şifreler birbiriyle uyuşmuyor!", "danger")
+            return render_template('register.html')
+
+        hashed_password = generate_password_hash(sifre)
+
+        try:
+            # E-posta veya Kullanıcı adı önceden alınmış mı kontrol et
+            check_user = supabase.table("kullanicilar").select("*").eq("email", eposta).execute()
+            if check_user.data:
+                flash("Bu e-posta adresi zaten kullanımda!", "danger")
+                return render_template('register.html')
+
+            yeni_kullanici = {
+                "username": kullanici_adi,
+                "email": eposta,
+                "password": hashed_password,
+                "role": "user"
+            }
+
+            # Kullanıcıyı ekle
+            insert_response = supabase.table("kullanicilar").insert(yeni_kullanici).execute()
+            
+            if insert_response.data:
+                flash("Kayıt işleminiz başarıyla tamamlandı! Giriş yapabilirsiniz.", "success")
+                return redirect(url_for('login'))
+        except Exception as e:
+            flash(f"Kayıt esnasında bir hata oluştu: {str(e)}", "danger")
+
+    return render_template('register.html')
+
+
+# ==========================================
+# 3. GİRİŞ YAP SAYFASI
+# ==========================================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if session.get('logged_in'):
+        return redirect(url_for('index'))
+
     if request.method == 'POST':
-        kullanici_adi = request.form.get('kullanici_adi')
-        sifre = request.form.get('sifre')
+        eposta_veya_kullanici = request.form.get('username', '').strip()
+        sifre = request.form.get('password')
 
-        if kullanici_adi == 'admin' and sifre == 'admin123':
-            session['logged_in'] = True
-            session['role'] = 'admin'
-            flash('Yönetici olarak başarıyla giriş yaptınız!', 'success')
-            return redirect(url_for('index'))
-
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=DictCursor)
-        cursor.execute('SELECT * FROM oyuncular WHERE kullanici_adi = %s AND sifre = %s', (kullanici_adi, sifre))
-        oyuncu = cursor.fetchone()
-        cursor.close()
-        conn.close()
-
-        if oyuncu:
-            session['logged_in'] = True
-            session['role'] = 'oyuncu'
-            session['oyuncu_id'] = oyuncu['id']
-            session['oyuncu_isim'] = oyuncu['isim']
-            flash(f'Hoş geldiniz, {oyuncu["isim"]}!', 'success')
-            return redirect(url_for('profil', id=oyuncu['id']))
-        else:
-            flash('Hatalı kullanıcı adı veya şifre!', 'danger')
+        try:
+            # Hem e-posta hem kullanıcı adı alanında ara
+            user_query = supabase.table("kullanicilar").select("*").or_(f"email.eq.{eposta_veya_kullanici},username.eq.{eposta_veya_kullanici}").execute()
             
+            if user_query.data:
+                user = user_query.data[0]
+                if check_password_hash(user['password'], sifre):
+                    session['logged_in'] = True
+                    session['user_id'] = user['id']
+                    session['username'] = user['username']
+                    session['role'] = user.get('role', 'user')
+
+                    # Eğer bu kullanıcı bir oyuncu profiliyle ilişkiliyse
+                    if user.get('oyuncu_id'):
+                        session['oyuncu_id'] = user['oyuncu_id']
+
+                    flash(f"Hoş geldiniz, {user['username']}!", "success")
+                    return redirect(url_for('index'))
+                else:
+                    flash("Hatalı şifre girdiniz!", "danger")
+            else:
+                flash("Böyle bir kullanıcı bulunamadı!", "danger")
+        except Exception as e:
+            flash(f"Giriş yapılırken bir hata oluştu: {str(e)}", "danger")
+
     return render_template('login.html')
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    flash('Başarıyla çıkış yapıldı.', 'info')
-    return redirect(url_for('index'))
 
-@app.route('/oyuncu/<int:id>')
-def profil(id):
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=DictCursor)
-    cursor.execute('SELECT id, isim, yas, cinsiyet, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, kullanici_adi, sifre, resim_url FROM oyuncular WHERE id = %s', (id,))
-    oyuncu = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    
-    if oyuncu is None:
-        flash('Oyuncu bulunamadı!', 'danger')
-        return redirect(url_for('index'))
-    return render_template('profil.html', oyuncu=oyuncu)
-
+# ==========================================
+# 4. OYUNCU EKLEME SAYFASI (Yalnızca Admin)
+# ==========================================
 @app.route('/ekle', methods=['GET', 'POST'])
-def ekle():
+def oyuncu_ekle():
     if not session.get('logged_in') or session.get('role') != 'admin':
-        flash('Bu işlem için yönetici yetkisi gerekiyor!', 'danger')
-        return redirect(url_for('login'))
+        flash("Bu sayfaya erişim yetkiniz bulunmamaktadır!", "danger")
+        return redirect(url_for('index'))
 
     if request.method == 'POST':
-        isim = request.form.get('isim')
-        yas = request.form.get('yas') if request.form.get('yas') else None
-        cinsiyet = request.form.get('cinsiyet')
-        boy = request.form.get('boy') if request.form.get('boy') else None
-        kilo = request.form.get('kilo') if request.form.get('kilo') else None
-        goz_rengi = request.form.get('goz_rengi')
-        sac_rengi = request.form.get('sac_rengi')
+        ad = request.form.get('ad')
+        soyad = request.form.get('soyad')
+        yas = request.form.get('yas')
+        boy = request.form.get('boy')
+        kilo = request.form.get('kilo')
         sehir = request.form.get('sehir')
-        telefon = request.form.get('telefon')
-        eposta = request.form.get('eposta')
-        deneyim = request.form.get('deneyim')
-        kullanici_adi = request.form.get('kullanici_adi')
-        sifre = request.form.get('sifre')
-        
-        resim_dosyası = request.files.get('resim')
-        resim_url = resim_yukle_supabase(resim_dosyası)
+        resim_url = request.form.get('resim_url')
+        hakkinda = request.form.get('hakkinda')
 
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        yeni_oyuncu = {
+            "ad": ad,
+            "soyad": soyad,
+            "yas": int(yas) if yas else None,
+            "boy": int(boy) if boy else None,
+            "kilo": int(kilo) if kilo else None,
+            "sehir": sehir,
+            "resim_url": resim_url,
+            "hakkinda": hakkinda
+        }
+
         try:
-            # Sütun sayısı (14 adet) ve %s sayısı (14 adet) birebir eşitlendi!
-            cursor.execute('''
-                INSERT INTO oyuncular (isim, yas, cinsiyet, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, kullanici_adi, sifre, resim_url)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ''', (isim, yas, cinsiyet, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, kullanici_adi, sifre, resim_url))
-            conn.commit()
-            flash('Yeni oyuncu başarıyla eklendi!', 'success')
-        except psycopg2.errors.UniqueViolation:
-            conn.rollback()
-            flash('Bu kullanıcı adı zaten alınmış!', 'danger')
-        finally:
-            cursor.close()
-            conn.close()
-        
-        return redirect(url_for('index'))
+            supabase.table("oyuncular").insert(yeni_oyuncu).execute()
+            flash(f"{ad} {soyad} sisteme başarıyla eklendi.", "success")
+            return redirect(url_for('index'))
+        except Exception as e:
+            flash(f"Oyuncu eklenirken hata oluştu: {str(e)}", "danger")
 
     return render_template('ekle.html')
 
-@app.route('/profil/duzenle/<int:id>', methods=['GET', 'POST'])
-def profil_duzenle(id):
-    if not session.get('logged_in'):
-        flash('Önce giriş yapmalısınız!', 'danger')
-        return redirect(url_for('login'))
-        
-    if session.get('role') == 'oyuncu' and session.get('oyuncu_id') != id:
-        flash('Sadece kendi profilinizi düzenleyebilirsiniz!', 'danger')
-        return redirect(url_for('index'))
 
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=DictCursor)
-    cursor.execute('SELECT * FROM oyuncular WHERE id = %s', (id,))
-    oyuncu = cursor.fetchone()
-
-    if request.method == 'POST':
-        yas = request.form.get('yas') if request.form.get('yas') else None
-        boy = request.form.get('boy') if request.form.get('boy') else None
-        kilo = request.form.get('kilo') if request.form.get('kilo') else None
-        goz_rengi = request.form.get('goz_rengi')
-        sac_rengi = request.form.get('sac_rengi')
-        sehir = request.form.get('sehir')
-        telefon = request.form.get('telefon')
-        eposta = request.form.get('eposta')
-        deneyim = request.form.get('deneyim')
-        sifre = request.form.get('sifre')
-        
-        resim_dosyası = request.files.get('resim')
-        resim_url = resim_yukle_supabase(resim_dosyası)
-
-        if resim_url:
-            cursor.execute('''
-                UPDATE oyuncular 
-                SET yas = %s, boy = %s, kilo = %s, goz_rengi = %s, sac_rengi = %s, sehir = %s, telefon = %s, eposta = %s, deneyim = %s, sifre = %s, resim_url = %s
-                WHERE id = %s
-            ''', (yas, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, sifre, resim_url, id))
+# ==========================================
+# 5. OYUNCU DETAY SAYFASI
+# ==========================================
+@app.route('/oyuncu/<int:oyuncu_id>')
+def oyuncu_detay(oyuncu_id):
+    try:
+        response = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
+        if response.data:
+            oyuncu = response.data[0]
+            return render_template('oyuncu_detay.html', oyuncu=oyuncu)
         else:
-            cursor.execute('''
-                UPDATE oyuncular 
-                SET yas = %s, boy = %s, kilo = %s, goz_rengi = %s, sac_rengi = %s, sehir = %s, telefon = %s, eposta = %s, deneyim = %s, sifre = %s
-                WHERE id = %s
-            ''', (yas, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, sifre, id))
-            
-        conn.commit()
-        cursor.close()
-        conn.close()
-        flash('Profil başarıyla güncellendi!', 'success')
-        return redirect(url_for('profil', id=id))
-
-    cursor.close()
-    conn.close()
-    return render_template('profil_duzenle.html', oyuncu=oyuncu)
-
-@app.route('/sil/<int:id>')
-def sil(id):
-    if not session.get('logged_in') or session.get('role') != 'admin':
-        flash('Bu işlem için yetkiniz yok!', 'danger')
+            flash("Aradığınız oyuncu sistemde bulunamadı.", "warning")
+            return redirect(url_for('index'))
+    except Exception as e:
+        flash(f"Oyuncu bilgisi alınırken hata: {str(e)}", "danger")
         return redirect(url_for('index'))
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('DELETE FROM oyuncular WHERE id = %s', (id,))
-    conn.commit()
-    cursor.close()
-    conn.close()
-    flash('Oyuncu kaydı başarıyla silindi.', 'success')
+
+# ==========================================
+# 6. OYUNCU GÜNCELLEME / DÜZENLEME
+# ==========================================
+@app.route('/oyuncu/duzenle/<int:oyuncu_id>', methods=['GET', 'POST'])
+def oyuncu_duzenle(oyuncu_id):
+    # Yetki kontrolü: Yalnızca admin veya profilin gerçek sahibi düzenleyebilir
+    is_admin = session.get('role') == 'admin'
+    is_owner = session.get('oyuncu_id') == oyuncu_id
+
+    if not session.get('logged_in') or (not is_admin and not is_owner):
+        flash("Bu işlem için yetkiniz yok!", "danger")
+        return redirect(url_for('index'))
+
+    try:
+        # Mevcut bilgileri çek
+        response = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
+        if not response.data:
+            flash("Oyuncu bulunamadı!", "warning")
+            return redirect(url_for('index'))
+        
+        oyuncu = response.data[0]
+
+        if request.method == 'POST':
+            guncel_veri = {
+                "ad": request.form.get('ad'),
+                "soyad": request.form.get('soyad'),
+                "yas": int(request.form.get('yas')) if request.form.get('yas') else None,
+                "boy": int(request.form.get('boy')) if request.form.get('boy') else None,
+                "kilo": int(request.form.get('kilo')) if request.form.get('kilo') else None,
+                "sehir": request.form.get('sehir'),
+                "resim_url": request.form.get('resim_url'),
+                "hakkinda": request.form.get('hakkinda')
+            }
+
+            supabase.table("oyuncular").update(guncel_veri).eq("id", oyuncu_id).execute()
+            flash("Oyuncu bilgileri başarıyla güncellendi.", "success")
+            return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
+
+    except Exception as e:
+        flash(f"Güncelleme sırasında hata oluştu: {str(e)}", "danger")
+        return redirect(url_for('index'))
+
+    return render_template('duzenle.html', oyuncu=oyuncu)
+
+
+# ==========================================
+# 7. OYUNCU SİLME (Yalnızca Admin)
+# ==========================================
+@app.route('/oyuncu/sil/<int:oyuncu_id>', methods=['POST'])
+def oyuncu_sil(oyuncu_id):
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        flash("Bu işlem için yetkiniz yok!", "danger")
+        return redirect(url_for('index'))
+
+    try:
+        supabase.table("oyuncular").delete().eq("id", oyuncu_id).execute()
+        flash("Oyuncu sistemden başarıyla silindi.", "success")
+    except Exception as e:
+        flash(f"Oyuncu silinirken hata oluştu: {str(e)}", "danger")
+
     return redirect(url_for('index'))
+
+
+# ==========================================
+# 8. HAKKIMIZDA VE YARDIMCI SAYFALAR
+# ==========================================
 @app.route('/hakkimizda')
 def hakkimizda():
     return render_template('hakkimizda.html')
+
+
+# ==========================================
+# 9. GÜVENLİ ÇIKIŞ İŞLEMİ
+# ==========================================
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash("Başarıyla çıkış yaptınız.", "info")
+    return redirect(url_for('index'))
+
+
+# ==========================================
+# 10. UYGULAMA ÇALIŞTIRMA (PORT DİNAMİK)
+# ==========================================
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
