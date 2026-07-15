@@ -31,7 +31,7 @@ def get_current_user():
 
 
 # ==========================================
-# GEÇİCİ ADMİN OLUŞTURMA ROTASI (İŞİN BİTİNCE SİLEBİLİRSİN)
+# GEÇİCİ ADMİN OLUŞTURMA ROTASI
 # ==========================================
 @app.route('/admin-olustur')
 def admin_olustur():
@@ -96,7 +96,7 @@ def index():
 
 
 # ==========================================
-# 2. GİRİŞ YAP SAYFASI
+# 2. GİRİŞ YAP SAYFASI (GÜVENLİ VE HATA AYIKLAMALI)
 # ==========================================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -108,11 +108,20 @@ def login():
         sifre = request.form.get('password')
 
         try:
+            # Kullanıcıyı veritabanından çekiyoruz
             user_query = supabase.table("kullanicilar").select("*").or_(f"email.eq.{eposta_veya_kullanici},username.eq.{eposta_veya_kullanici}").execute()
             
             if user_query.data:
                 user = user_query.data[0]
-                if check_password_hash(user['password'], sifre):
+                
+                # Güvenlik Kontrolü: Veritabanındaki şifre alanının boş olup olmadığını denetliyoruz
+                db_password = user.get('password')
+                if not db_password:
+                    flash("Hata: Veritabanındaki şifre boş veya geçersiz formatta!", "danger")
+                    return render_template('login.html')
+
+                # Şifre doğrulama testi
+                if check_password_hash(db_password, sifre):
                     session['logged_in'] = True
                     session['user_id'] = user['id']
                     session['username'] = user['username']
