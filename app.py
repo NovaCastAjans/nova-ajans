@@ -44,16 +44,16 @@ def index():
         return render_template('index.html', oyuncular=[], arama_sorgusu=arama_sorgusu)
 
     try:
-        # Arama sorgusu varsa filtreleyip en yeni eklenenden en eskiye doğru sıralıyoruz
+        # Arama sorgusu varsa filtreleyip en yeni eklenenden en eskiye doğru sıralıyoruz (order eklendi)
         if arama_sorgusu:
             response = (
                 supabase.table("oyuncular")
                 .select("*")
-                .ilike("ad", f"%{arama_sorgusu}%")
+                .ilike("isim", f"%{arama_sorgusu}%")
                 .order("id", desc=True)
                 .execute()
             )
-        # Arama sorgusu yoksa tüm oyuncuları en yeni eklenenden en eskiye sıralayarak getiriyoruz
+        # Arama sorgusu yoksa tüm oyuncuları en yeni eklenenden en eskiye sıralayarak getiriyoruz (order eklendi)
         else:
             response = (
                 supabase.table("oyuncular")
@@ -128,7 +128,8 @@ def login():
         return redirect(url_for('index'))
 
     if request.method == 'POST':
-        eposta_veya_kullanici = request.form.get('username', '').strip()
+        # login.html'deki name="kullanici_adi" alanıyla tam uyumlu hale getirildi
+        eposta_veya_kullanici = request.form.get('kullanici_adi', '').strip()
         sifre = request.form.get('password')
 
         try:
@@ -169,29 +170,38 @@ def oyuncu_ekle():
         return redirect(url_for('index'))
 
     if request.method == 'POST':
-        ad = request.form.get('ad')
-        soyad = request.form.get('soyad')
+        # ekle.html formundaki input "name" nitelikleri ve veritabanı sütunlarıyla eşleştirildi
+        isim = request.form.get('isim')
         yas = request.form.get('yas')
         boy = request.form.get('boy')
         kilo = request.form.get('kilo')
         sehir = request.form.get('sehir')
-        resim_url = request.form.get('resim_url')
-        hakkinda = request.form.get('hakkinda')
+        resim_url = request.form.get('resim_url')  # veya yüklenen dosya mantığı
+        deneyimler = request.form.get('deneyim')
+        cinsiyet = request.form.get('cinsiyet')
+        goz_rengi = request.form.get('goz_rengi')
+        sac_rengi = request.form.get('sac_rengi')
+        telefon = request.form.get('telefon')
+        eposta = request.form.get('eposta')
 
         yeni_oyuncu = {
-            "ad": ad,
-            "soyad": soyad,
+            "isim": isim,
             "yas": int(yas) if yas else None,
             "boy": int(boy) if boy else None,
             "kilo": int(kilo) if kilo else None,
             "sehir": sehir,
-            "resim_url": resim_url,
-            "hakkinda": hakkinda
+            "foto_url": resim_url,
+            "deneyimler": deneyimler,
+            "cinsiyet": cinsiyet,
+            "goz_rengi": goz_rengi,
+            "sac_rengi": sac_rengi,
+            "telefon": telefon,
+            "eposta": eposta
         }
 
         try:
             supabase.table("oyuncular").insert(yeni_oyuncu).execute()
-            flash(f"{ad} {soyad} sisteme başarıyla eklendi.", "success")
+            flash(f"{isim} sisteme başarıyla eklendi.", "success")
             return redirect(url_for('index'))
         except Exception as e:
             flash(f"Oyuncu eklenirken hata oluştu: {str(e)}", "danger")
@@ -240,15 +250,20 @@ def oyuncu_duzenle(oyuncu_id):
         oyuncu = response.data[0]
 
         if request.method == 'POST':
+            # Veritabanı şemasıyla birebir uyumlu alanlar güncelleniyor
             guncel_veri = {
-                "ad": request.form.get('ad'),
-                "soyad": request.form.get('soyad'),
+                "isim": request.form.get('isim'),
                 "yas": int(request.form.get('yas')) if request.form.get('yas') else None,
                 "boy": int(request.form.get('boy')) if request.form.get('boy') else None,
                 "kilo": int(request.form.get('kilo')) if request.form.get('kilo') else None,
                 "sehir": request.form.get('sehir'),
-                "resim_url": request.form.get('resim_url'),
-                "hakkinda": request.form.get('hakkinda')
+                "foto_url": request.form.get('resim_url'),
+                "deneyimler": request.form.get('deneyim'),
+                "cinsiyet": request.form.get('cinsiyet'),
+                "goz_rengi": request.form.get('goz_rengi'),
+                "sac_rengi": request.form.get('sac_rengi'),
+                "telefon": request.form.get('telefon'),
+                "eposta": request.form.get('eposta')
             }
 
             supabase.table("oyuncular").update(guncel_veri).eq("id", oyuncu_id).execute()
