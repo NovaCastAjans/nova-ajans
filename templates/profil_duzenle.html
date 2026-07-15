@@ -8,8 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body {
-            background-color: #f8f9fa !important;
-            color: #1a1a1a !important;
+            background-color: #0b0c10 !important;
+            color: #f1f5f9 !important;
             font-family: 'Inter', sans-serif !important;
         }
         .navbar {
@@ -24,35 +24,37 @@
             font-weight: 600 !important;
         }
         .duzenle-card {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
+            background: #111827;
+            border: 1px solid #1e293b;
             border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
             padding: 2.5rem;
         }
         h2 {
-            color: #0b0c10 !important;
+            color: #ffffff !important;
             font-weight: 800 !important;
         }
         label {
-            color: #0f172a !important;
+            color: #cbd5e1 !important;
             font-weight: 700 !important;
             margin-bottom: 0.5rem;
         }
         .form-control, .form-select {
-            color: #0f172a !important;
+            color: #ffffff !important;
             font-weight: 600 !important;
-            border: 2px solid #94a3b8 !important;
-            background-color: #ffffff !important;
+            border: 2px solid #334155 !important;
+            background-color: #1e293b !important;
         }
         .form-control:focus, .form-select:focus {
             border-color: #2563eb !important;
+            background-color: #1e293b !important;
+            color: #ffffff !important;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25) !important;
         }
         .section-title {
-            color: #2563eb !important;
+            color: #3b82f6 !important;
             font-weight: 700 !important;
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 2px solid #1e293b;
             padding-bottom: 0.5rem;
             margin-bottom: 1.5rem;
         }
@@ -72,7 +74,7 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark mb-5">
         <div class="container">
-            <a class="navbar-brand" href="/">🎭 Nova Cast Ajans</a>
+            <a class="navbar-brand" href="/">🎭 NOVA CAST AJANS</a>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="/">Ana Sayfa</a></li>
@@ -88,6 +90,8 @@
             <div class="col-md-9">
                 <div class="duzenle-card">
                     <h2 class="mb-4 text-center">{{ oyuncu.isim }} - Profili Güncelle</h2>
+                    
+                    <!-- ENCTYPE ÖZELLİĞİ BURAYA DA EKLENDİ -->
                     <form action="/profil/duzenle/{{ oyuncu.id }}" method="post" enctype="multipart/form-data">
                         
                         <!-- 1. Bölüm: Fiziksel Özellikler -->

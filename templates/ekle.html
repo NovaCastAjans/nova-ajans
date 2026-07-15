@@ -8,8 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body {
-            background-color: #f8f9fa !important;
-            color: #1a1a1a !important;
+            background-color: #0b0c10 !important;
+            color: #f1f5f9 !important;
             font-family: 'Inter', sans-serif !important;
         }
         .navbar {
@@ -24,35 +24,37 @@
             font-weight: 600 !important;
         }
         .ekle-card {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
+            background: #111827;
+            border: 1px solid #1e293b;
             border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
             padding: 2.5rem;
         }
         h2 {
-            color: #0b0c10 !important;
+            color: #ffffff !important;
             font-weight: 800 !important;
         }
         label {
-            color: #0f172a !important;
+            color: #cbd5e1 !important;
             font-weight: 700 !important;
             margin-bottom: 0.5rem;
         }
         .form-control, .form-select {
-            color: #0f172a !important;
+            color: #ffffff !important;
             font-weight: 600 !important;
-            border: 2px solid #94a3b8 !important;
-            background-color: #ffffff !important;
+            border: 2px solid #334155 !important;
+            background-color: #1e293b !important;
         }
         .form-control:focus, .form-select:focus {
             border-color: #2563eb !important;
+            background-color: #1e293b !important;
+            color: #ffffff !important;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25) !important;
         }
         .section-title {
-            color: #2563eb !important;
+            color: #3b82f6 !important;
             font-weight: 700 !important;
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 2px solid #1e293b;
             padding-bottom: 0.5rem;
             margin-bottom: 1.5rem;
         }
@@ -72,7 +74,7 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark mb-5">
         <div class="container">
-            <a class="navbar-brand" href="/">🎭 Nova Cast Ajans</a>
+            <a class="navbar-brand" href="/">🎭 NOVA CAST AJANS</a>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="/">Ana Sayfa</a></li>
@@ -88,6 +90,8 @@
             <div class="col-md-9">
                 <div class="ekle-card">
                     <h2 class="mb-4 text-center">Yeni Oyuncu Kaydı</h2>
+                    
+                    <!-- ENCTYPE ÖZELLİĞİ EKLENDİ (Dosya gönderimi için zorunlu) -->
                     <form action="/ekle" method="post" enctype="multipart/form-data">
                         
                         <!-- 1. Bölüm: Kişisel Bilgiler -->
@@ -154,13 +158,14 @@
                         <h4 class="section-title mt-4">Giriş Bilgileri ve Fotoğraf</h4>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="kullanici_adi">Kullanıcı Adı (Oyuncunun kendi girişi için)</label>
+                                <label for="kullanici_adi">Kullanıcı Adı (Oyuncu girişi için)</label>
                                 <input type="text" class="form-control" id="kullanici_adi" name="kullanici_adi" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="sifre">Şifre</label>
                                 <input type="text" class="form-control" id="sifre" name="sifre" required>
                             </div>
+                            <!-- name="resim" DEĞERİ FLASK'TAKİ ALANLA EŞLENDİ -->
                             <div class="col-md-12 mb-3">
                                 <label for="resim" class="form-label">Profil Fotoğrafı</label>
                                 <input class="form-control" type="file" id="resim" name="resim" accept="image/*">
