@@ -6,7 +6,7 @@ from supabase import create_client, Client
 app = Flask(__name__)
 
 # Çevre Değişkenleri
-app.secret_key = os.environ.get("SECRET_KEY", "nova_ajans_cok_gizli_super_anahtar_2026")[cite: 1]
+app.secret_key = os.environ.get("SECRET_KEY", "nova_ajans_cok_gizli_super_anahtar_2026")
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
@@ -17,14 +17,14 @@ else:
 
 
 def get_current_user():
-    if not session.get('logged_in'):[cite: 4]
+    if not session.get('logged_in'):
         return None
     try:
-        user_id = session.get('user_id')[cite: 4]
+        user_id = session.get('user_id')
         if user_id:
-            response = supabase.table("kullanicilar").select("*").eq("id", user_id).execute()[cite: 4]
-            if response.data:[cite: 4]
-                return response.data[0][cite: 4]
+            response = supabase.table("kullanicilar").select("*").eq("id", user_id).execute()
+            if response.data:
+                return response.data[0]
     except Exception:
         pass
     return None
@@ -35,12 +35,12 @@ def get_current_user():
 # ==========================================
 @app.route('/')
 def index():
-    arama_sorgusu = request.args.get('q', '').strip()[cite: 4]
+    arama_sorgusu = request.args.get('q', '').strip()
     oyuncular = []
 
     if not supabase:
-        flash("Veri tabanı bağlantısı kurulamadı. Lütfen ortam değişkenlerini kontrol edin.", "danger")[cite: 4]
-        return render_template('index.html', oyuncular=[], arama_sorgusu=arama_sorgusu)[cite: 4]
+        flash("Veri tabanı bağlantısı kurulamadı. Lütfen ortam değişkenlerini kontrol edin.", "danger")
+        return render_template('index.html', oyuncular=[], arama_sorgusu=arama_sorgusu)
 
     try:
         # Arama sorgusu varsa filtreleyip "id"ye göre en yeni ekleneni en üstte gösterir
@@ -61,11 +61,11 @@ def index():
                 .execute()
             )
         
-        oyuncular = response.data if response.data else [][cite: 4]
+        oyuncular = response.data if response.data else []
     except Exception as e:
-        flash(f"Oyuncular listelenirken bir hata oluştu: {str(e)}", "danger")[cite: 4]
+        flash(f"Oyuncular listelenirken bir hata oluştu: {str(e)}", "danger")
 
-    return render_template('index.html', oyuncular=oyuncular, arama_sorgusu=arama_sorgusu)[cite: 4]
+    return render_template('index.html', oyuncular=oyuncular, arama_sorgusu=arama_sorgusu)
 
 
 # ==========================================
@@ -73,39 +73,39 @@ def index():
 # ==========================================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if session.get('logged_in'):[cite: 4]
-        return redirect(url_for('index'))[cite: 4]
+    if session.get('logged_in'):
+        return redirect(url_for('index'))
 
     if request.method == 'POST':
         # login.html'deki name="kullanici_adi" ile eşitlendi
         eposta_veya_kullanici = request.form.get('kullanici_adi', '').strip()
-        sifre = request.form.get('password')[cite: 4]
+        sifre = request.form.get('password')
 
         try:
             # Hem e-posta hem kullanıcı adı alanında ara
-            user_query = supabase.table("kullanicilar").select("*").or_(f"email.eq.{eposta_veya_kullanici},username.eq.{eposta_veya_kullanici}").execute()[cite: 4]
+            user_query = supabase.table("kullanicilar").select("*").or_(f"email.eq.{eposta_veya_kullanici},username.eq.{eposta_veya_kullanici}").execute()
             
-            if user_query.data:[cite: 4]
-                user = user_query.data[0][cite: 4]
-                if check_password_hash(user['password'], sifre):[cite: 4]
-                    session['logged_in'] = True[cite: 4]
-                    session['user_id'] = user['id'][cite: 4]
-                    session['username'] = user['username'][cite: 4]
-                    session['role'] = user.get('role', 'user')[cite: 4]
+            if user_query.data:
+                user = user_query.data[0]
+                if check_password_hash(user['password'], sifre):
+                    session['logged_in'] = True
+                    session['user_id'] = user['id']
+                    session['username'] = user['username']
+                    session['role'] = user.get('role', 'user')
 
-                    if user.get('oyuncu_id'):[cite: 4]
-                        session['oyuncu_id'] = user['oyuncu_id'][cite: 4]
+                    if user.get('oyuncu_id'):
+                        session['oyuncu_id'] = user['oyuncu_id']
 
-                    flash(f"Hoş geldiniz, {user['username']}!", "success")[cite: 4]
-                    return redirect(url_for('index'))[cite: 4]
+                    flash(f"Hoş geldiniz, {user['username']}!", "success")
+                    return redirect(url_for('index'))
                 else:
-                    flash("Hatalı şifre girdiniz!", "danger")[cite: 4]
+                    flash("Hatalı şifre girdiniz!", "danger")
             else:
-                flash("Böyle bir kullanıcı bulunamadı!", "danger")[cite: 4]
+                flash("Böyle bir kullanıcı bulunamadı!", "danger")
         except Exception as e:
-            flash(f"Giriş yapılırken bir hata oluştu: {str(e)}", "danger")[cite: 4]
+            flash(f"Giriş yapılırken bir hata oluştu: {str(e)}", "danger")
 
-    return render_template('login.html')[cite: 4]
+    return render_template('login.html')
 
 
 # ==========================================
@@ -113,9 +113,9 @@ def login():
 # ==========================================
 @app.route('/ekle', methods=['GET', 'POST'])
 def oyuncu_ekle():
-    if not session.get('logged_in') or session.get('role') != 'admin':[cite: 4]
-        flash("Bu sayfaya erişim yetkiniz bulunmamaktadır!", "danger")[cite: 4]
-        return redirect(url_for('index'))[cite: 4]
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        flash("Bu sayfaya erişim yetkiniz bulunmamaktadır!", "danger")
+        return redirect(url_for('index'))
 
     if request.method == 'POST':
         # ekle.html formundaki veriler ve SQLite/Supabase şeması eşleşti
@@ -152,9 +152,9 @@ def oyuncu_ekle():
             flash(f"{isim} sisteme başarıyla eklendi.", "success")
             return redirect(url_for('index'))
         except Exception as e:
-            flash(f"Oyuncu eklenirken hata oluştu: {str(e)}", "danger")[cite: 4]
+            flash(f"Oyuncu eklenirken hata oluştu: {str(e)}", "danger")
 
-    return render_template('ekle.html')[cite: 4]
+    return render_template('ekle.html')
 
 
 # ==========================================
@@ -163,16 +163,16 @@ def oyuncu_ekle():
 @app.route('/oyuncu/<int:oyuncu_id>')
 def oyuncu_detay(oyuncu_id):
     try:
-        response = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()[cite: 4]
-        if response.data:[cite: 4]
-            oyuncu = response.data[0][cite: 4]
-            return render_template('oyuncu_detay.html', oyuncu=oyuncu)[cite: 4]
+        response = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
+        if response.data:
+            oyuncu = response.data[0]
+            return render_template('oyuncu_detay.html', oyuncu=oyuncu)
         else:
-            flash("Aradığınız oyuncu sistemde bulunamadı.", "warning")[cite: 4]
-            return redirect(url_for('index'))[cite: 4]
+            flash("Aradığınız oyuncu sistemde bulunamadı.", "warning")
+            return redirect(url_for('index'))
     except Exception as e:
-        flash(f"Oyuncu bilgisi alınırken hata: {str(e)}", "danger")[cite: 4]
-        return redirect(url_for('index'))[cite: 4]
+        flash(f"Oyuncu bilgisi alınırken hata: {str(e)}", "danger")
+        return redirect(url_for('index'))
 
 
 # ==========================================
@@ -180,20 +180,20 @@ def oyuncu_detay(oyuncu_id):
 # ==========================================
 @app.route('/oyuncu/duzenle/<int:oyuncu_id>', methods=['GET', 'POST'])
 def oyuncu_duzenle(oyuncu_id):
-    is_admin = session.get('role') == 'admin'[cite: 4]
-    is_owner = session.get('oyuncu_id') == oyuncu_id[cite: 4]
+    is_admin = session.get('role') == 'admin'
+    is_owner = session.get('oyuncu_id') == oyuncu_id
 
-    if not session.get('logged_in') or (not is_admin and not is_owner):[cite: 4]
-        flash("Bu işlem için yetkiniz yok!", "danger")[cite: 4]
-        return redirect(url_for('index'))[cite: 4]
+    if not session.get('logged_in') or (not is_admin and not is_owner):
+        flash("Bu işlem için yetkiniz yok!", "danger")
+        return redirect(url_for('index'))
 
     try:
-        response = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()[cite: 4]
-        if not response.data:[cite: 4]
-            flash("Oyuncu bulunamadı!", "warning")[cite: 4]
-            return redirect(url_for('index'))[cite: 4]
+        response = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
+        if not response.data:
+            flash("Oyuncu bulunamadı!", "warning")
+            return redirect(url_for('index'))
         
-        oyuncu = response.data[0][cite: 4]
+        oyuncu = response.data[0]
 
         if request.method == 'POST':
             guncel_veri = {
@@ -212,14 +212,14 @@ def oyuncu_duzenle(oyuncu_id):
             }
 
             supabase.table("oyuncular").update(guncel_veri).eq("id", oyuncu_id).execute()
-            flash("Oyuncu bilgileri başarıyla güncellendi.", "success")[cite: 4]
-            return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))[cite: 4]
+            flash("Oyuncu bilgileri başarıyla güncellendi.", "success")
+            return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
 
     except Exception as e:
-        flash(f"Güncelleme sırasında hata oluştu: {str(e)}", "danger")[cite: 4]
-        return redirect(url_for('index'))[cite: 4]
+        flash(f"Güncelleme sırasında hata oluştu: {str(e)}", "danger")
+        return redirect(url_for('index'))
 
-    return render_template('duzenle.html', oyuncu=oyuncu)[cite: 4]
+    return render_template('duzenle.html', oyuncu=oyuncu)
 
 
 # ==========================================
@@ -227,31 +227,31 @@ def oyuncu_duzenle(oyuncu_id):
 # ==========================================
 @app.route('/oyuncu/sil/<int:oyuncu_id>', methods=['POST'])
 def oyuncu_sil(oyuncu_id):
-    if not session.get('logged_in') or session.get('role') != 'admin':[cite: 4]
-        flash("Bu işlem için yetkiniz yok!", "danger")[cite: 4]
-        return redirect(url_for('index'))[cite: 4]
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        flash("Bu işlem için yetkiniz yok!", "danger")
+        return redirect(url_for('index'))
 
     try:
-        supabase.table("oyuncular").delete().eq("id", oyuncu_id).execute()[cite: 4]
-        flash("Oyuncu sistemden başarıyla silindi.", "success")[cite: 4]
+        supabase.table("oyuncular").delete().eq("id", oyuncu_id).execute()
+        flash("Oyuncu sistemden başarıyla silindi.", "success")
     except Exception as e:
-        flash(f"Oyuncu silinirken hata oluştu: {str(e)}", "danger")[cite: 4]
+        flash(f"Oyuncu silinirken hata oluştu: {str(e)}", "danger")
 
-    return redirect(url_for('index'))[cite: 4]
+    return redirect(url_for('index'))
 
 
 @app.route('/hakkimizda')
 def hakkimizda():
-    return render_template('hakkimizda.html')[cite: 4]
+    return render_template('hakkimizda.html')
 
 
 @app.route('/logout')
 def logout():
-    session.clear()[cite: 4]
-    flash("Başarıyla çıkış yaptınız.", "info")[cite: 4]
-    return redirect(url_for('index'))[cite: 4]
+    session.clear()
+    flash("Başarıyla çıkış yaptınız.", "info")
+    return redirect(url_for('index'))
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))[cite: 4]
-    app.run(host='0.0.0.0', port=port, debug=True)[cite: 4]
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
