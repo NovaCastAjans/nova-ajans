@@ -11,7 +11,7 @@ app.secret_key = 'senin_cok_gizli_anahtarin'
 DATABASE_URL = os.environ.get('DATABASE_URL')
 SUPABASE_URL = "https://hlalwpwuzokuuegculnv.supabase.co"
 
-# Bulduğun API anahtarını buraya entegre ettik
+# Supabase API anahtarı
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsYWx3cHd1em9rdXVlZ2N1bG52Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwNTYzNjEsImV4cCI6MjA5OTYzMjM2MX0.T8uLVWSZ4upuEtA0x_RHrBxVbhnCTu7Y3kP3fSi2o24"
 
 def get_db_connection():
@@ -58,19 +58,20 @@ try:
 except Exception as e:
     print(f"Veritabanı kurulum hatası: {e}")
 
-# Artık bu fonksiyon Supabase'e şifreli ve güvenli şekilde istek atıyor
+# Supabase Storage standartlarına tam uyumlu çalışan resim yükleme fonksiyonu
 def resim_yukle_supabase(file):
     if not file or file.filename == '':
         return None
     
-    uzanti = os.path.splitext(file.filename)[1]
+    uzanti = os.path.splitext(file.filename)[1].lower()
     rastgele_isim = f"{uuid.uuid4()}{uzanti}"
     
+    # URL yapısı tam olarak Supabase standartlarına çekildi
     upload_url = f"{SUPABASE_URL}/storage/v1/object/resimler/{rastgele_isim}"
     file_bytes = file.read()
     
     headers = {
-        "Content-Type": file.content_type,
+        "Content-Type": file.content_type or "image/jpeg",
         "Authorization": f"Bearer {SUPABASE_KEY}",
         "apikey": SUPABASE_KEY
     }
@@ -78,6 +79,7 @@ def resim_yukle_supabase(file):
     try:
         response = requests.post(upload_url, headers=headers, data=file_bytes)
         if response.status_code in [200, 201]:
+            # Dışarıya açık public URL döner
             return f"{SUPABASE_URL}/storage/v1/object/public/resimler/{rastgele_isim}"
         else:
             print(f"Supabase Resim Yükleme Hatası ({response.status_code}): {response.text}")
@@ -182,7 +184,7 @@ def ekle():
         try:
             cursor.execute('''
                 INSERT INTO oyuncular (isim, yas, cinsiyet, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, kullanici_adi, sifre, resim_url)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ''', (isim, yas, cinsiyet, boy, kilo, goz_rengi, sac_rengi, sehir, telefon, eposta, deneyim, kullanici_adi, sifre, resim_url))
             conn.commit()
             flash('Yeni oyuncu başarıyla eklendi!', 'success')
