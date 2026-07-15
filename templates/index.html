@@ -4,207 +4,156 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nova Cast Ajans</title>
-    
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Modern Karanlık Tema (Dark Mode) Ayarları */
         body {
-            background-color: #0b0c10 !important; /* Derin siyah arka plan */
-            color: #f1f5f9 !important; /* Genel yazılar açık gri/beyaz */
+            background-color: #0b0c10 !important;
+            color: #f1f5f9 !important;
             font-family: 'Inter', sans-serif !important;
-            -webkit-font-smoothing: antialiased;
         }
-
-        /* Navigasyon Barı */
         .navbar {
-            background-color: rgba(15, 23, 42, 0.95) !important; /* Yarı saydam koyu lacivert */
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid #1e293b;
+            background-color: #0f172a !important;
         }
-
         .navbar-brand {
-            font-family: 'Montserrat', sans-serif;
             color: #ffffff !important;
-            font-weight: 900 !important;
-            font-size: 1.5rem !important;
-            letter-spacing: 1px;
+            font-weight: 800 !important;
         }
-
         .nav-link {
-            color: #cbd5e1 !important;
+            color: #e2e8f0 !important;
             font-weight: 600 !important;
         }
-
-        .nav-link:hover {
-            color: #3b82f6 !important; /* Canlı mavi vurgu */
+        .nav-link:hover, .nav-link.active {
+            color: #3b82f6 !important;
         }
-
-        /* Kayar Görseller (Slider / Carousel) */
-        .carousel {
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            border: 1px solid #1e293b;
+        .hero-section {
+            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+            border-bottom: 1px solid #1e293b;
+            padding: 5rem 0;
+            text-align: center;
         }
-
-        .carousel-item {
-            height: 450px;
-            background-color: #111827;
+        .search-box {
+            max-width: 600px;
+            margin: 2rem auto 0 auto;
         }
-
-        .carousel-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0.75; /* Arka planı karartıp yazıyı öne çıkarır */
-        }
-
-        .carousel-caption {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(8px);
-            border-radius: 12px;
-            padding: 2rem !important;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            bottom: 10%;
-        }
-
-        .carousel-caption h2 {
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 800;
-            color: #ffffff !important;
-            text-transform: uppercase;
-        }
-
-        .carousel-caption p {
-            color: #cbd5e1 !important;
-            font-size: 1.1rem;
-            font-weight: 500;
-        }
-
-        /* Başlıklar */
-        .section-title {
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 800;
-            color: #ffffff !important;
-            letter-spacing: -0.5px;
-        }
-
-        /* Arama Kutusu */
-        .arama-kutusu {
+        .search-input {
             background-color: #1e293b !important;
             border: 2px solid #334155 !important;
             color: #ffffff !important;
             font-weight: 600 !important;
+            padding: 0.75rem 1.5rem !important;
+            border-radius: 30px 0 0 30px !important;
         }
-
-        .arama-kutusu::placeholder {
-            color: #94a3b8 !important;
+        .search-input:focus {
+            border-color: #2563eb !important;
+            box-shadow: none !important;
         }
-
-        .arama-kutusu:focus {
-            border-color: #3b82f6 !important;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
-        }
-
-        /* Karizmatik Oyuncu Kartları */
-        .card {
-            background-color: #111827 !important; /* Koyu kart arka planı */
-            border: 1px solid #1e293b !important;
-            border-radius: 16px !important;
-            overflow: hidden !important;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
-        }
-        
-        .card:hover {
-            transform: translateY(-8px);
-            border-color: #3b82f6 !important; /* Üzerine gelince mavi parlar */
-            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2) !important;
-        }
-
-        .card-img-top {
-            height: 320px !important;
-            object-fit: cover !important;
-            border-bottom: 1px solid #1e293b;
-            background-color: #1f2937;
-        }
-
-        .card-body {
-            padding: 1.5rem !important;
-        }
-
-        .card-title {
-            color: #ffffff !important; /* İsimler bembeyaz ve çok net */
-            font-size: 1.3rem !important;
-            font-weight: 800 !important;
-            margin-bottom: 0.75rem !important;
-        }
-
-        /* Oyuncu kartı içindeki detay yazıları (Kontrast tavan yaptı) */
-        .card-text {
-            color: #cbd5e1 !important; /* Açık gri, çok rahat okunur */
-            font-size: 0.95rem !important;
-            font-weight: 500 !important;
-            margin-bottom: 0.4rem !important;
-        }
-
-        .detay-etiket {
-            color: #3b82f6 !important; /* Etiketler (Boy, Kilo, Yaş) Canlı Mavi */
-            font-weight: 700 !important;
-        }
-
-        /* Butonlar */
-        .btn-primary {
+        .search-btn {
             background-color: #2563eb !important;
             border: none !important;
+            color: white !important;
             font-weight: 700 !important;
-            padding: 0.6rem !important;
-            border-radius: 8px !important;
-            transition: background 0.2s;
+            padding: 0.75rem 2rem !important;
+            border-radius: 0 30px 30px 0 !important;
         }
-
-        .btn-primary:hover {
+        .search-btn:hover {
             background-color: #1d4ed8 !important;
+        }
+        .oyuncu-card {
+            background: #111827;
+            border: 1px solid #1e293b;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .oyuncu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        .oyuncu-img-container {
+            width: 100%;
+            height: 320px;
+            overflow: hidden;
+            background-color: #1f2937;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .oyuncu-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .oyuncu-no-img {
+            color: #4b5563;
+            font-size: 4rem;
+        }
+        .card-body-custom {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        .card-title-custom {
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+        .card-text-custom {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+        .btn-detail {
+            background-color: #1e293b !important;
+            border: 1px solid #334155 !important;
+            color: #f1f5f9 !important;
+            font-weight: 600 !important;
+            border-radius: 8px !important;
+            margin-top: auto;
+        }
+        .btn-detail:hover {
+            background-color: #334155 !important;
         }
     </style>
 </head>
 <body>
 
-    <!-- Üst Menü (Navbar) -->
-    <nav class="navbar navbar-expand-lg navbar-dark mb-4 sticky-top">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="/">🎭 NOVA CAST AJANS</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item">
-                        <a class="nav-link" href="/">Ana Sayfa</a>
+                        <a class="nav-link active" href="/">Ana Sayfa</a>
+                    </li>
+                    <li class="nav-item">
+                        <!-- MENÜYE EKLENEN ÇALIŞAN HAKKIMIZDA LİNKİ -->
+                        <a class="nav-link" href="/hakkimizda">Hakkımızda</a>
                     </li>
                     {% if session.get('logged_in') %}
                         {% if session.get('role') == 'admin' %}
                             <li class="nav-item">
-                                <a class="nav-link text-warning fw-bold" href="/ekle">➕ Oyuncu Ekle</a>
+                                <a class="btn btn-success btn-sm ms-2 px-3 fw-bold" href="/ekle">+ Oyuncu Ekle</a>
                             </li>
                         {% else %}
                             <li class="nav-item">
-                                <a class="nav-link" href="/oyuncu/{{ session.get('oyuncu_id') }}">Profilim</a>
+                                <a class="btn btn-primary btn-sm ms-2 px-3 fw-bold" href="/oyuncu/{{ session.get('oyuncu_id') }}">Profilim</a>
                             </li>
                         {% endif %}
                         <li class="nav-item">
-                            <a class="nav-link text-danger fw-bold" href="/logout">Çıkış Yap</a>
+                            <a class="nav-link text-danger fw-bold ms-2" href="/logout">Çıkış Yap</a>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="/login">Giriş Yap</a>
+                            <a class="btn btn-outline-light btn-sm ms-2 px-3 fw-bold" href="/login">Giriş Yap</a>
                         </li>
                     {% endif %}
                 </ul>
@@ -212,103 +161,26 @@
         </div>
     </nav>
 
-    <!-- Bildirim Mesajları -->
-    <div class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show fw-bold bg-dark text-white border-secondary" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    </div>
-
-    <!-- Slayt Gösterisi (Kayar Tasarım / Carousel) -->
-    <div class="container mb-5">
-        <div id="ajansCarousel" class="carousel slide" data-bs-ride="carousel">
-            <div class="carousel-indicators">
-                <button type="button" data-bs-target="#ajansCarousel" data-bs-slide-to="0" class="active"></button>
-                <button type="button" data-bs-target="#ajansCarousel" data-bs-slide-to="1"></button>
-            </div>
-            <div class="carousel-inner">
-                <!-- Slayt 1 -->
-                <div class="carousel-item active">
-                    <img src="https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=1200&auto=format&fit=crop" alt="Nova Cast">
-                    <div class="carousel-caption d-none d-md-block">
-                        <h2>Geleceğin Yıldızlarını Keşfediyoruz</h2>
-                        <p>Televizyon, sinema ve reklam projeleriniz için profesyonel cast çözümleri.</p>
-                    </div>
-                </div>
-                <!-- Slayt 2 -->
-                <div class="carousel-item">
-                    <img src="https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=1200&auto=format&fit=crop" alt="Profesyonel Çekim">
-                    <div class="carousel-caption d-none d-md-block">
-                        <h2>Profesyonel Kadromuz</h2>
-                        <p>Deneyimli ve yeni yüzlerden oluşan geniş oyuncu portföyümüzle hizmetinizdeyiz.</p>
-                    </div>
-                </div>
-            </div>
-            <button class="carousel-control-prev" type="button" data-bs-target="#ajansCarousel" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon"></span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#ajansCarousel" data-bs-slide="next">
-                <span class="carousel-control-next-icon"></span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Ana İçerik Alanı -->
-    <div class="container mb-5">
-        <div class="row mb-5 align-items-center">
-            <div class="col-md-6">
-                <h1 class="section-title display-6">OYUNCU PORTFÖYÜMÜZ</h1>
-            </div>
-            <!-- Arama Formu -->
-            <div class="col-md-6">
-                <form action="/" method="get" class="d-flex">
-                    <input type="text" name="q" class="form-control arama-kutusu me-2" placeholder="Oyuncu adı ara..." value="{{ arama_sorgusu or '' }}">
-                    <button class="btn btn-primary px-4" type="submit">Ara</button>
+    <!-- Hero Bölümü -->
+    <header class="hero-section">
+        <div class="container">
+            <h1 class="display-4 fw-extrabold text-white">Geleceğin Yıldızlarını Keşfedin</h1>
+            <p class="lead text-muted">Nova Cast Ajans bünyesindeki profesyonel oyuncu kadrosuna göz atın.</p>
+            
+            <div class="search-box">
+                <form action="/" method="GET" class="input-group">
+                    <input type="text" name="q" class="form-control search-input" placeholder="Oyuncu adı ile arayın..." value="{{ arama_sorgusu }}">
+                    <button class="btn search-btn" type="submit">Ara</button>
                 </form>
             </div>
         </div>
+    </header>
 
-        <!-- Oyuncu Listesi -->
-        <div class="row row-cols-1 row-cols-md-3 g-4">
-            {% for oyuncu in oyuncular %}
-                <div class="col">
-                    <div class="card">
-                        <!-- Profil Resmi -->
-                        {% if oyuncu.resim_url %}
-                            <img src="{{ oyuncu.resim_url }}" class="card-img-top" alt="{{ oyuncu.isim }}">
-                        {% else %}
-                            <img src="https://via.placeholder.com/300x320/1f2937/ffffff?text=Nova+Cast+Oyuncusu" class="card-img-top" alt="Fotoğraf Yok">
-                        {% endif %}
-                        
-                        <div class="card-body d-flex flex-column justify-content-between">
-                            <div>
-                                <h5 class="card-title">{{ oyuncu.isim }}</h5>
-                                <p class="card-text"><span class="detay-etiket">Yaş:</span> {{ oyuncu.yas or 'Belirtilmemiş' }}</p>
-                                <p class="card-text"><span class="detay-etiket">Şehir:</span> {{ oyuncu.sehir or 'Belirtilmemiş' }}</p>
-                                <p class="card-text"><span class="detay-etiket">Boy:</span> {{ oyuncu.boy or '-' }} cm | <span class="detay-etiket">Kilo:</span> {{ oyuncu.kilo or '-' }} kg</p>
-                            </div>
-                            <div class="mt-4">
-                                <a href="/oyuncu/{{ oyuncu.id }}" class="btn btn-primary w-100">Profili İncele</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% else %}
-                <div class="col-12 text-center py-5">
-                    <h3 class="text-muted">Kayıtlı oyuncu bulunamadı.</h3>
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <!-- Oyuncu Listesi -->
+    <main class="container my-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-closeNormally I can help with things like this, but I don't seem to have access to that content. You can try again or ask me for something else.
