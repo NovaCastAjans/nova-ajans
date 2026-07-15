@@ -1,140 +1,207 @@
-{{ oyuncu.ad }} {{ oyuncu.soyad }} - Nova Cast Ajans
-    
-    
-    
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ oyuncu.isim }} - Nova Cast Ajans</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0b0c10 !important;
+            color: #f1f5f9 !important;
+            font-family: 'Inter', sans-serif !important;
+        }
+        .navbar {
+            background-color: #0f172a !important;
+        }
+        .navbar-brand {
+            color: #ffffff !important;
+            font-weight: 800 !important;
+        }
+        .nav-link {
+            color: #e2e8f0 !important;
+            font-weight: 600 !important;
+        }
+        .detay-card {
+            background: #111827;
+            border: 1px solid #1e293b;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            margin-top: 30px;
+        }
+        .detay-img {
+            width: 100%;
+            max-height: 500px;
+            object-fit: cover;
+            border-radius: 16px;
+        }
+        .no-img-box {
+            width: 100%;
+            height: 400px;
+            background-color: #1f2937;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 6rem;
+            color: #4b5563;
+            border-radius: 16px;
+        }
+        .oyuncu-isim {
+            font-weight: 800;
+            color: #ffffff;
+            border-bottom: 2px solid #1e293b;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .ozellik-item {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        .ozellik-baslik {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+        .ozellik-deger {
+            font-size: 1.1rem;
+            color: #ffffff;
+            font-weight: 700;
+        }
+        .deneyim-section {
+            background-color: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        .deneyim-baslik {
+            color: #3b82f6;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
 
-
-
-    
-    
-        
-            🎭 NOVA CAST AJANS
-            
-                
-            
-            
-                
-                    
-                        Ana Sayfa
-                    
-                    
-                        Hakkımızda
-                    
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">🎭 NOVA CAST AJANS</a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Ana Sayfa</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/hakkimizda">Hakkımızda</a>
+                    </li>
                     {% if session.get('logged_in') %}
                         {% if session.get('role') == 'admin' %}
-                            
-                                + Oyuncu Ekle
-                            
-                        {% else %}
-                            
-                                Profilim
-                            
+                            <li class="nav-item">
+                                <a class="btn btn-success btn-sm ms-2 px-3 fw-bold" href="/ekle">+ Oyuncu Ekle</a>
+                            </li>
                         {% endif %}
-                        
-                            Çıkış Yap
-                        
-                    {% else %}
-                        
-                            Giriş Yap
-                        
+                        <li class="nav-item">
+                            <a class="nav-link text-danger fw-bold ms-2" href="/logout">Çıkış Yap</a>
+                        </li>
                     {% endif %}
-                
-            
-        
-    
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-    
-    
-        
+    <!-- Ana Detay Gövdesi -->
+    <div class="container mb-5">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    
+                    <div class="alert alert-{{ category }} mt-3 alert-dismissible fade show" role="alert">
                         {{ message }}
-                        
-                    
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
 
-        
-            
+        <div class="row mt-4">
+            <!-- Sol Sütun: Fotoğraf ve İşlemler -->
+            <div class="col-md-5 mb-4">
+                {% if oyuncu.foto_url %}
+                    <img src="{{ oyuncu.foto_url }}" class="detay-img img-fluid shadow" alt="Oyuncu Resmi">
+                {% else %}
+                    <div class="no-img-box">👤</div>
+                {% endif %}
                 
-                
-                    
-                        {% if oyuncu.resim_url %}
-                            
-                        {% elif oyuncu.resim %}
-                            
-                        {% else %}
-                            👤
-                        {% endif %}
-                    
-                    
-                    
-                    {% if session.get('logged_in') and session.get('role') == 'admin' %}
-                        
-                            Bilgileri Düzenle
-                            
-                                Oyuncuyu Sil
-                            
-                        
-                    {% endif %}
-                
+                {% if session.get('logged_in') and session.get('role') == 'admin' %}
+                    <div class="d-grid gap-2 mt-3">
+                        <a href="/oyuncu/duzenle/{{ oyuncu.id }}" class="btn btn-warning fw-bold">Bilgileri Düzenle</a>
+                        <form action="/oyuncu/sil/{{ oyuncu.id }}" method="post" onsubmit="return confirm('Bu oyuncuyu silmek istediğinize emin misiniz?');">
+                            <button type="submit" class="btn btn-danger fw-bold w-100">Oyuncuyu Sil</button>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
 
-                
-                
-                    
-                        {% if oyuncu.ad and oyuncu.soyad %}
-                            {{ oyuncu.ad }} {{ oyuncu.soyad }}
-                        {% elif oyuncu.ad_soyad %}
-                            {{ oyuncu.ad_soyad }}
-                        {% elif oyuncu.isim %}
-                            {{ oyuncu.isim }}
-                        {% else %}
-                            İsimsiz Oyuncu
-                        {% endif %}
-                    
+            <!-- Sağ Sütun: Kişisel Bilgiler ve Deneyimler -->
+            <div class="col-md-7">
+                <h1 class="oyuncu-isim">{{ oyuncu.isim or "İsimsiz Oyuncu" }}</h1>
 
-                    
-                        
-                            
-                                Yaş
-                                {{ oyuncu.yas or oyuncu.yas_grubu or "Belirtilmemiş" }}
-                            
-                            
-                                Boy
-                                {{ oyuncu.boy or "Belirtilmemiş" }} cm
-                            
-                            
-                                Kilo
-                                {{ oyuncu.kilo or "Belirtilmemiş" }} kg
-                            
-                            
-                                Şehir
-                                {{ oyuncu.sehir or oyuncu.il or "Belirtilmemiş" }}
-                            
-                        
-                    
+                <div class="row">
+                    <div class="col-6 col-sm-3 mb-3">
+                        <div class="ozellik-item">
+                            <div class="ozellik-baslik">Yaş</div>
+                            <div class="ozellik-deger">{{ oyuncu.yas or "Belirtilmemiş" }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-3 mb-3">
+                        <div class="ozellik-item">
+                            <div class="ozellik-baslik">Boy</div>
+                            <div class="ozellik-deger">{{ oyuncu.boy or "Belirtilmemiş" }} cm</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-3 mb-3">
+                        <div class="ozellik-item">
+                            <div class="ozellik-baslik">Kilo</div>
+                            <div class="ozellik-deger">{{ oyuncu.kilo or "Belirtilmemiş" }} kg</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-sm-3 mb-3">
+                        <div class="ozellik-item">
+                            <div class="ozellik-baslik">Şehir</div>
+                            <div class="ozellik-deger">{{ oyuncu.sehir or "Belirtilmemiş" }}</div>
+                        </div>
+                    </div>
+                </div>
 
-                    {% if oyuncu.hakkinda %}
-                        
-                            Hakkında / Özgeçmiş
-                            
-                                {{ oyuncu.hakkinda | replace('\n', '') | safe }}
-                            
-                        
-                    {% endif %}
+                {% if oyuncu.deneyimler %}
+                    <div class="deneyim-section shadow">
+                        <h4 class="deneyim-baslik">Hakkında / Özgeçmiş</h4>
+                        <p style="white-space: pre-line; line-height: 1.8; color: #cbd5e1;">
+                            {{ oyuncu.deneyimler | safe }}
+                        </p>
+                    </div>
+                {% endif %}
 
-                    
-                        ← Ana Sayfaya Dön
-                    
-                
-            
-        
-    
+                <div class="mt-4">
+                    <a href="/" class="btn btn-outline-light fw-bold">← Ana Sayfaya Dön</a>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    
-    
-        
-            © 2026 Nova Cast Ajans. Tüm Hakları Saklıdır.
+    <!-- Footer -->
+    <footer class="text-center py-4 text-muted mt-5">
+        <p>&copy; 2026 Nova Cast Ajans. Tüm Hakları Saklıdır.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

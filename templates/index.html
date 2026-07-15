@@ -209,37 +209,27 @@
                         <div class="oyuncu-card">
                             <!-- Resim Bölümü -->
                             <div class="oyuncu-img-container">
-                                {% if oyuncu.resim_url %}
-                                    <img src="{{ oyuncu.resim_url }}" class="oyuncu-img" alt="Oyuncu Resmi" loading="lazy">
-                                {% elif oyuncu.resim %}
-                                    <img src="{{ oyuncu.resim }}" class="oyuncu-img" alt="Oyuncu Resmi" loading="lazy">
+                                {% if oyuncu.foto_url %}
+                                    <img src="{{ oyuncu.foto_url }}" class="oyuncu-img" alt="Oyuncu Resmi" loading="lazy">
                                 {% else %}
                                     <div class="oyuncu-no-img">👤</div>
                                 {% endif %}
                             </div>
                             
-                            <!-- Kart Gövdesi (Hata Payını Sıfırlayan Güvenli Yapı) -->
+                            <!-- Kart Gövdesi -->
                             <div class="card-body-custom">
                                 <h5 class="card-title-custom">
-                                    {% if oyuncu.ad and oyuncu.soyad %}
-                                        {{ oyuncu.ad }} {{ oyuncu.soyad }}
-                                    {% elif oyuncu.ad_soyad %}
-                                        {{ oyuncu.ad_soyad }}
-                                    {% elif oyuncu.isim %}
-                                        {{ oyuncu.isim }}
-                                    {% else %}
-                                        İsimsiz Oyuncu
-                                    {% endif %}
+                                    {{ oyuncu.isim or "İsimsiz Oyuncu" }}
                                 </h5>
                                 
                                 <p class="card-text-custom">
-                                    <strong>Yaş:</strong> {{ oyuncu.yas or oyuncu.yas_grubu or "-" }}
+                                    <strong>Yaş:</strong> {{ oyuncu.yas or "-" }}
                                 </p>
                                 <p class="card-text-custom">
                                     <strong>Boy/Kilo:</strong> {{ oyuncu.boy or "-" }} cm / {{ oyuncu.kilo or "-" }} kg
                                 </p>
                                 <p class="card-text-custom">
-                                    <strong>Şehir:</strong> {{ oyuncu.sehir or oyuncu.il or "-" }}
+                                    <strong>Şehir:</strong> {{ oyuncu.sehir or "-" }}
                                 </p>
                                 
                                 <a href="/oyuncu/{{ oyuncu.id }}" class="btn-detail mt-3">Profili İncele</a>
