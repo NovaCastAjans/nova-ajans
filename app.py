@@ -31,7 +31,36 @@ def get_current_user():
 
 
 # ==========================================
-# 1. ANA SAYFA (SIRALAMA DÜZELTİLDİ)
+# GEÇİCİ ADMİN OLUŞTURMA ROTASI (İŞİN BİTİNCE SİLEBİLİRSİN)
+# ==========================================
+@app.route('/admin-olustur')
+def admin_olustur():
+    if not supabase:
+        return "Supabase bağlantısı kurulamadı!"
+    
+    try:
+        # Şifreyi doğrudan bu sunucudaki kütüphaneyle şifreliyoruz (Uyuşmazlık ihtimali sıfır)
+        sifreli_sifre = generate_password_hash("admin123")
+        
+        yeni_admin = {
+            "username": "admin",
+            "email": "admin@novacast.com",
+            "password": sifreli_sifre,
+            "role": "admin"
+        }
+        
+        # Önce eski admin varsa silip temiz bir kurulum yapıyoruz
+        supabase.table("kullanicilar").delete().eq("username", "admin").execute()
+        
+        # Yeni admini ekliyoruz
+        supabase.table("kullanicilar").insert(yeni_admin).execute()
+        return "<h1>Admin Hesabı Başarıyla Oluşturuldu!</h1><p>Artık <b>admin</b> ve <b>admin123</b> bilgileriyle giriş yapabilirsiniz.</p><a href='/login'>Giriş Yapmaya Git</a>"
+    except Exception as e:
+        return f"Admin oluşturulurken hata oluştu: {str(e)}"
+
+
+# ==========================================
+# 1. ANA SAYFA
 # ==========================================
 @app.route('/')
 def index():
@@ -43,7 +72,6 @@ def index():
         return render_template('index.html', oyuncular=[], arama_sorgusu=arama_sorgusu)
 
     try:
-        # Arama sorgusu varsa filtreleyip "id"ye göre en yeni ekleneni en üstte gösterir
         if arama_sorgusu:
             response = (
                 supabase.table("oyuncular")
@@ -52,7 +80,6 @@ def index():
                 .order("id", desc=True)
                 .execute()
             )
-        # Arama sorgusu yoksa tüm oyuncuları en yeni eklenenden en eskiye doğru sıralar
         else:
             response = (
                 supabase.table("oyuncular")
@@ -69,7 +96,7 @@ def index():
 
 
 # ==========================================
-# 2. GİRİŞ YAP SAYFASI (FORM UYUŞMAZLIĞI DÜZELTİLDİ)
+# 2. GİRİŞ YAP SAYFASI
 # ==========================================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -77,12 +104,10 @@ def login():
         return redirect(url_for('index'))
 
     if request.method == 'POST':
-        # login.html'deki name="kullanici_adi" ile eşitlendi
         eposta_veya_kullanici = request.form.get('kullanici_adi', '').strip()
         sifre = request.form.get('password')
 
         try:
-            # Hem e-posta hem kullanıcı adı alanında ara
             user_query = supabase.table("kullanicilar").select("*").or_(f"email.eq.{eposta_veya_kullanici},username.eq.{eposta_veya_kullanici}").execute()
             
             if user_query.data:
@@ -109,7 +134,7 @@ def login():
 
 
 # ==========================================
-# 3. OYUNCU EKLEME SAYFASI (TABLO ŞEMASINA EŞİTLENDİ)
+# 3. OYUNCU EKLEME SAYFASI
 # ==========================================
 @app.route('/ekle', methods=['GET', 'POST'])
 def oyuncu_ekle():
@@ -118,7 +143,6 @@ def oyuncu_ekle():
         return redirect(url_for('index'))
 
     if request.method == 'POST':
-        # ekle.html formundaki veriler ve SQLite/Supabase şeması eşleşti
         isim = request.form.get('isim')
         yas = request.form.get('yas')
         boy = request.form.get('boy')
