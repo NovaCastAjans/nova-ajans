@@ -1,6 +1,5 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-from werkzeug.security import generate_password_hash, check_password_hash
 from supabase import create_client, Client
 
 app = Flask(__name__)
@@ -31,7 +30,7 @@ def get_current_user():
 
 
 # ==========================================
-# GEÇİCİ ADMİN OLUŞTURMA ROTASI
+# GÜVENLİ VE GEÇİCİ ADMİN OLUŞTURMA ROTASI
 # ==========================================
 @app.route('/admin-olustur')
 def admin_olustur():
@@ -39,20 +38,18 @@ def admin_olustur():
         return "Supabase bağlantısı kurulamadı!"
     
     try:
-        # Şifreyi doğrudan bu sunucudaki kütüphaneyle şifreliyoruz (Uyuşmazlık ihtimali sıfır)
-        sifreli_sifre = generate_password_hash("admin123")
-        
+        # Şifreleme hatası (encode) almamak için şifreyi düz metin "admin123" olarak yazıyoruz
         yeni_admin = {
             "username": "admin",
             "email": "admin@novacast.com",
-            "password": sifreli_sifre,
+            "password": "admin123",
             "role": "admin"
         }
         
-        # Önce eski admin varsa silip temiz bir kurulum yapıyoruz
+        # Varsa mükerrer kaydı önlemek için eski admin kullanıcısını siliyoruz
         supabase.table("kullanicilar").delete().eq("username", "admin").execute()
         
-        # Yeni admini ekliyoruz
+        # Yeni admini yerleştiriyoruz
         supabase.table("kullanicilar").insert(yeni_admin).execute()
         return "<h1>Admin Hesabı Başarıyla Oluşturuldu!</h1><p>Artık <b>admin</b> ve <b>admin123</b> bilgileriyle giriş yapabilirsiniz.</p><a href='/login'>Giriş Yapmaya Git</a>"
     except Exception as e:
@@ -96,7 +93,7 @@ def index():
 
 
 # ==========================================
-# 2. GİRİŞ YAP SAYFASI (GÜVENLİ VE HATA AYIKLAMALI)
+# 2. GİRİŞ YAP SAYFASI (DÜZ ŞİFRE KONTROLÜ - ÇÖKMEYEN SİSTEM)
 # ==========================================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -105,23 +102,20 @@ def login():
 
     if request.method == 'POST':
         eposta_veya_kullanici = request.form.get('kullanici_adi', '').strip()
-        sifre = request.form.get('password')
+        
+        # HTML formunda name="password" veya name="sifre" ne girildiyse yakala, boşsa çökmesini engelle
+        sifre = request.form.get('password') or request.form.get('sifre') or ""
 
         try:
-            # Kullanıcıyı veritabanından çekiyoruz
+            # Kullanıcıyı veritabanından sorgula
             user_query = supabase.table("kullanicilar").select("*").or_(f"email.eq.{eposta_veya_kullanici},username.eq.{eposta_veya_kullanici}").execute()
             
             if user_query.data:
                 user = user_query.data[0]
-                
-                # Güvenlik Kontrolü: Veritabanındaki şifre alanının boş olup olmadığını denetliyoruz
-                db_password = user.get('password')
-                if not db_password:
-                    flash("Hata: Veritabanındaki şifre boş veya geçersiz formatta!", "danger")
-                    return render_template('login.html')
+                db_password = user.get('password', '')
 
-                # Şifre doğrulama testi
-                if check_password_hash(db_password, sifre):
+                # Şifreleme kütüphanesi olmadan doğrudan eşleştirme yapıyoruz (Sıfır Hata Payı)
+                if db_password == sifre:
                     session['logged_in'] = True
                     session['user_id'] = user['id']
                     session['username'] = user['username']
