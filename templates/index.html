@@ -207,18 +207,41 @@
                 {% for oyuncu in oyuncular %}
                     <div class="col-12 col-sm-6 col-md-4 col-lg-3">
                         <div class="oyuncu-card">
+                            <!-- Resim Bölümü -->
                             <div class="oyuncu-img-container">
                                 {% if oyuncu.resim_url %}
-                                    <img src="{{ oyuncu.resim_url }}" class="oyuncu-img" alt="{{ oyuncu.ad }} {{ oyuncu.soyad }}" loading="lazy">
+                                    <img src="{{ oyuncu.resim_url }}" class="oyuncu-img" alt="Oyuncu Resmi" loading="lazy">
+                                {% elif oyuncu.resim %}
+                                    <img src="{{ oyuncu.resim }}" class="oyuncu-img" alt="Oyuncu Resmi" loading="lazy">
                                 {% else %}
                                     <div class="oyuncu-no-img">👤</div>
                                 {% endif %}
                             </div>
+                            
+                            <!-- Kart Gövdesi (Hata Payını Sıfırlayan Güvenli Yapı) -->
                             <div class="card-body-custom">
-                                <h5 class="card-title-custom">{{ oyuncu.ad }} {{ oyuncu.soyad }}</h5>
-                                <p class="card-text-custom"><strong>Yaş:</strong> {{ oyuncu.yas }}</p>
-                                <p class="card-text-custom"><strong>Boy/Kilo:</strong> {{ oyuncu.boy }} cm / {{ oyuncu.kilo }} kg</p>
-                                <p class="card-text-custom"><strong>Şehir:</strong> {{ oyuncu.sehir }}</p>
+                                <h5 class="card-title-custom">
+                                    {% if oyuncu.ad and oyuncu.soyad %}
+                                        {{ oyuncu.ad }} {{ oyuncu.soyad }}
+                                    {% elif oyuncu.ad_soyad %}
+                                        {{ oyuncu.ad_soyad }}
+                                    {% elif oyuncu.isim %}
+                                        {{ oyuncu.isim }}
+                                    {% else %}
+                                        İsimsiz Oyuncu
+                                    {% endif %}
+                                </h5>
+                                
+                                <p class="card-text-custom">
+                                    <strong>Yaş:</strong> {{ oyuncu.yas or oyuncu.yas_grubu or "-" }}
+                                </p>
+                                <p class="card-text-custom">
+                                    <strong>Boy/Kilo:</strong> {{ oyuncu.boy or "-" }} cm / {{ oyuncu.kilo or "-" }} kg
+                                </p>
+                                <p class="card-text-custom">
+                                    <strong>Şehir:</strong> {{ oyuncu.sehir or oyuncu.il or "-" }}
+                                </p>
+                                
                                 <a href="/oyuncu/{{ oyuncu.id }}" class="btn-detail mt-3">Profili İncele</a>
                             </div>
                         </div>
