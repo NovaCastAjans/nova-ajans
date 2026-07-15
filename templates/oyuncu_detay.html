@@ -1,0 +1,140 @@
+{{ oyuncu.ad }} {{ oyuncu.soyad }} - Nova Cast Ajans
+    
+    
+    
+
+
+
+    
+    
+        
+            🎭 NOVA CAST AJANS
+            
+                
+            
+            
+                
+                    
+                        Ana Sayfa
+                    
+                    
+                        Hakkımızda
+                    
+                    {% if session.get('logged_in') %}
+                        {% if session.get('role') == 'admin' %}
+                            
+                                + Oyuncu Ekle
+                            
+                        {% else %}
+                            
+                                Profilim
+                            
+                        {% endif %}
+                        
+                            Çıkış Yap
+                        
+                    {% else %}
+                        
+                            Giriş Yap
+                        
+                    {% endif %}
+                
+            
+        
+    
+
+    
+    
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    
+                        {{ message }}
+                        
+                    
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        
+            
+                
+                
+                    
+                        {% if oyuncu.resim_url %}
+                            
+                        {% elif oyuncu.resim %}
+                            
+                        {% else %}
+                            👤
+                        {% endif %}
+                    
+                    
+                    
+                    {% if session.get('logged_in') and session.get('role') == 'admin' %}
+                        
+                            Bilgileri Düzenle
+                            
+                                Oyuncuyu Sil
+                            
+                        
+                    {% endif %}
+                
+
+                
+                
+                    
+                        {% if oyuncu.ad and oyuncu.soyad %}
+                            {{ oyuncu.ad }} {{ oyuncu.soyad }}
+                        {% elif oyuncu.ad_soyad %}
+                            {{ oyuncu.ad_soyad }}
+                        {% elif oyuncu.isim %}
+                            {{ oyuncu.isim }}
+                        {% else %}
+                            İsimsiz Oyuncu
+                        {% endif %}
+                    
+
+                    
+                        
+                            
+                                Yaş
+                                {{ oyuncu.yas or oyuncu.yas_grubu or "Belirtilmemiş" }}
+                            
+                            
+                                Boy
+                                {{ oyuncu.boy or "Belirtilmemiş" }} cm
+                            
+                            
+                                Kilo
+                                {{ oyuncu.kilo or "Belirtilmemiş" }} kg
+                            
+                            
+                                Şehir
+                                {{ oyuncu.sehir or oyuncu.il or "Belirtilmemiş" }}
+                            
+                        
+                    
+
+                    {% if oyuncu.hakkinda %}
+                        
+                            Hakkında / Özgeçmiş
+                            
+                                {{ oyuncu.hakkinda | replace('\n', '') | safe }}
+                            
+                        
+                    {% endif %}
+
+                    
+                        ← Ana Sayfaya Dön
+                    
+                
+            
+        
+    
+
+    
+    
+        
+            © 2026 Nova Cast Ajans. Tüm Hakları Saklıdır.
