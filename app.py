@@ -9,7 +9,7 @@ load_dotenv()
 
 app = Flask(__name__)
 # Gizli anahtarı çevre değişkenlerinden güvenli bir şekilde alıyoruz
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "nova_ajans_varsayilan_anahtar_2026")
+app.secret_key = os.getenv("SECRET_KEY", "nova_ajans_varsayilan_anahtar_2026")
 
 # Supabase bağlantı bilgileri (.env dosyasından çekiliyor)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
