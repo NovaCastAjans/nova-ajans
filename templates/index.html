@@ -135,7 +135,6 @@
             display: flex;
             gap: 1.5rem;
             overflow-x: auto;
-            /* Dokunmatik cihazlar dışında scrollbar'ı tamamen gizler */
             -ms-overflow-style: none;  
             scrollbar-width: none;  
         }
@@ -143,7 +142,7 @@
             display: none;
         }
         .vitrin-item-link {
-            flex: 0 0 220px; /* Her bir vitrin kartının sabit genişliği */
+            flex: 0 0 220px; 
             text-decoration: none;
         }
         .vitrin-item {
@@ -184,6 +183,14 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+        
+        /* Kategori Başlıkları için Alt Çizgi Stili */
+        .kategori-baslik {
+            border-bottom: 2px solid #1e293b;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.5rem;
+            color: #f8fafc;
         }
         /* ============================================================== */
 
@@ -310,7 +317,6 @@
             </div>
             
             <div class="vitrin-wrapper">
-                <!-- ID eklendi: JS animasyonu burayı hedef alacak -->
                 <div class="vitrin-scroll" id="vitrinScroll">
                     {% for oyuncu in oyuncular %}
                         <a href="/oyuncu/{{ oyuncu.id }}" class="vitrin-item-link">
@@ -330,59 +336,82 @@
         {% endif %}
         <!-- ======================================================= -->
 
-        <!-- Genel Oyuncu Listesi Başlığı -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <h3 class="fw-bold text-white mb-3">Profesyonel Oyuncu Kadromuz</h3>
-            </div>
-        </div>
-
-        <!-- Oyuncu Kartları Grid Yapısı -->
-        <div class="row g-4">
-            {% if oyuncular %}
-                {% for oyuncu in oyuncular %}
-                    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                        <div class="oyuncu-card">
-                            <!-- Resim Bölümü -->
-                            <div class="oyuncu-img-container">
-                                {% if oyuncu.resim_url %}
-                                    <img src="{{ oyuncu.resim_url }}" class="oyuncu-img" alt="Oyuncu Resmi" loading="lazy">
-                                {% else %}
-                                    <div class="oyuncu-no-img">👤</div>
-                                {% endif %}
-                            </div>
-                            
-                            <!-- Kart Gövdesi -->
-                            <div class="card-body-custom">
-                                <h5 class="card-title-custom">
-                                    {{ oyuncu.isim or "İsimsiz Oyuncu" }}
-                                </h5>
-                                
-                                <p class="card-text-custom">
-                                    <strong>Yaş:</strong> {{ oyuncu.yas or "-" }}
-                                </p>
-                                <p class="card-text-custom">
-                                    <strong>Boy/Kilo:</strong> {{ oyuncu.boy or "-" }} cm / {{ oyuncu.kilo or "-" }} kg
-                                </p>
-                                <p class="card-text-custom">
-                                    <strong>Şehir:</strong> {{ oyuncu.sehir or "-" }}
-                                </p>
-                                
-                                <a href="/oyuncu/{{ oyuncu.id }}" class="btn-detail mt-3">Profili İncele</a>
+        <!-- ================= KATEGORİLENDİRİLMİŞ OYUNCU BÖLÜMÜ ================= -->
+        {% macro render_kategori(liste, baslik, ikon) %}
+            {% if liste|length > 0 %}
+                <div class="row mt-4 mb-3">
+                    <div class="col-12">
+                        <h3 class="fw-bold kategori-baslik">
+                            {{ ikon }} {{ baslik }}
+                        </h3>
+                    </div>
+                </div>
+                <div class="row g-4 mb-5">
+                    {% for oyuncu in liste %}
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                            <div class="oyuncu-card">
+                                <div class="oyuncu-img-container">
+                                    {% if oyuncu.resim_url %}
+                                        <img src="{{ oyuncu.resim_url }}" class="oyuncu-img" alt="Oyuncu Resmi" loading="lazy">
+                                    {% else %}
+                                        <div class="oyuncu-no-img">👤</div>
+                                    {% endif %}
+                                </div>
+                                <div class="card-body-custom">
+                                    <h5 class="card-title-custom">{{ oyuncu.isim or "İsimsiz Oyuncu" }}</h5>
+                                    <p class="card-text-custom"><strong>Yaş:</strong> {{ oyuncu.yas or "-" }}</p>
+                                    <p class="card-text-custom"><strong>Boy/Kilo:</strong> {{ oyuncu.boy or "-" }} cm / {{ oyuncu.kilo or "-" }} kg</p>
+                                    <p class="card-text-custom"><strong>Şehir:</strong> {{ oyuncu.sehir or "-" }}</p>
+                                    <a href="/oyuncu/{{ oyuncu.id }}" class="btn-detail mt-3">Profili İncele</a>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <!-- Eğer hem kurucu yoksa hem de liste boşsa gösterilir -->
-                {% if not kurucu %}
-                    <div class="col-12 text-center py-5">
-                        <h3 class="text-muted">Aramanıza uygun oyuncu bulunamadı.</h3>
-                        <a href="/" class="btn btn-outline-primary mt-3">Tüm Kadroyu Göster</a>
-                    </div>
-                {% endif %}
+                    {% endfor %}
+                </div>
             {% endif %}
-        </div>
+        {% endmacro %}
+
+        {% if oyuncular %}
+            <!-- Oyuncuları Yaşlarına Göre Gruplama -->
+            {% set cocuklar = [] %}
+            {% set gencler = [] %}
+            {% set ortalar = [] %}
+            {% set yaslilar = [] %}
+            {% set belirsizler = [] %}
+
+            {% for oyuncu in oyuncular %}
+                {% if oyuncu.yas != None %}
+                    {% if oyuncu.yas <= 15 %}
+                        {% set _ = cocuklar.append(oyuncu) %}
+                    {% elif oyuncu.yas <= 25 %}
+                        {% set _ = gencler.append(oyuncu) %}
+                    {% elif oyuncu.yas <= 45 %}
+                        {% set _ = ortalar.append(oyuncu) %}
+                    {% else %}
+                        {% set _ = yaslilar.append(oyuncu) %}
+                    {% endif %}
+                {% else %}
+                    {% set _ = belirsizler.append(oyuncu) %}
+                {% endif %}
+            {% endfor %}
+
+            <!-- Kategorileri Ekrana Basma -->
+            {{ render_kategori(cocuklar, "Çocuk Oyuncu Kategorisi (0-15 Yaş)", "🧸") }}
+            {{ render_kategori(gencler, "Genç Oyuncu Kategorisi (16-25 Yaş)", "🌟") }}
+            {{ render_kategori(ortalar, "Orta Yaş Oyuncu Kategorisi (26-45 Yaş)", "🎬") }}
+            {{ render_kategori(yaslilar, "Kıdemli / Usta Oyuncular (46+ Yaş)", "👑") }}
+            {{ render_kategori(belirsizler, "Diğer Oyuncular", "👤") }}
+            
+        {% else %}
+            {% if not kurucu %}
+                <div class="col-12 text-center py-5">
+                    <h3 class="text-muted">Aramanıza uygun oyuncu bulunamadı.</h3>
+                    <a href="/" class="btn btn-outline-primary mt-3">Tüm Kadroyu Göster</a>
+                </div>
+            {% endif %}
+        {% endif %}
+        <!-- ======================================================================= -->
+
     </main>
 
     <!-- Footer -->
@@ -400,28 +429,22 @@
         document.addEventListener("DOMContentLoaded", function() {
             const scrollContainer = document.getElementById('vitrinScroll');
             if (scrollContainer) {
-                // İçeriği hiç kopmadan sürekli kaydırmak için DOM elemanlarını ikiye katlıyoruz
                 const content = scrollContainer.innerHTML;
                 scrollContainer.innerHTML += content;
                 
                 let isHovered = false;
                 
-                // Fareyle üzerine gelindiğinde kaymayı durdur (kullanıcı profili tıklayabilsin)
                 scrollContainer.addEventListener('mouseenter', () => isHovered = true);
                 scrollContainer.addEventListener('mouseleave', () => isHovered = false);
-                
-                // Dokunmatik cihazlarda parmak ekrandayken durdur
                 scrollContainer.addEventListener('touchstart', () => isHovered = true);
                 scrollContainer.addEventListener('touchend', () => {
-                    // Mobilde tıkladıktan hemen sonra kaymasın diye hafif bir gecikme
                     setTimeout(() => isHovered = false, 1000); 
                 });
 
                 function autoScroll() {
                     if (!isHovered) {
-                        scrollContainer.scrollLeft += 1; // 1 piksel hızıyla kaydır (Artırırsan hızlanır)
+                        scrollContainer.scrollLeft += 1; 
                         
-                        // İçerik tamamen kopyanın olduğu yere gelince fark ettirmeden başa sar
                         if (scrollContainer.scrollLeft >= scrollContainer.scrollWidth / 2) {
                             scrollContainer.scrollLeft = 0;
                         }
@@ -429,7 +452,6 @@
                     requestAnimationFrame(autoScroll);
                 }
                 
-                // Animasyonu başlat
                 requestAnimationFrame(autoScroll);
             }
         });
