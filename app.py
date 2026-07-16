@@ -39,7 +39,7 @@ def index():
     
     # ID'si 28 olan "Kurucu" profilini ayırıp özel bölüme, diğerlerini genel listeye gönderiyoruz
     for o in all_players:
-        if o.get('id') == 28:
+        if o.get('id') == 29:
             kurucu = o
         else:
             oyuncular_listesi.append(o)
