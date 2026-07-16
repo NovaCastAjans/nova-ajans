@@ -122,6 +122,71 @@
             background-color: #334155 !important;
             color: #ffffff !important;
         }
+        
+        /* ================= VİTRİN (KAYAN PENCERE) CSS ================= */
+        .vitrin-wrapper {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+        }
+        .vitrin-scroll {
+            display: flex;
+            gap: 1.5rem;
+            overflow-x: auto;
+            /* Dokunmatik cihazlar dışında scrollbar'ı tamamen gizler */
+            -ms-overflow-style: none;  
+            scrollbar-width: none;  
+        }
+        .vitrin-scroll::-webkit-scrollbar {
+            display: none;
+        }
+        .vitrin-item-link {
+            flex: 0 0 220px; /* Her bir vitrin kartının sabit genişliği */
+            text-decoration: none;
+        }
+        .vitrin-item {
+            background: #111827;
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+            cursor: pointer;
+            height: 100%;
+        }
+        .vitrin-item:hover {
+            transform: scale(1.05);
+            border-color: #3b82f6;
+        }
+        .vitrin-item-img {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+        }
+        .vitrin-item-no-img {
+            width: 100%;
+            height: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #1f2937;
+            font-size: 4rem;
+            color: #4b5563;
+        }
+        .vitrin-item-title {
+            padding: 1rem;
+            text-align: center;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 1rem;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        /* ============================================================== */
+
         footer {
             background-color: #0f172a;
             border-top: 1px solid #1e293b;
@@ -175,7 +240,7 @@
     <!-- Hero Bölümü -->
     <header class="hero-section">
         <div class="container">
-            <h1 class="display-4 fw-extrabold text-white">Geleceğin Yıldızlerini Keşfedin</h1>
+            <h1 class="display-4 fw-extrabold text-white">Geleceğin Yıldızlarını Keşfedin</h1>
             <p class="lead text-muted">Nova Cast Ajans bünyesindeki profesyonel oyuncu kadrosuna göz atın.</p>
             
             <div class="search-box">
@@ -229,6 +294,36 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+            <hr style="border-color: #1e293b; margin-bottom: 4rem;">
+        {% endif %}
+        <!-- ======================================================= -->
+
+        <!-- ================= OYUNCU VİTRİNİ BÖLÜMÜ (OTOMATİK KAYAN) ================= -->
+        {% if oyuncular %}
+            <div class="row mb-3">
+                <div class="col-12">
+                    <h4 class="fw-bold text-white mb-1">⭐ Yıldız Vitrini</h4>
+                    <p class="text-muted small">Tüm kadromuza hızlıca göz atın</p>
+                </div>
+            </div>
+            
+            <div class="vitrin-wrapper">
+                <!-- ID eklendi: JS animasyonu burayı hedef alacak -->
+                <div class="vitrin-scroll" id="vitrinScroll">
+                    {% for oyuncu in oyuncular %}
+                        <a href="/oyuncu/{{ oyuncu.id }}" class="vitrin-item-link">
+                            <div class="vitrin-item shadow">
+                                {% if oyuncu.resim_url %}
+                                    <img src="{{ oyuncu.resim_url }}" class="vitrin-item-img" alt="{{ oyuncu.isim }}" loading="lazy">
+                                {% else %}
+                                    <div class="vitrin-item-no-img">👤</div>
+                                {% endif %}
+                                <h5 class="vitrin-item-title">{{ oyuncu.isim or "İsimsiz Oyuncu" }}</h5>
+                            </div>
+                        </a>
+                    {% endfor %}
                 </div>
             </div>
             <hr style="border-color: #1e293b; margin-bottom: 4rem;">
@@ -299,5 +394,47 @@
 
     <!-- Bootstrap JS kütüphaneleri -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- ================= VİTRİN OTOMATİK KAYDIRMA SCRİPTİ ================= -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const scrollContainer = document.getElementById('vitrinScroll');
+            if (scrollContainer) {
+                // İçeriği hiç kopmadan sürekli kaydırmak için DOM elemanlarını ikiye katlıyoruz
+                const content = scrollContainer.innerHTML;
+                scrollContainer.innerHTML += content;
+                
+                let isHovered = false;
+                
+                // Fareyle üzerine gelindiğinde kaymayı durdur (kullanıcı profili tıklayabilsin)
+                scrollContainer.addEventListener('mouseenter', () => isHovered = true);
+                scrollContainer.addEventListener('mouseleave', () => isHovered = false);
+                
+                // Dokunmatik cihazlarda parmak ekrandayken durdur
+                scrollContainer.addEventListener('touchstart', () => isHovered = true);
+                scrollContainer.addEventListener('touchend', () => {
+                    // Mobilde tıkladıktan hemen sonra kaymasın diye hafif bir gecikme
+                    setTimeout(() => isHovered = false, 1000); 
+                });
+
+                function autoScroll() {
+                    if (!isHovered) {
+                        scrollContainer.scrollLeft += 1; // 1 piksel hızıyla kaydır (Artırırsan hızlanır)
+                        
+                        // İçerik tamamen kopyanın olduğu yere gelince fark ettirmeden başa sar
+                        if (scrollContainer.scrollLeft >= scrollContainer.scrollWidth / 2) {
+                            scrollContainer.scrollLeft = 0;
+                        }
+                    }
+                    requestAnimationFrame(autoScroll);
+                }
+                
+                // Animasyonu başlat
+                requestAnimationFrame(autoScroll);
+            }
+        });
+    </script>
+    <!-- ==================================================================== -->
+
 </body>
 </html>
