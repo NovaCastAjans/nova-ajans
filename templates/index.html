@@ -232,13 +232,21 @@
     <nav class="navbar navbar-expand-lg navbar-dark">
         <!-- Navigasyon kısmına bunu ekle -->
 <!-- Mevcut linkin olduğu yeri şu mantıkla değiştir: -->
-
-{% if not session.get('logged_in') %}
-    <!-- Giriş yapmamışsa "Ajansa Katıl" görünsün -->
-    <a href="/basvuru" class="nav-link">Ajansa Başvur</a>
-{% else %}
-   
-{% endif %}
+<!-- Navigasyon Menüsü -->
+<div class="d-flex align-items-center gap-3">
+    {% if not session.get('logged_in') %}
+        <!-- Henüz giriş yapmamışlar için şık buton -->
+        <a href="/basvuru" class="btn btn-outline-light rounded-pill px-4 shadow-sm" 
+           style="transition: all 0.3s ease; border-width: 2px;">
+            Ajansa Katıl
+        </a>
+    {% else %}
+        <!-- Giriş yapmışlar için estetik çıkış butonu -->
+        <a href="/logout" class="btn btn-outline-danger rounded-pill px-3">
+            Giriş Yapıldı
+        </a>
+    {% endif %}
+</div>
         <div class="container">
             <a class="navbar-brand" href="/">🎭 NOVA CAST AJANS</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
