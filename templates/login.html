@@ -3,113 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nova Cast Ajans - Giriş Yap</title>
+    <title>Giriş Yap - Nova Cast Ajans</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body {
-            background-color: #f8f9fa !important;
-            color: #1a1a1a !important;
-            font-family: 'Inter', sans-serif !important;
-        }
-        .navbar {
-            background-color: #0f172a !important;
-        }
-        .navbar-brand {
-            color: #ffffff !important;
-            font-weight: 800 !important;
-        }
-        .nav-link {
-            color: #e2e8f0 !important;
-            font-weight: 600 !important;
+            /* Ana sayfayla uyumlu karanlık degrade arkaplan */
+            background: linear-gradient(135deg, #0b0c10 0%, #1e1b4b 100%);
+            color: #f1f5f9;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
         }
         .login-card {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            padding: 2.5rem;
+            background: #111827;
+            border: 1px solid #1e293b;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: row;
+            min-height: 600px;
         }
-        h2 {
-            color: #0b0c10 !important;
-            font-weight: 800 !important;
+        .login-image-section {
+            /* Şık bir sinema/set görseli */
+            background: linear-gradient(to right, rgba(17, 24, 39, 0.2), rgba(17, 24, 39, 1)), 
+                        url('https://images.unsplash.com/photo-1485846234645-a62644f84728?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80') center/cover;
+            width: 50%;
+            display: none;
+            position: relative;
         }
-        label {
-            color: #0f172a !important;
-            font-weight: 700 !important;
+        @media (min-width: 992px) {
+            .login-image-section {
+                display: block;
+            }
+        }
+        .login-image-overlay {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            max-width: 80%;
+        }
+        .login-form-section {
+            padding: 4rem 3rem;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        @media (min-width: 992px) {
+            .login-form-section {
+                width: 50%;
+            }
+        }
+        .brand-title {
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 1px;
             margin-bottom: 0.5rem;
         }
+        .brand-subtitle {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            margin-bottom: 2.5rem;
+        }
+        .form-label {
+            color: #cbd5e1;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
         .form-control {
-            color: #0f172a !important;
-            font-weight: 600 !important;
-            border: 2px solid #94a3b8 !important;
-            background-color: #ffffff !important;
+            background-color: #1e293b;
+            border: 2px solid #334155;
+            color: #ffffff;
+            padding: 0.9rem 1.2rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
         }
         .form-control:focus {
-            border-color: #2563eb !important;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25) !important;
+            background-color: #0f172a;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+            color: #ffffff;
         }
-        .btn-primary {
-            background-color: #2563eb !important;
-            border-color: #2563eb !important;
-            font-weight: 700 !important;
-            padding: 0.75rem !important;
+        .form-control::placeholder {
+            color: #64748b;
         }
-        .btn-primary:hover {
-            background-color: #1d4ed8 !important;
+        .btn-login {
+            background-color: #2563eb;
+            border: none;
+            color: white;
+            font-weight: 700;
+            font-size: 1.05rem;
+            padding: 1rem;
+            border-radius: 12px;
+            width: 100%;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-login:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px rgba(37, 99, 235, 0.5);
+        }
+        .back-link {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: inline-block;
+            margin-top: 2rem;
+            transition: color 0.3s ease;
+        }
+        .back-link:hover {
+            color: #3b82f6;
+        }
+        .alert-custom {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border-radius: 10px;
+            padding: 1rem;
+            font-size: 0.9rem;
         }
     </style>
 </head>
 <body>
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark mb-5">
-        <div class="container">
-            <a class="navbar-brand" href="/">🎭 Nova Cast Ajans</a>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="/">Ana Sayfa</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Bildirim Mesajları -->
-    <div class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show fw-bold" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    </div>
-
-    <!-- Giriş Formu -->
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-5">
-                <div class="login-card">
-                    <h2 class="text-center mb-4">Giriş Yap</h2>
-                    <form action="/login" method="post">
-                        <div class="mb-3">
-                            <label for="kullanici_adi">Kullanıcı Adı</label>
-                            <input type="text" class="form-control" id="kullanici_adi" name="kullanici_adi" required autocomplete="off">
-                        </div>
-                        <div class="mb-4">
-                            <label for="sifre">Şifre</label>
-                            <input type="password" class="form-control" id="sifre" name="sifre" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Giriş Yap</button>
-                    </form>
+    <div class="container p-3 p-md-5 d-flex justify-content-center">
+        <div class="login-card">
+            
+            <!-- Sol Taraf: Görsel Alanı (Sadece büyük ekranlarda görünür) -->
+            <div class="login-image-section">
+                <div class="login-image-overlay">
+                    <h3 class="text-white fw-bold mb-2">Yeteneklerinizi Sahneye Taşıyın</h3>
+                    <p class="text-light opacity-75 mb-0">Nova Cast Ajans özel yetenek paneline hoş geldiniz. Kendi profilinizi yönetmek veya yeni yıldızlar eklemek için giriş yapın.</p>
                 </div>
             </div>
+
+            <!-- Sağ Taraf: Form Alanı -->
+            <div class="login-form-section">
+                <div class="text-center text-lg-start">
+                    <h2 class="brand-title">🎭 NOVA CAST</h2>
+                    <p class="brand-subtitle">Ajans Yönetim Sistemi</p>
+                </div>
+                
+                <!-- Hata / Flash Mesajları -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-custom mb-4" role="alert">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST" action="/login">
+                    <div class="mb-4">
+                        <label class="form-label">Kullanıcı Adı</label>
+                        <input type="text" name="kullanici_adi" class="form-control" required placeholder="Kullanıcı adınızı girin" autocomplete="off">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Şifre</label>
+                        <input type="password" name="sifre" class="form-control" required placeholder="••••••••">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-login">Sisteme Giriş Yap</button>
+                </form>
+                
+                <div class="text-center text-lg-start">
+                    <a href="/" class="back-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left me-1" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                        </svg>
+                        Ana Sayfaya Dön
+                    </a>
+                </div>
+            </div>
+            
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
