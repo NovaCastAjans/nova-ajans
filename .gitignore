@@ -1,2 +1,11 @@
+# Çevre değişkenleri (Kesinlikle yüklenmemeli!)
 .env
-ajans.db
+
+# Python önbellek dosyaları
+__pycache__/
+*.pyc
+
+# Sanal ortam klasörleri (Eğer venv kullanıyorsan)
+venv/
+.venv/
+env/

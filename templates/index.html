@@ -175,7 +175,7 @@
     <!-- Hero Bölümü -->
     <header class="hero-section">
         <div class="container">
-            <h1 class="display-4 fw-extrabold text-white">Geleceğin Yıldızlarını Keşfedin</h1>
+            <h1 class="display-4 fw-extrabold text-white">Geleceğin Yıldızlerini Keşfedin</h1>
             <p class="lead text-muted">Nova Cast Ajans bünyesindeki profesyonel oyuncu kadrosuna göz atın.</p>
             
             <div class="search-box">
@@ -187,7 +187,7 @@
         </div>
     </header>
 
-    <!-- Oyuncu Listesi -->
+    <!-- Ana İçerik -->
     <main class="container my-5">
         <!-- Flash Mesajları -->
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -201,6 +201,47 @@
             {% endif %}
         {% endwith %}
 
+        <!-- ================= ÖZEL KURUCU BÖLÜMÜ ================= -->
+        {% if kurucu %}
+            <div class="row mb-5 justify-content-center">
+                <div class="col-12 text-center mb-4">
+                    <h2 class="fw-bold text-uppercase" style="letter-spacing: 2px; color: #3b82f6;">Ajans Sahibi & Kurucu</h2>
+                    <div style="width: 60px; height: 4px; background: #3b82f6; margin: 10px auto; border-radius: 2px;"></div>
+                </div>
+                <div class="col-12 col-md-8 col-lg-6">
+                    <div class="oyuncu-card p-4" style="border: 2px solid #3b82f6; background: linear-gradient(135deg, #111827 0%, #1e1b4b 100%);">
+                        <div class="row align-items-center">
+                            <div class="col-12 col-sm-5 text-center mb-3 mb-sm-0">
+                                <div class="oyuncu-img-container" style="height: 250px; border-radius: 12px; overflow: hidden;">
+                                    {% if kurucu.resim_url %}
+                                        <img src="{{ kurucu.resim_url }}" class="oyuncu-img" alt="Kurucu Resmi" loading="lazy">
+                                    {% else %}
+                                        <div class="oyuncu-no-img">👤</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-7 text-center text-sm-start ps-sm-4 d-flex flex-column h-100">
+                                <span class="badge bg-danger mb-2 px-3 py-2 fw-bold align-self-center align-self-sm-start" style="font-size: 0.8rem; letter-spacing: 1px;">AJANS KURUCUSU</span>
+                                <h3 class="fw-extrabold text-white mb-2">{{ kurucu.isim }}</h3>
+                                <p class="card-text-custom mb-1"><strong>Şehir:</strong> {{ kurucu.sehir or "-" }}</p>
+                                <p class="card-text-custom mb-3"><strong>Boy/Kilo:</strong> {{ kurucu.boy or "-" }} cm / {{ kurucu.kilo or "-" }} kg</p>
+                                <a href="/oyuncu/{{ kurucu.id }}" class="btn-detail w-100 py-2">Profili İncele</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr style="border-color: #1e293b; margin-bottom: 4rem;">
+        {% endif %}
+        <!-- ======================================================= -->
+
+        <!-- Genel Oyuncu Listesi Başlığı -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h3 class="fw-bold text-white mb-3">Profesyonel Oyuncu Kadromuz</h3>
+            </div>
+        </div>
+
         <!-- Oyuncu Kartları Grid Yapısı -->
         <div class="row g-4">
             {% if oyuncular %}
@@ -209,8 +250,8 @@
                         <div class="oyuncu-card">
                             <!-- Resim Bölümü -->
                             <div class="oyuncu-img-container">
-                                {% if oyuncu.foto_url %}
-                                    <img src="{{ oyuncu.foto_url }}" class="oyuncu-img" alt="Oyuncu Resmi" loading="lazy">
+                                {% if oyuncu.resim_url %}
+                                    <img src="{{ oyuncu.resim_url }}" class="oyuncu-img" alt="Oyuncu Resmi" loading="lazy">
                                 {% else %}
                                     <div class="oyuncu-no-img">👤</div>
                                 {% endif %}
@@ -238,10 +279,13 @@
                     </div>
                 {% endfor %}
             {% else %}
-                <div class="col-12 text-center py-5">
-                    <h3 class="text-muted">Aramanıza uygun oyuncu bulunamadı.</h3>
-                    <a href="/" class="btn btn-outline-primary mt-3">Tüm Kadroyu Göster</a>
-                </div>
+                <!-- Eğer hem kurucu yoksa hem de liste boşsa gösterilir -->
+                {% if not kurucu %}
+                    <div class="col-12 text-center py-5">
+                        <h3 class="text-muted">Aramanıza uygun oyuncu bulunamadı.</h3>
+                        <a href="/" class="btn btn-outline-primary mt-3">Tüm Kadroyu Göster</a>
+                    </div>
+                {% endif %}
             {% endif %}
         </div>
     </main>

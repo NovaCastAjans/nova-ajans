@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yeni Oyuncu Ekle - Nova Ajans</title>
+    <title>Oyuncu Düzenle - Nova Ajans</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
@@ -28,7 +28,7 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         h2 { color: #ffffff; font-size: 28px; font-weight: 600; margin-bottom: 30px; text-align: center; letter-spacing: -0.5px; }
-        h2 span { color: #818cf8; }
+        h2 span { color: #10b981; }
         .form-group { margin-bottom: 22px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         label { display: block; margin-bottom: 8px; color: #94a3b8; font-size: 14px; font-weight: 500; }
@@ -36,33 +36,33 @@
             width: 100%; padding: 12px 16px; border: 2px solid #334155; border-radius: 10px;
             font-size: 14px; color: #ffffff; transition: all 0.3s ease; background-color: #0f172a;
         }
-        .form-control:focus { outline: none; border-color: #818cf8; background-color: #0f172a; box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.15); }
+        .form-control:focus { outline: none; border-color: #10b981; background-color: #0f172a; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15); }
         select.form-control {
             appearance: none;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
             background-repeat: no-repeat; background-position: right 16px center; background-size: 16px; padding-right: 40px;
         }
         textarea.form-control { resize: vertical; min-height: 100px; }
-        .file-upload-wrapper {
-            position: relative; border: 2px dashed #475569; border-radius: 10px; background-color: #0f172a; padding: 24px; text-align: center; cursor: pointer; transition: all 0.3s ease;
-        }
-        .file-upload-wrapper:hover { border-color: #818cf8; background-color: rgba(129, 140, 248, 0.05); }
+        .image-section { display: flex; align-items: center; gap: 20px; background-color: #0f172a; border: 2px solid #334155; border-radius: 10px; padding: 15px; margin-bottom: 22px; }
+        .current-image-preview { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #10b981; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .file-upload-wrapper { position: relative; border: 2px dashed #475569; border-radius: 10px; background-color: #0f172a; padding: 15px; text-align: center; cursor: pointer; transition: all 0.3s ease; flex-grow: 1; }
+        .file-upload-wrapper:hover { border-color: #10b981; background-color: rgba(16, 185, 129, 0.05); }
         .file-upload-wrapper input[type="file"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-        .file-upload-text { color: #94a3b8; font-size: 14px; }
-        .file-upload-text span { color: #818cf8; font-weight: 600; }
+        .file-upload-text { color: #94a3b8; font-size: 13px; }
+        .file-upload-text span { color: #10b981; font-weight: 600; }
         .button-group { display: flex; gap: 15px; margin-top: 35px; }
         .btn { flex: 1; padding: 14px; font-size: 15px; font-weight: 600; border-radius: 10px; border: none; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); text-align: center; text-decoration: none; display: inline-block; }
-        .btn-primary { background: linear-gradient(135deg, #818cf8 0%, #4f46e5 100%); color: white; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3); }
-        .btn-primary:hover { background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4); }
+        .btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); }
+        .btn-success:hover { background: linear-gradient(135deg, #34d399 0%, #059669 100%); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); }
         .btn-secondary { background-color: #334155; color: #94a3b8; }
         .btn-secondary:hover { background-color: #475569; color: #f1f5f9; transform: translateY(-2px); }
         .alert-danger { background-color: #ef4444; color: white; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; text-align: center; }
-        @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; gap: 0; } .form-container { padding: 24px; } }
+        @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; gap: 0; } .form-container { padding: 24px; } .image-section { flex-direction: column; text-align: center; } }
     </style>
 </head>
 <body>
     <div class="form-container">
-        <h2>Yeni Oyuncu <span>Ekle</span></h2>
+        <h2>Profil <span>Düzenle</span></h2>
         
         <!-- Flash Hata Mesajları Bölümü -->
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -73,55 +73,61 @@
             {% endif %}
         {% endwith %}
         
-        <form action="{{ url_for('oyuncu_ekle') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ url_for('oyuncu_duzenle', oyuncu_id=oyuncu.id) }}" method="POST" enctype="multipart/form-data">
             
-            <!-- Resim Yükleme Alanı -->
+            <!-- Resim Alanı ve Önizleme Düzeni -->
             <div class="form-group">
-                <label>Fotoğraf</label>
-                <div class="file-upload-wrapper">
-                    <input type="file" name="resim" id="resim" accept="image/*">
-                    <div class="file-upload-text">
-                        <svg style="width: 32px; height: 32px; fill: #94a3b8; margin-bottom: 8px;" viewBox="0 0 24 24">
-                            <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
-                        </svg>
-                        <br>
-                        <span id="file-name-text">Fotoğraf seçmek için tıklayın</span> veya sürükleyin
+                <label>Profil Fotoğrafı</label>
+                <div class="image-section">
+                    {% if oyuncu.resim_url %}
+                        <img src="{{ oyuncu.resim_url }}" alt="Mevcut Fotoğraf" class="current-image-preview">
+                    {% else %}
+                        <div class="current-image-preview" style="display: flex; align-items: center; justify-content: center; background-color: #1e293b; border: 2px dashed #475569;">
+                            <span style="font-size: 10px; color: #64748b; text-align: center;">Yok</span>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="file-upload-wrapper">
+                        <input type="file" name="resim" id="resim" accept="image/*">
+                        <div class="file-upload-text">
+                            <span id="file-name-text">Yeni fotoğraf seç</span> veya sürükleyin
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Giriş Bilgileri Bölümü (Kullanıcı Adı ve Şifre) -->
+            <!-- Giriş Bilgileri Bölümü (Kullanıcı Adı ve Şifre Güncelleme) -->
             <div style="border-bottom: 1px dashed rgba(255, 255, 255, 0.15); padding-bottom: 20px; margin-bottom: 25px;">
-                <h3 style="font-size: 18px; margin-bottom: 15px; color: #818cf8;">Giriş ve Hesap Bilgileri</h3>
+                <h3 style="font-size: 18px; margin-bottom: 15px; color: #10b981;">Giriş ve Hesap Bilgileri</h3>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="kullanici_adi">Kullanıcı Adı</label>
-                        <input type="text" name="kullanici_adi" id="kullanici_adi" class="form-control" placeholder="Örn. ahmet123">
+                        <input type="text" name="kullanici_adi" id="kullanici_adi" class="form-control" value="{{ kullanici.kullanici_adi or '' }}" placeholder="Kullanıcı adı">
                     </div>
                     <div class="form-group">
                         <label for="sifre">Şifre</label>
-                        <input type="password" name="sifre" id="sifre" class="form-control" placeholder="Giriş şifresi belirleyin">
+                        <input type="password" name="sifre" id="sifre" class="form-control" value="{{ kullanici.sifre or '' }}" placeholder="Şifre">
                     </div>
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="isim">Adı Soyadı</label>
-                <input type="text" name="isim" id="isim" class="form-control" placeholder="Örn. Ahmet Yılmaz" required>
+                <input type="text" name="isim" id="isim" class="form-control" value="{{ oyuncu.isim or '' }}" required>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
                     <label for="yas">Yaş</label>
-                    <input type="number" name="yas" id="yas" class="form-control" placeholder="Örn. 25">
+                    <input type="number" name="yas" id="yas" class="form-control" value="{{ oyuncu.yas or '' }}">
                 </div>
                 <div class="form-group">
                     <label for="cinsiyet">Cinsiyet</label>
                     <select name="cinsiyet" id="cinsiyet" class="form-control">
-                        <option value="">Seçin...</option>
-                        <option value="Kadın">Kadın</option>
-                        <option value="Erkek">Erkek</option>
-                        <option value="Diğer">Diğer</option>
+                        <option value="" {% if not oyuncu.cinsiyet %}selected{% endif %}>Seçin...</option>
+                        <option value="Kadın" {% if oyuncu.cinsiyet == 'Kadın' %}selected{% endif %}>Kadın</option>
+                        <option value="Erkek" {% if oyuncu.cinsiyet == 'Erkek' %}selected{% endif %}>Erkek</option>
+                        <option value="Diğer" {% if oyuncu.cinsiyet == 'Diğer' %}selected{% endif %}>Diğer</option>
                     </select>
                 </div>
             </div>
@@ -129,55 +135,55 @@
             <div class="form-row">
                 <div class="form-group">
                     <label for="boy">Boy (cm)</label>
-                    <input type="number" name="boy" id="boy" class="form-control" placeholder="Örn. 180">
+                    <input type="number" name="boy" id="boy" class="form-control" value="{{ oyuncu.boy or '' }}">
                 </div>
                 <div class="form-group">
                     <label for="kilo">Kilo (kg)</label>
-                    <input type="number" name="kilo" id="kilo" class="form-control" placeholder="Örn. 75">
+                    <input type="number" name="kilo" id="kilo" class="form-control" value="{{ oyuncu.kilo or '' }}">
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
                     <label for="goz_rengi">Göz Rengi</label>
-                    <input type="text" name="goz_rengi" id="goz_rengi" class="form-control" placeholder="Örn. Kahverengi">
+                    <input type="text" name="goz_rengi" id="goz_rengi" class="form-control" value="{{ oyuncu.goz_rengi or '' }}">
                 </div>
                 <div class="form-group">
                     <label for="sac_rengi">Saç Rengi</label>
-                    <input type="text" name="sac_rengi" id="sac_rengi" class="form-control" placeholder="Örn. Siyah">
+                    <input type="text" name="sac_rengi" id="sac_rengi" class="form-control" value="{{ oyuncu.sac_rengi or '' }}">
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="sehir">Şehir</label>
-                <input type="text" name="sehir" id="sehir" class="form-control" placeholder="Örn. İstanbul">
+                <input type="text" name="sehir" id="sehir" class="form-control" value="{{ oyuncu.sehir or '' }}">
             </div>
 
             <div class="form-group">
                 <label for="telefon">Telefon</label>
-                <input type="tel" name="telefon" id="telefon" class="form-control" placeholder="Örn. 0555...">
+                <input type="tel" name="telefon" id="telefon" class="form-control" value="{{ oyuncu.telefon or '' }}">
             </div>
 
             <div class="form-group">
                 <label for="eposta">E-posta</label>
-                <input type="email" name="eposta" id="eposta" class="form-control" placeholder="Örn. ahmet@mail.com">
+                <input type="email" name="eposta" id="eposta" class="form-control" value="{{ oyuncu.eposta or '' }}">
             </div>
 
             <div class="form-group">
                 <label for="deneyim">Deneyim / Özgeçmiş</label>
-                <textarea name="deneyim" id="deneyim" rows="4" class="form-control" placeholder="Oynadığı projeler, eğitimler..."></textarea>
+                <textarea name="deneyim" id="deneyim" rows="4" class="form-control">{{ oyuncu.deneyim or '' }}</textarea>
             </div>
 
             <div class="button-group">
-                <button type="submit" class="btn btn-primary">Kaydet ve Ekle</button>
-                <a href="{{ url_for('index') }}" class="btn btn-secondary">Vazgeç</a>
+                <button type="submit" class="btn btn-success">Değişiklikleri Kaydet</button>
+                <a href="{{ url_for('oyuncu_detay', oyuncu_id=oyuncu.id) }}" class="btn btn-secondary">İptal Et</a>
             </div>
         </form>
     </div>
 
     <script>
         document.getElementById('resim').addEventListener('change', function(e) {
-            var fileName = e.target.files[0] ? e.target.files[0].name : "Fotoğraf seçmek için tıklayın";
+            var fileName = e.target.files[0] ? e.target.files[0].name : "Yeni fotoğraf seç";
             document.getElementById('file-name-text').textContent = fileName;
         });
     </script>

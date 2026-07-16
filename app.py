@@ -1,15 +1,29 @@
 import os
+import uuid
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from supabase import create_client
+from dotenv import load_dotenv
+
+# .env dosyasındaki gizli anahtarları yükle
+load_dotenv()
 
 app = Flask(__name__)
-# Render üzerindeki SECRET_KEY değişkenini önceliklendir
-app.secret_key = os.environ.get("SECRET_KEY", "nova_ajans_cok_gizli_super_anahtar_2026")
+# Gizli anahtarı çevre değişkenlerinden güvenli bir şekilde alıyoruz
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "nova_ajans_varsayilan_anahtar_2026")
 
-# Supabase Bağlantısı
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL else None
+# Supabase bağlantı bilgileri (.env dosyasından çekiliyor)
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# Boş veya hatalı sayısal girdileri veritabanı için None (NULL) yapan yardımcı fonksiyon
+def safe_int(val):
+    if not val or str(val).strip() == "":
+        return None
+    try:
+        return int(val)
+    except (ValueError, TypeError):
+        return None
 
 @app.route('/')
 def index():
@@ -18,77 +32,211 @@ def index():
     if arama:
         query = query.ilike("isim", f"%{arama}%")
     res = query.execute()
-    return render_template('index.html', oyuncular=res.data, arama_sorgusu=arama)
-
-@app.route('/hakkimizda')
-def hakkimizda():
-    return render_template('hakkimizda.html')
+    
+    all_players = res.data if res.data else []
+    kurucu = None
+    oyuncular_listesi = []
+    
+    # ID'si 28 olan "Kurucu" profilini ayırıp özel bölüme, diğerlerini genel listeye gönderiyoruz
+    for o in all_players:
+        if o.get('id') == 28:
+            kurucu = o
+        else:
+            oyuncular_listesi.append(o)
+            
+    # Eğer arama yapıldıysa ve kurucu arama kriterine uymuyorsa kurucu bölümünü gizle
+    if arama and kurucu:
+        if arama.lower() not in kurucu.get('isim', '').lower():
+            kurucu = None
+            
+    return render_template('index.html', oyuncular=oyuncular_listesi, kurucu=kurucu, arama_sorgusu=arama)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         k_adi = request.form.get('kullanici_adi')
         sifre = request.form.get('sifre')
-        # Kullanıcı kontrolü
-        user = supabase.table("kullanicilar").select("*").eq("kullanici_adi", k_adi).execute().data
-        if user and user[0].get('sifre') == sifre:
-            session.update({'logged_in': True, 'role': user[0].get('yetki'), 'oyuncu_id': user[0].get('oyuncu_id')})
+        
+        user = supabase.table("kullanicilar").select("*").ilike("kullanici_adi", k_adi).execute().data
+        
+        if user and str(user[0].get('sifre')) == str(sifre):
+            yetki = user[0].get('yetki', 'admin') 
+            # Düzeltme: Kullanıcılar tablosundaki ilişki 'id' sütununda tutuluyor
+            oyuncu_id = user[0].get('id', None) 
+            
+            session.update({'logged_in': True, 'role': yetki, 'oyuncu_id': oyuncu_id})
             return redirect(url_for('index'))
-        flash("Hatalı kullanıcı adı veya şifre", "danger")
+        else:
+            flash("Hatalı kullanıcı adı veya şifre", "danger")
     return render_template('login.html')
-
-@app.route('/ekle', methods=['GET', 'POST'])
-def oyuncu_ekle():
-    if not session.get('logged_in'): return redirect(url_for('login'))
-    if request.method == 'POST':
-        yeni_oyuncu = {
-            "isim": request.form.get('isim'),
-            "yas": int(request.form.get('yas')) if request.form.get('yas') else None,
-            "boy": request.form.get('boy'),
-            "kilo": request.form.get('kilo'),
-            "sehir": request.form.get('sehir'),
-            "foto_url": request.form.get('resim_url'),
-            "deneyimler": request.form.get('deneyim'),
-            "cinsiyet": request.form.get('cinsiyet'),
-            "telefon": request.form.get('telefon'),
-            "eposta": request.form.get('eposta')
-        }
-        supabase.table("oyuncular").insert(yeni_oyuncu).execute()
-        return redirect(url_for('index'))
-    return render_template('ekle.html')
-
-@app.route('/oyuncu/<int:oyuncu_id>')
-def oyuncu_detay(oyuncu_id):
-    res = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
-    if not res.data: return "Oyuncu bulunamadı", 404
-    return render_template('oyuncu_detay.html', oyuncu=res.data[0])
-
-@app.route('/oyuncu/duzenle/<int:oyuncu_id>', methods=['GET', 'POST'])
-def oyuncu_duzenle(oyuncu_id):
-    if not session.get('logged_in'): return redirect(url_for('login'))
-    if request.method == 'POST':
-        guncel = {
-            "isim": request.form.get('isim'),
-            "yas": int(request.form.get('yas')) if request.form.get('yas') else None,
-            "boy": request.form.get('boy'),
-            "kilo": request.form.get('kilo'),
-            "deneyimler": request.form.get('deneyim')
-        }
-        supabase.table("oyuncular").update(guncel).eq("id", oyuncu_id).execute()
-        return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
-    
-    res = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
-    return render_template('duzenle.html', oyuncu=res.data[0])
-
-@app.route('/oyuncu/sil/<int:oyuncu_id>', methods=['POST'])
-def oyuncu_sil(oyuncu_id):
-    supabase.table("oyuncular").delete().eq("id", oyuncu_id).execute()
-    return redirect(url_for('index'))
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
 
+@app.route('/ekle', methods=['GET', 'POST'])
+def oyuncu_ekle():
+    if not session.get('logged_in'): 
+        return redirect(url_for('login'))
+        
+    if request.method == 'POST':
+        resim_url = None
+        file = request.files.get('resim')
+        
+        if file and file.filename != '':
+            try:
+                ext = os.path.splitext(file.filename)[1]
+                filename = f"{uuid.uuid4()}{ext}"
+                file_data = file.read()
+                
+                supabase.storage.from_("oyuncu-resimleri").upload(
+                    path=filename,
+                    file=file_data,
+                    file_options={"content-type": file.content_type}
+                )
+                
+                resim_url_res = supabase.storage.from_("oyuncu-resimleri").get_public_url(filename)
+                if isinstance(resim_url_res, str):
+                    resim_url = resim_url_res
+                else:
+                    resim_url = getattr(resim_url_res, 'public_url', str(resim_url_res))
+            except Exception as e:
+                flash(f"Resim yüklenirken bir hata oluştu: {str(e)}", "danger")
+
+        yeni_oyuncu = {
+            "isim": request.form.get('isim'),
+            "yas": safe_int(request.form.get('yas')),
+            "cinsiyet": request.form.get('cinsiyet'),
+            "boy": safe_int(request.form.get('boy')),
+            "kilo": safe_int(request.form.get('kilo')),
+            "goz_rengi": request.form.get('goz_rengi'),
+            "sac_rengi": request.form.get('sac_rengi'),
+            "sehir": request.form.get('sehir'),
+            "telefon": request.form.get('telefon'),
+            "eposta": request.form.get('eposta'),
+            "deneyim": request.form.get('deneyim'),
+            "resim_url": resim_url
+        }
+        
+        oyuncu_res = supabase.table("oyuncular").insert(yeni_oyuncu).execute()
+        
+        if oyuncu_res.data:
+            yeni_oyuncu_id = oyuncu_res.data[0]['id']
+            k_adi = request.form.get('kullanici_adi')
+            sifre = request.form.get('sifre')
+            
+            if k_adi and sifre:
+                yeni_kullanici = {
+                    "kullanici_adi": k_adi,
+                    "sifre": sifre,
+                    "yetki": "oyuncu",
+                    "id": yeni_oyuncu_id  # Düzeltme: Şemaya uygun olarak 'id' sütununa kaydediliyor
+                }
+                supabase.table("kullanicilar").insert(yeni_kullanici).execute()
+                
+        return redirect(url_for('index'))
+    return render_template('ekle.html')
+
+@app.route('/oyuncu/duzenle/<int:oyuncu_id>', methods=['GET', 'POST'])
+def oyuncu_duzenle(oyuncu_id):
+    if not session.get('logged_in'): 
+        return redirect(url_for('login'))
+    
+    if session.get('role') != 'admin' and session.get('oyuncu_id') != oyuncu_id:
+        flash("Bu profili düzenleme yetkiniz yok!", "danger")
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        guncel = {
+            "isim": request.form.get('isim'),
+            "yas": safe_int(request.form.get('yas')),
+            "cinsiyet": request.form.get('cinsiyet'),
+            "boy": safe_int(request.form.get('boy')),
+            "kilo": safe_int(request.form.get('kilo')),
+            "goz_rengi": request.form.get('goz_rengi'),
+            "sac_rengi": request.form.get('sac_rengi'),
+            "sehir": request.form.get('sehir'),
+            "telefon": request.form.get('telefon'),
+            "eposta": request.form.get('eposta'),
+            "deneyim": request.form.get('deneyim')
+        }
+        
+        file = request.files.get('resim')
+        if file and file.filename != '':
+            try:
+                ext = os.path.splitext(file.filename)[1]
+                filename = f"{uuid.uuid4()}{ext}"
+                file_data = file.read()
+                
+                supabase.storage.from_("oyuncu-resimleri").upload(
+                    path=filename,
+                    file=file_data,
+                    file_options={"content-type": file.content_type}
+                )
+                
+                resim_url_res = supabase.storage.from_("oyuncu-resimleri").get_public_url(filename)
+                if isinstance(resim_url_res, str):
+                    guncel["resim_url"] = resim_url_res
+                else:
+                    guncel["resim_url"] = getattr(resim_url_res, 'public_url', str(resim_url_res))
+            except Exception as e:
+                flash(f"Yeni resim yüklenirken hata oluştu: {str(e)}", "danger")
+
+        supabase.table("oyuncular").update(guncel).eq("id", oyuncu_id).execute()
+        
+        k_adi = request.form.get('kullanici_adi')
+        sifre = request.form.get('sifre')
+        
+        if k_adi and sifre:
+            # Düzeltme: İlişki kontrolü 'id' sütunu üzerinden yapılıyor
+            mevcut_kullanici = supabase.table("kullanicilar").select("*").eq("id", oyuncu_id).execute().data
+            if mevcut_kullanici:
+                supabase.table("kullanicilar").update({
+                    "kullanici_adi": k_adi,
+                    "sifre": sifre
+                }).eq("id", oyuncu_id).execute()
+            else:
+                supabase.table("kullanicilar").insert({
+                    "kullanici_adi": k_adi,
+                    "sifre": sifre,
+                    "yetki": "oyuncu",
+                    "id": oyuncu_id
+                }).execute()
+
+        return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
+    
+    res = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
+    oyuncu_veri = res.data[0]
+    
+    # Düzeltme: Kullanıcı verisi 'id' üzerinden çekiliyor
+    kullanici_res = supabase.table("kullanicilar").select("*").eq("id", oyuncu_id).execute()
+    kullanici_veri = kullanici_res.data[0] if kullanici_res.data else {}
+    
+    return render_template('duzenle.html', oyuncu=oyuncu_veri, kullanici=kullanici_veri)
+
+@app.route('/oyuncu/<int:oyuncu_id>')
+def oyuncu_detay(oyuncu_id):
+    res = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
+    return render_template('oyuncu_detay.html', oyuncu=res.data[0])
+
+@app.route('/oyuncu/sil/<int:oyuncu_id>', methods=['GET', 'POST'])
+def oyuncu_sil(oyuncu_id):
+    if not session.get('logged_in'): 
+        return redirect(url_for('login'))
+    
+    if session.get('role') != 'admin':
+        flash("Bu işlem için yetkiniz yok!", "danger")
+        return redirect(url_for('index'))
+        
+    # Düzeltme: İlişkili kullanıcı silinirken 'id' sütunu kullanılıyor
+    supabase.table("kullanicilar").delete().eq("id", oyuncu_id).execute()
+    supabase.table("oyuncular").delete().eq("id", oyuncu_id).execute()
+    return redirect(url_for('index'))
+
+@app.route('/hakkimizda')
+def hakkimizda():
+    return render_template('hakkimizda.html')
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
+    app.run(debug=True, port=5000)

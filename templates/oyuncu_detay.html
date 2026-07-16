@@ -108,6 +108,10 @@
                             <li class="nav-item">
                                 <a class="btn btn-success btn-sm ms-2 px-3 fw-bold" href="/ekle">+ Oyuncu Ekle</a>
                             </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="btn btn-primary btn-sm ms-2 px-3 fw-bold" href="/oyuncu/{{ session.get('oyuncu_id') }}">Profilim</a>
+                            </li>
                         {% endif %}
                         <li class="nav-item">
                             <a class="nav-link text-danger fw-bold ms-2" href="/logout">Çıkış Yap</a>
@@ -134,21 +138,27 @@
         <div class="row mt-4">
             <!-- Sol Sütun: Fotoğraf ve İşlemler -->
             <div class="col-md-5 mb-4">
-                {% if oyuncu.foto_url %}
-                    <img src="{{ oyuncu.foto_url }}" class="detay-img img-fluid shadow" alt="Oyuncu Resmi">
+                {% if oyuncu.resim_url %}
+                    <img src="{{ oyuncu.resim_url }}" class="detay-img img-fluid shadow" alt="Oyuncu Resmi">
                 {% else %}
                     <div class="no-img-box">👤</div>
                 {% endif %}
                 
-                {% if session.get('logged_in') and session.get('role') == 'admin' %}
-                    <div class="d-grid gap-2 mt-3">
+                <!-- Buton Grubu -->
+                <div class="d-grid gap-2 mt-3">
+                    <!-- Düzenleme: Admin veya Profil Sahibi yapabilir -->
+                    {% if session.get('role') == 'admin' or session.get('oyuncu_id') == oyuncu.id %}
                         <a href="/oyuncu/duzenle/{{ oyuncu.id }}" class="btn btn-warning fw-bold">Bilgileri Düzenle</a>
+                    {% endif %}
+                    
+                    <!-- Silme: SADECE Admin yapabilir -->
+                    {% if session.get('role') == 'admin' %}
                         <form action="/oyuncu/sil/{{ oyuncu.id }}" method="post" onsubmit="return confirm('Bu oyuncuyu silmek istediğinize emin misiniz?');">
                             <button type="submit" class="btn btn-danger fw-bold w-100">Oyuncuyu Sil</button>
                         </form>
-                    </div>
-                {% endif %}
-            </div>
+                    {% endif %}
+                </div>
+            </div> <!-- BU ETİKET DÜZELTİLDİ: Sol sütunu kapatarak sağ sütunun doğru yere oturmasını sağlar -->
 
             <!-- Sağ Sütun: Kişisel Bilgiler ve Deneyimler -->
             <div class="col-md-7">
