@@ -231,7 +231,14 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <!-- Navigasyon kısmına bunu ekle -->
-<a href="/basvuru" class="btn btn-outline-light btn-sm px-4 rounded-pill">Ajansa Başvur</a>
+<!-- Mevcut linkin olduğu yeri şu mantıkla değiştir: -->
+
+{% if not session.get('logged_in') %}
+    <!-- Giriş yapmamışsa "Ajansa Katıl" görünsün -->
+    <a href="/basvuru" class="nav-link">Ajansa Başvur</a>
+{% else %}
+   
+{% endif %}
         <div class="container">
             <a class="navbar-brand" href="/">🎭 NOVA CAST AJANS</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
