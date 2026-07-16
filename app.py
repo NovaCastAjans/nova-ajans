@@ -28,16 +28,22 @@ def safe_int(val):
 @app.route('/')
 def index():
     arama = request.args.get('q', '')
+    cinsiyet = request.args.get('cinsiyet', '')
+    
     query = supabase.table("oyuncular").select("*")
+    
     if arama:
         query = query.ilike("isim", f"%{arama}%")
+    if cinsiyet:
+        query = query.eq("cinsiyet", cinsiyet)
+        
     res = query.execute()
     
     all_players = res.data if res.data else []
     kurucu = None
     oyuncular_listesi = []
     
-    # ID'si 28 olan "Kurucu" profilini ayırıp özel bölüme, diğerlerini genel listeye gönderiyoruz
+    # ID'si 29 olan "Kurucu" profilini ayırıp özel bölüme, diğerlerini genel listeye gönderiyoruz
     for o in all_players:
         if o.get('id') == 29:
             kurucu = o
@@ -49,7 +55,22 @@ def index():
         if arama.lower() not in kurucu.get('isim', '').lower():
             kurucu = None
             
-    return render_template('index.html', oyuncular=oyuncular_listesi, kurucu=kurucu, arama_sorgusu=arama)
+    return render_template('index.html', oyuncular=oyuncular_listesi, kurucu=kurucu, arama_sorgusu=arama, secili_cinsiyet=cinsiyet)
+
+@app.route('/basvuru', methods=['GET', 'POST'])
+def basvuru():
+    if request.method == 'POST':
+        yeni_basvuru = {
+            "isim": request.form.get('isim'),
+            "yas": safe_int(request.form.get('yas')),
+            "boy": safe_int(request.form.get('boy')),
+            "telefon": request.form.get('telefon'),
+            "deneyim": request.form.get('deneyim')
+        }
+        supabase.table("basvurular").insert(yeni_basvuru).execute()
+        flash("Başvurunuz alındı, teşekkürler!", "success")
+        return redirect(url_for('index'))
+    return render_template('basvuru.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -61,7 +82,6 @@ def login():
         
         if user and str(user[0].get('sifre')) == str(sifre):
             yetki = user[0].get('yetki', 'admin') 
-            # Düzeltme: Kullanıcılar tablosundaki ilişki 'id' sütununda tutuluyor
             oyuncu_id = user[0].get('id', None) 
             
             session.update({'logged_in': True, 'role': yetki, 'oyuncu_id': oyuncu_id})
@@ -131,7 +151,7 @@ def oyuncu_ekle():
                     "kullanici_adi": k_adi,
                     "sifre": sifre,
                     "yetki": "oyuncu",
-                    "id": yeni_oyuncu_id  # Düzeltme: Şemaya uygun olarak 'id' sütununa kaydediliyor
+                    "id": yeni_oyuncu_id 
                 }
                 supabase.table("kullanicilar").insert(yeni_kullanici).execute()
                 
@@ -189,7 +209,6 @@ def oyuncu_duzenle(oyuncu_id):
         sifre = request.form.get('sifre')
         
         if k_adi and sifre:
-            # Düzeltme: İlişki kontrolü 'id' sütunu üzerinden yapılıyor
             mevcut_kullanici = supabase.table("kullanicilar").select("*").eq("id", oyuncu_id).execute().data
             if mevcut_kullanici:
                 supabase.table("kullanicilar").update({
@@ -209,7 +228,6 @@ def oyuncu_duzenle(oyuncu_id):
     res = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
     oyuncu_veri = res.data[0]
     
-    # Düzeltme: Kullanıcı verisi 'id' üzerinden çekiliyor
     kullanici_res = supabase.table("kullanicilar").select("*").eq("id", oyuncu_id).execute()
     kullanici_veri = kullanici_res.data[0] if kullanici_res.data else {}
     
@@ -229,14 +247,45 @@ def oyuncu_sil(oyuncu_id):
         flash("Bu işlem için yetkiniz yok!", "danger")
         return redirect(url_for('index'))
         
-    # Düzeltme: İlişkili kullanıcı silinirken 'id' sütunu kullanılıyor
     supabase.table("kullanicilar").delete().eq("id", oyuncu_id).execute()
     supabase.table("oyuncular").delete().eq("id", oyuncu_id).execute()
     return redirect(url_for('index'))
 
 @app.route('/hakkimizda')
 def hakkimizda():
-    return render_template('hakkimizda.html')
+    res = supabase.table("sayfalar").select("*").eq("sayfa_adi", "hakkimizda").execute()
+    sayfa_verisi = res.data[0] if res.data else {"baslik": "Hakkımızda", "icerik": "HAKIMIZDA"}
+    return render_template('hakkimizda.html', sayfa=sayfa_verisi)
+
+@app.route('/admin/duzenle/<sayfa_adi>', methods=['GET', 'POST'])
+def admin_duzenle(sayfa_adi):
+    if session.get('role') != 'admin':
+        return redirect(url_for('login'))
+        
+    if request.method == 'POST':
+        yeni_baslik = request.form.get('baslik')
+        yeni_icerik = request.form.get('icerik')
+        
+        kontrol = supabase.table("sayfalar").select("*").eq("sayfa_adi", sayfa_adi).execute()
+        
+        if kontrol.data:
+            supabase.table("sayfalar").update({
+                "baslik": yeni_baslik,
+                "icerik": yeni_icerik
+            }).eq("sayfa_adi", sayfa_adi).execute()
+        else:
+            supabase.table("sayfalar").insert({
+                "sayfa_adi": sayfa_adi,
+                "baslik": yeni_baslik,
+                "icerik": yeni_icerik
+            }).execute()
+        
+        flash(f"{sayfa_adi} sayfası güncellendi!", "success")
+        return redirect(url_for('hakkimizda')) 
+
+    res = supabase.table("sayfalar").select("*").eq("sayfa_adi", sayfa_adi).execute()
+    mevcut_veri = res.data[0] if res.data else {"baslik": "", "icerik": ""}
+    return render_template('admin_duzenle.html', sayfa_adi=sayfa_adi, veri=mevcut_veri)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

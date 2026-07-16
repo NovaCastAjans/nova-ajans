@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hakkımızda - Nova Cast Ajans</title>
+    <title>{{ sayfa.baslik }} - Nova Cast Ajans</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -23,94 +23,118 @@
             color: #e2e8f0 !important;
             font-weight: 600 !important;
         }
-        .about-card {
+        .nav-link:hover, .nav-link.active {
+            color: #3b82f6 !important;
+        }
+        .content-section {
             background: #111827;
             border: 1px solid #1e293b;
             border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
             padding: 3rem;
-            margin-top: 50px;
+            margin-top: 3rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
-        h1 {
-            color: #ffffff !important;
-            font-weight: 800 !important;
-        }
-        .text-primary-custom {
-            color: #3b82f6 !important;
-            font-weight: 700;
-        }
-        .border-custom {
-            border-bottom: 2px solid #1e293b;
+        .page-title {
+            color: #ffffff;
+            font-weight: 800;
+            border-bottom: 2px solid #3b82f6;
             padding-bottom: 1rem;
             margin-bottom: 2rem;
+            display: inline-block;
         }
-        .lead {
-            color: #94a3b8 !important;
-            font-weight: 500;
-        }
-        p {
-            color: #cbd5e1 !important;
+        .page-content {
+            color: #cbd5e1;
             line-height: 1.8;
+            font-size: 1.1rem;
+            white-space: pre-line; /* Yazdığın metindeki Enter/Satır atlamalarını korur */
         }
-        .btn-primary {
-            background-color: #2563eb !important;
-            border-color: #2563eb !important;
-            font-weight: 700 !important;
-            padding: 0.75rem 2rem !important;
-        }
-        .btn-primary:hover {
-            background-color: #1d4ed8 !important;
+        footer {
+            background-color: #0f172a;
+            border-top: 1px solid #1e293b;
+            padding: 2rem 0;
+            margin-top: 5rem;
+            text-align: center;
+            color: #64748b;
         }
     </style>
 </head>
 <body>
 
-    <!-- Menü (Navbar) -->
-    <nav class="navbar navbar-expand-lg navbar-dark mb-5">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="/">🎭 NOVA CAST AJANS</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="/">Ana Sayfa</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="/hakkimizda">Hakkımızda</a></li>
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Ana Sayfa</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/hakkimizda">Hakkımızda</a>
+                    </li>
+                    {% if session.get('logged_in') %}
+                        {% if session.get('role') == 'admin' %}
+                            <li class="nav-item">
+                                <a class="btn btn-success btn-sm ms-2 px-3 fw-bold" href="/ekle">+ Oyuncu Ekle</a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="btn btn-primary btn-sm ms-2 px-3 fw-bold" href="/oyuncu/{{ session.get('oyuncu_id') }}">Profilim</a>
+                            </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link text-danger fw-bold ms-2" href="/logout">Çıkış Yap</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="btn btn-outline-light btn-sm ms-2 px-3 fw-bold" href="/login">Giriş Yap</a>
+                        </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
     </nav>
 
-    <!-- Hakkımızda İçerik Alanı -->
-    <div class="container mb-5">
-        <div class="row justify-content-center">
-            <div class="col-md-9">
-                <div class="about-card">
-                    <h1 class="text-center mb-4 border-custom">Hakkımızda</h1>
-                    
-                    <p class="lead text-center mb-5">
-                        Nova Cast Ajans, sektörün yenilikçi ve dinamik yüzlerini bir araya getiren modern bir yetenek platformudur.
-                    </p>
-                    
-                    <!-- Hikayemiz Bölümü -->
-                    <h3 class="text-primary-custom mb-3">Hikayemiz</h3>
-                    <p class="mb-4">
-                        Nova Cast Ajans, <strong>2025 yılında Emirhan Nizam tarafından Kayseri'de</strong> sektöre taze, dürüst ve yenilikçi bir soluk getirmek amacıyla kurulmuştur. Kayseri merkezli başlayan bu heyecan dolu yolculuğumuz, bugün Türkiye genelindeki yapımcıları ve genç yetenekleri bir araya getiren güçlü bir köprüye dönüşmüştür.
-                    </p>
-
-                    <!-- Vizyonumuz Bölümü -->
-                    <h3 class="text-primary-custom mb-3">Vizyonumuz</h3>
-                    <p class="mb-4">
-                        Sinema, televizyon, reklam ve dijital medya sektörlerine en uygun yetenekleri kazandırmak; oyuncularımızın kariyer yolculuklarında onlara profesyonel ve güvenilir bir rehberlik sunmaktır. Gelişmiş veritabanımız ve modern altyapımız sayesinde doğru projeyi doğru yüzle en hızlı şekilde buluşturuyoruz.
-                    </p>
-
-                    <div class="text-center mt-5">
-                        <a href="/" class="btn btn-primary">Oyuncularımızı Keşfedin</a>
+    <!-- Ana İçerik -->
+    <main class="container mb-5">
+        
+        <!-- Bildirim Mesajları -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mt-4">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
                     </div>
+                {% endfor %}
                 </div>
-            </div>
-        </div>
-    </div>
+            {% endif %}
+        {% endwith %}
 
-    <footer class="text-center py-4 text-muted mt-5">
-        <p>&copy; 2026 Nova Cast Ajans. Tüm Hakları Saklıdır.</p>
+        <div class="content-section">
+            <!-- SADECE ADMİN GÖREBİLİR: Düzenleme Butonu -->
+            {% if session.get('role') == 'admin' %}
+                <div class="d-flex justify-content-end mb-4">
+                    <a href="/admin/duzenle/hakkimizda" class="btn btn-warning fw-bold px-4 py-2 shadow-sm" style="border-radius: 8px;">
+                        ✏️ Sayfayı Düzenle
+                    </a>
+                </div>
+            {% endif %}
+
+            <h1 class="page-title">{{ sayfa.baslik }}</h1>
+            <div class="page-content">{{ sayfa.icerik }}</div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Nova Cast Ajans. Tüm Hakları Saklıdır.</p>
+        </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
