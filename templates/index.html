@@ -7,6 +7,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        /* Filtre Etiket Stili */
+.filter-label { font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.25rem; text-align: left; font-weight: 600; }
         /* Yükleme Ekranı Stili */
 #loading-overlay {
     position: fixed;
@@ -50,7 +52,7 @@
             text-align: center;
         }
         .search-box {
-            max-width: 600px;
+            max-width: 800px;
             margin: 2rem auto 0 auto;
         }
         .search-input {
@@ -230,23 +232,21 @@
 </script>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
-        <!-- Navigasyon kısmına bunu ekle -->
-<!-- Mevcut linkin olduğu yeri şu mantıkla değiştir: -->
-<!-- Navigasyon Menüsü -->
-<div class="d-flex align-items-center gap-3">
-    {% if not session.get('logged_in') %}
-        <!-- Henüz giriş yapmamışlar için şık buton -->
-        <a href="/basvuru" class="btn btn-outline-light rounded-pill px-4 shadow-sm" 
-           style="transition: all 0.3s ease; border-width: 2px;">
-            Ajansa Başvur
-        </a>
-    {% else %}
-        <!-- Giriş yapmışlar için estetik çıkış butonu -->
-        <a href="/logout" class="btn btn-outline-danger rounded-pill px-3">
-            Giriş Yapıldı
-        </a>
-    {% endif %}
-</div>
+        <!-- Navigasyon Menüsü -->
+        <div class="d-flex align-items-center gap-3">
+            {% if not session.get('logged_in') %}
+                <!-- Henüz giriş yapmamışlar için şık buton -->
+                <a href="/basvuru" class="btn btn-outline-light rounded-pill px-4 shadow-sm" 
+                   style="transition: all 0.3s ease; border-width: 2px;">
+                    Ajansa Başvur
+                </a>
+            {% else %}
+                <!-- Giriş yapmışlar için estetik çıkış butonu -->
+                <a href="/logout" class="btn btn-outline-danger rounded-pill px-3">
+                    Giriş Yapıldı
+                </a>
+            {% endif %}
+        </div>
         <div class="container">
             {% if session.get('logged_in') %}
                 {% if session.get('role') == 'admin' %}
@@ -271,6 +271,9 @@
                     </li>
                     {% if session.get('logged_in') %}
                         {% if session.get('role') == 'admin' %}
+                            <li class="nav-item">
+                                <a class="nav-link text-warning fw-bold ms-2" href="/admin/basvurular">📥 Başvurular</a>
+                            </li>
                             <li class="nav-item">
                                 <a class="btn btn-success btn-sm ms-2 px-3 fw-bold" href="/ekle">+ Oyuncu Ekle</a>
                             </li>
@@ -298,19 +301,47 @@
             <h1 class="display-4 fw-extrabold text-white">Geleceğin Yıldızlarını Keşfedin</h1>
             <p class="lead text-muted">Nova Cast Ajans bünyesindeki profesyonel oyuncu kadrosuna göz atın.</p>
             
+            <!-- GELİŞMİŞ FİLTRELEME ALANI -->
             <div class="search-box">
-                <form action="/" method="GET" class="input-group">
-                    <input type="text" name="q" class="form-control search-input" placeholder="Oyuncu adı ile arayın..." value="{{ arama_sorgusu or '' }}">
-                    <button class="btn search-btn" type="submit">Ara</button>
-                    <form action="/" method="GET" class="d-flex gap-2 mb-4 justify-content-center">
-    <select name="cinsiyet" class="form-select bg-dark text-white" style="width: auto;">
-        <option value="">Tüm Cinsiyetler</option>
-        <option value="Erkek">Erkek</option>
-        <option value="Kadın">Kadın</option>
-    </select>
-    <button type="submit" class="btn btn-primary">Filtrele</button>
-</form>
-                </form>
+                <!-- GELİŞMİŞ FİLTRELEME -->
+<div class="search-box">
+    <form action="/" method="GET" class="bg-dark p-4 rounded-4 shadow">
+        <div class="row g-2">
+            <!-- İsim Arama -->
+            <div class="col-12 col-md-6">
+                <div class="filter-label">İsim ile Ara</div>
+                <input type="text" name="q" class="form-control" placeholder="Oyuncu adı..." value="{{ arama_sorgusu or '' }}">
+            </div>
+            <!-- Cinsiyet -->
+            <div class="col-6 col-md-3">
+                <div class="filter-label">Cinsiyet</div>
+                <select name="cinsiyet" class="form-select">
+                    <option value="">Tümü</option>
+                    <option value="Erkek" {% if secili_cinsiyet == 'Erkek' %}selected{% endif %}>Erkek</option>
+                    <option value="Kadın" {% if secili_cinsiyet == 'Kadın' %}selected{% endif %}>Kadın</option>
+                </select>
+            </div>
+            <!-- Şehir -->
+            <div class="col-6 col-md-3">
+                <div class="filter-label">Şehir</div>
+                <input type="text" name="sehir" class="form-control" placeholder="Örn: İstanbul" value="{{ secili_sehir or '' }}">
+            </div>
+            <!-- Yaş Min/Max -->
+            <div class="col-6 col-md-3">
+                <div class="filter-label">Min Yaş</div>
+                <input type="number" name="yas_min" class="form-control" placeholder="18" value="{{ yas_min }}">
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="filter-label">Max Yaş</div>
+                <input type="number" name="yas_max" class="form-control" placeholder="50" value="{{ yas_max }}">
+            </div>
+            <!-- Arama Butonu -->
+            <div class="col-12 col-md-6 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100 fw-bold">Filtreleri Uygula</button>
+            </div>
+        </div>
+    </form>
+</div>
             </div>
         </div>
     </header>
@@ -330,7 +361,7 @@
         {% endwith %}
 
         <!-- ================= ÖZEL KURUCU BÖLÜMÜ ================= -->
-        {% if kurucu %}
+        {% if kurucu and current_page == 1 %}
             <div class="row mb-5 justify-content-center">
                 <div class="col-12 text-center mb-4">
                     <h2 class="fw-bold text-uppercase" style="letter-spacing: 2px; color: #3b82f6;">Ajans Sahibi & Kurucu</h2>
@@ -364,7 +395,7 @@
         <!-- ======================================================= -->
 
         <!-- ================= OYUNCU VİTRİNİ BÖLÜMÜ (OTOMATİK KAYAN) ================= -->
-        {% if oyuncular %}
+        {% if oyuncular and current_page == 1 %}
             <div class="row mb-3">
                 <div class="col-12">
                     <h4 class="fw-bold text-white mb-1">⭐ Yıldız Vitrini</h4>
@@ -467,6 +498,31 @@
             {% endif %}
         {% endif %}
         <!-- ======================================================================= -->
+
+        <!-- ================= SAYFALANDIRMA BÖLÜMÜ ================= -->
+        {% if total_pages > 1 %}
+        <nav aria-label="Sayfa Gezinme" class="mt-5 mb-4">
+            <ul class="pagination justify-content-center">
+                {% if current_page > 1 %}
+                <li class="page-item">
+                    <a class="page-link bg-dark text-white border-secondary" href="?page={{ current_page - 1 }}&q={{ arama_sorgusu }}&cinsiyet={{ secili_cinsiyet }}&yas_min={{ yas_min }}&yas_max={{ yas_max }}&sehir={{ secili_sehir }}">Önceki</a>
+                </li>
+                {% endif %}
+                
+                {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == current_page %}active{% endif %}">
+                    <a class="page-link {% if p == current_page %}bg-primary border-primary text-white fw-bold{% else %}bg-dark text-white border-secondary{% endif %}" href="?page={{ p }}&q={{ arama_sorgusu }}&cinsiyet={{ secili_cinsiyet }}&yas_min={{ yas_min }}&yas_max={{ yas_max }}&sehir={{ secili_sehir }}">{{ p }}</a>
+                </li>
+                {% endfor %}
+                
+                {% if current_page < total_pages %}
+                <li class="page-item">
+                    <a class="page-link bg-dark text-white border-secondary" href="?page={{ current_page + 1 }}&q={{ arama_sorgusu }}&cinsiyet={{ secili_cinsiyet }}&yas_min={{ yas_min }}&yas_max={{ yas_max }}&sehir={{ secili_sehir }}">Sonraki</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
 
     </main>
 

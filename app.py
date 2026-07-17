@@ -1,5 +1,6 @@
 import os
 import uuid
+import math
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from supabase import create_client
 from dotenv import load_dotenv
@@ -27,19 +28,45 @@ def safe_int(val):
 
 @app.route('/')
 def index():
+    # URL'den gelen sayfa numarası (varsayılan: 1)
+    page = int(request.args.get('page', 1))
+    per_page = 16 # Her sayfada gösterilecek oyuncu sayısı
+    
+    # Filtre Parametreleri
     arama = request.args.get('q', '')
     cinsiyet = request.args.get('cinsiyet', '')
+    yas_min = safe_int(request.args.get('yas_min'))
+    yas_max = safe_int(request.args.get('yas_max'))
+    sehir = request.args.get('sehir', '')
     
-    query = supabase.table("oyuncular").select("*")
+    # count="exact" ile toplam kayıt sayısını da istiyoruz
+    query = supabase.table("oyuncular").select("*", count="exact")
     
+    # Filtreleri Uygula
     if arama:
         query = query.ilike("isim", f"%{arama}%")
     if cinsiyet:
         query = query.eq("cinsiyet", cinsiyet)
+    if yas_min is not None:
+        query = query.gte("yas", yas_min)
+    if yas_max is not None:
+        query = query.lte("yas", yas_max)
+    if sehir:
+        query = query.ilike("sehir", f"%{sehir}%")
+        
+    # Sayfalandırma (Pagination) Limit ve Offset Ayarı
+    start = (page - 1) * per_page
+    end = start + per_page - 1
+    query = query.range(start, end)
         
     res = query.execute()
     
     all_players = res.data if res.data else []
+    
+    # Toplam sayfa sayısını hesapla
+    total_count = res.count if hasattr(res, 'count') and res.count is not None else len(all_players)
+    total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
+    
     kurucu = None
     oyuncular_listesi = []
     
@@ -55,7 +82,16 @@ def index():
         if arama.lower() not in kurucu.get('isim', '').lower():
             kurucu = None
             
-    return render_template('index.html', oyuncular=oyuncular_listesi, kurucu=kurucu, arama_sorgusu=arama, secili_cinsiyet=cinsiyet)
+    return render_template('index.html', 
+                           oyuncular=oyuncular_listesi, 
+                           kurucu=kurucu, 
+                           arama_sorgusu=arama, 
+                           secili_cinsiyet=cinsiyet,
+                           yas_min=yas_min if yas_min is not None else '',
+                           yas_max=yas_max if yas_max is not None else '',
+                           secili_sehir=sehir,
+                           current_page=page,
+                           total_pages=total_pages)
 
 @app.route('/basvuru', methods=['GET', 'POST'])
 def basvuru():
@@ -84,7 +120,6 @@ def login():
             yetki = user[0].get('yetki', 'admin') 
             oyuncu_id = user[0].get('id', None) 
             
-            # KULLANICI ADINI DA SESSION'A KAYDEDİYORUZ
             session.update({'logged_in': True, 'role': yetki, 'oyuncu_id': oyuncu_id, 'kullanici_adi': k_adi})
             return redirect(url_for('index'))
         else:
@@ -287,6 +322,26 @@ def admin_duzenle(sayfa_adi):
     res = supabase.table("sayfalar").select("*").eq("sayfa_adi", sayfa_adi).execute()
     mevcut_veri = res.data[0] if res.data else {"baslik": "", "icerik": ""}
     return render_template('admin_duzenle.html', sayfa_adi=sayfa_adi, veri=mevcut_veri)
+
+# ================= YENİ: BAŞVURU YÖNETİMİ =================
+@app.route('/admin/basvurular')
+def admin_basvurular():
+    if session.get('role') != 'admin':
+        flash("Bu sayfayı görüntüleme yetkiniz yok.", "danger")
+        return redirect(url_for('index'))
+    
+    # En yeni başvuru en üstte gözüksün diye id'ye göre azalan (desc) sıraladık
+    res = supabase.table("basvurular").select("*").order("id", desc=True).execute()
+    return render_template('basvurular.html', basvurular=res.data)
+
+@app.route('/admin/basvurular/sil/<int:b_id>', methods=['POST'])
+def basvuru_sil(b_id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('index'))
+    
+    supabase.table("basvurular").delete().eq("id", b_id).execute()
+    flash("Başvuru reddedildi ve listeden kaldırıldı.", "success")
+    return redirect(url_for('admin_basvurular'))
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
