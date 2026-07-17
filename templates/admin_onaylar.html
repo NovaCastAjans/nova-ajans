@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Yönetim Paneli | Onay Bekleyenler</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .card { border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .data-label { font-weight: bold; color: #6c757d; }
+        .json-box { background: #212529; color: #00ff00; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Onay Bekleyen Değişiklikler</h1>
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Ana Sayfaya Dön</a>
+    </div>
+
+    {% if bekleyenler %}
+        {% for b in bekleyenler %}
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between">
+                <span>Oyuncu: <strong>{{ b.oyuncular.isim if b.oyuncular else 'Bilinmeyen Oyuncu' }}</strong></span>
+                <small>{{ b.created_at[:10] }} tarihinde talep edildi</small>
+            </div>
+            <div class="card-body">
+                <h6 class="mb-3">Talep Edilen Veriler:</h6>
+                <div class="json-box">
+                    {% for key, value in b.yeni_veriler.items() %}
+                        <div><span class="text-info">{{ key }}:</span> {{ value }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer d-flex gap-2">
+                <a href="{{ url_for('onay_islem', id=b.id, action='onayla') }}" class="btn btn-success flex-grow-1">✓ Onayla ve Güncelle</a>
+                <a href="{{ url_for('onay_islem', id=b.id, action='reddet') }}" class="btn btn-danger">X Reddet</a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info text-center">
+            <h4>Tebrikler!</h4>
+            <p>Şu an onay bekleyen hiçbir değişiklik bulunmuyor.</p>
+        </div>
+    {% endif %}
+</div>
+
+</body>
+</html>

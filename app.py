@@ -194,81 +194,6 @@ def oyuncu_ekle():
         return redirect(url_for('index'))
     return render_template('ekle.html')
 
-@app.route('/oyuncu/duzenle/<int:oyuncu_id>', methods=['GET', 'POST'])
-def oyuncu_duzenle(oyuncu_id):
-    if not session.get('logged_in'): 
-        return redirect(url_for('login'))
-    
-    if session.get('role') != 'admin' and session.get('oyuncu_id') != oyuncu_id:
-        flash("Bu profili düzenleme yetkiniz yok!", "danger")
-        return redirect(url_for('index'))
-
-    if request.method == 'POST':
-        guncel = {
-            "isim": request.form.get('isim'),
-            "yas": safe_int(request.form.get('yas')),
-            "cinsiyet": request.form.get('cinsiyet'),
-            "boy": safe_int(request.form.get('boy')),
-            "kilo": safe_int(request.form.get('kilo')),
-            "goz_rengi": request.form.get('goz_rengi'),
-            "sac_rengi": request.form.get('sac_rengi'),
-            "sehir": request.form.get('sehir'),
-            "telefon": request.form.get('telefon'),
-            "eposta": request.form.get('eposta'),
-            "deneyim": request.form.get('deneyim')
-        }
-        
-        file = request.files.get('resim')
-        if file and file.filename != '':
-            try:
-                ext = os.path.splitext(file.filename)[1]
-                filename = f"{uuid.uuid4()}{ext}"
-                file_data = file.read()
-                
-                supabase.storage.from_("oyuncu-resimleri").upload(
-                    path=filename,
-                    file=file_data,
-                    file_options={"content-type": file.content_type}
-                )
-                
-                resim_url_res = supabase.storage.from_("oyuncu-resimleri").get_public_url(filename)
-                if isinstance(resim_url_res, str):
-                    guncel["resim_url"] = resim_url_res
-                else:
-                    guncel["resim_url"] = getattr(resim_url_res, 'public_url', str(resim_url_res))
-            except Exception as e:
-                flash(f"Yeni resim yüklenirken hata oluştu: {str(e)}", "danger")
-
-        supabase.table("oyuncular").update(guncel).eq("id", oyuncu_id).execute()
-        
-        k_adi = request.form.get('kullanici_adi')
-        sifre = request.form.get('sifre')
-        
-        if k_adi and sifre:
-            mevcut_kullanici = supabase.table("kullanicilar").select("*").eq("id", oyuncu_id).execute().data
-            if mevcut_kullanici:
-                supabase.table("kullanicilar").update({
-                    "kullanici_adi": k_adi,
-                    "sifre": sifre
-                }).eq("id", oyuncu_id).execute()
-            else:
-                supabase.table("kullanicilar").insert({
-                    "kullanici_adi": k_adi,
-                    "sifre": sifre,
-                    "yetki": "oyuncu",
-                    "id": oyuncu_id
-                }).execute()
-
-        return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
-    
-    res = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
-    oyuncu_veri = res.data[0]
-    
-    kullanici_res = supabase.table("kullanicilar").select("*").eq("id", oyuncu_id).execute()
-    kullanici_veri = kullanici_res.data[0] if kullanici_res.data else {}
-    
-    return render_template('duzenle.html', oyuncu=oyuncu_veri, kullanici=kullanici_veri)
-
 @app.route('/oyuncu/<int:oyuncu_id>')
 def oyuncu_detay(oyuncu_id):
     res = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
@@ -334,7 +259,51 @@ def admin_basvurular():
     res = supabase.table("basvurular").select("*").order("id", desc=True).execute()
     return render_template('basvurular.html', basvurular=res.data)
 from flask import send_from_directory
+@app.route('/oyuncu/duzenle/<int:oyuncu_id>', methods=['GET', 'POST'])
+def oyuncu_duzenle(oyuncu_id):
+    if not session.get('logged_in'): 
+        return redirect(url_for('login'))
+    
+    # Yetki kontrolü: Admin ise veya kendi profiliyse girebilir
+    if session.get('role') != 'admin' and session.get('oyuncu_id') != oyuncu_id:
+        flash("Bu profili düzenleme yetkiniz yok!", "danger")
+        return redirect(url_for('index'))
 
+    if request.method == 'POST':
+        # Değişiklikleri topluyoruz
+        yeni_veriler = {
+            "isim": request.form.get('isim'),
+            "yas": safe_int(request.form.get('yas')),
+            "cinsiyet": request.form.get('cinsiyet'),
+            "boy": safe_int(request.form.get('boy')),
+            "kilo": safe_int(request.form.get('kilo')),
+            "goz_rengi": request.form.get('goz_rengi'),
+            "sac_rengi": request.form.get('sac_rengi'),
+            "sehir": request.form.get('sehir'),
+            "telefon": request.form.get('telefon'),
+            "eposta": request.form.get('eposta'),
+            "deneyim": request.form.get('deneyim')
+        }
+
+        # --- YENİ MANTIĞIMIZ: ADMIN DEĞİLSE ONAYA GÖNDER ---
+        if session.get('role') != 'admin':
+            supabase.table("bekleyen_degisiklikler").insert({
+                "oyuncu_id": oyuncu_id,
+                "yeni_veriler": yeni_veriler
+            }).execute()
+            flash("Değişiklik talebiniz yönetici onayına gönderildi.", "info")
+            return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
+
+        # --- ADMIN İSE DİREKT GÜNCELLE ---
+        supabase.table("oyuncular").update(yeni_veriler).eq("id", oyuncu_id).execute()
+        flash("Profil güncellendi!", "success")
+        return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
+    
+    # GET isteği için mevcut verileri çek
+    res = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
+    oyuncu_veri = res.data[0] if res.data else {}
+    
+    return render_template('duzenle.html', oyuncu=oyuncu_veri)
 @app.route('/sitemap.xml')
 def sitemap():
     return send_from_directory('static', 'sitemap.xml')
@@ -347,6 +316,32 @@ def basvuru_sil(b_id):
     flash("Başvuru reddedildi ve listeden kaldırıldı.", "success")
     return redirect(url_for('admin_basvurular'))
 # app.py dosyasında herhangi bir yere ekleyebilirsin
+@app.route('/admin/onaylar')
+def admin_onaylar():
+    if session.get('role') != 'admin': return redirect(url_for('index'))
+    
+    # Bekleyenleri çek
+    bekleyenler = supabase.table("bekleyen_degisiklikler").select("*, oyuncular(isim)").execute().data
+    return render_template('admin_onaylar.html', bekleyenler=bekleyenler)
+
+@app.route('/admin/onay/islem/<int:id>/<action>')
+def onay_islem(id, action):
+    if session.get('role') != 'admin': return redirect(url_for('index'))
+    
+    if action == 'onayla':
+        # 1. Veriyi çek
+        istek = supabase.table("bekleyen_degisiklikler").select("*").eq("id", id).single().execute().data
+        # 2. Oyuncular tablosunu güncelle
+        supabase.table("oyuncular").update(istek['yeni_veriler']).eq("id", istek['oyuncu_id']).execute()
+        # 3. İsteği sil
+        supabase.table("bekleyen_degisiklikler").delete().eq("id", id).execute()
+        flash("Değişiklik onaylandı!", "success")
+        
+    elif action == 'reddet':
+        supabase.table("bekleyen_degisiklikler").delete().eq("id", id).execute()
+        flash("Değişiklik reddedildi.", "danger")
+        
+    return redirect(url_for('admin_onaylar'))
 @app.route('/ping')
 def ping():
     return "Pong! Site uyanık.", 200

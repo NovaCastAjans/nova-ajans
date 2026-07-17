@@ -9,24 +9,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         /* Filtre Etiket Stili */
-.filter-label { font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.25rem; text-align: left; font-weight: 600; }
+        .filter-label { font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.25rem; text-align: left; font-weight: 600; }
         /* Yükleme Ekranı Stili */
-#loading-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: #0b0c10;
-    display: flex;
-    justify-content: center; align-items: center;
-    z-index: 9999;
-}
-.spinner {
-    border: 4px solid #1e293b;
-    border-top: 4px solid #3b82f6;
-    border-radius: 50%;
-    width: 40px; height: 40px;
-    animation: spin 1s linear infinite;
-}
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #loading-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #0b0c10;
+            display: flex;
+            justify-content: center; align-items: center;
+            z-index: 9999;
+        }
+        .spinner {
+            border: 4px solid #1e293b;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px; height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         body {
             background-color: #0b0c10 !important;
             color: #f1f5f9 !important;
@@ -55,29 +55,6 @@
         .search-box {
             max-width: 800px;
             margin: 2rem auto 0 auto;
-        }
-        .search-input {
-            background-color: #1e293b !important;
-            border: 2px solid #334155 !important;
-            color: #ffffff !important;
-            font-weight: 600 !important;
-            padding: 0.75rem 1.5rem !important;
-            border-radius: 30px 0 0 30px !important;
-        }
-        .search-input:focus {
-            border-color: #2563eb !important;
-            box-shadow: none !important;
-        }
-        .search-btn {
-            background-color: #2563eb !important;
-            border: none !important;
-            color: white !important;
-            font-weight: 700 !important;
-            padding: 0.75rem 2rem !important;
-            border-radius: 0 30px 30px 0 !important;
-        }
-        .search-btn:hover {
-            background-color: #1d4ed8 !important;
         }
         .oyuncu-card {
             background: #111827;
@@ -143,85 +120,19 @@
             color: #ffffff !important;
         }
         
-        /* ================= VİTRİN (KAYAN PENCERE) CSS ================= */
-        .vitrin-wrapper {
-            position: relative;
-            width: 100%;
-            overflow: hidden;
-            padding: 1rem 0;
-            margin-bottom: 2rem;
-        }
-        .vitrin-scroll {
-            display: flex;
-            gap: 1.5rem;
-            overflow-x: auto;
-            -ms-overflow-style: none;  
-            scrollbar-width: none;  
-        }
-        .vitrin-scroll::-webkit-scrollbar {
-            display: none;
-        }
-        .vitrin-item-link {
-            flex: 0 0 220px; 
-            text-decoration: none;
-        }
-        .vitrin-item {
-            background: #111827;
-            border: 1px solid #1e293b;
-            border-radius: 12px;
-            overflow: hidden;
-            transition: transform 0.3s ease, border-color 0.3s ease;
-            cursor: pointer;
-            height: 100%;
-        }
-        .vitrin-item:hover {
-            transform: scale(1.05);
-            border-color: #3b82f6;
-        }
-        .vitrin-item-img {
-            width: 100%;
-            height: 280px;
-            object-fit: cover;
-        }
-        .vitrin-item-no-img {
-            width: 100%;
-            height: 280px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #1f2937;
-            font-size: 4rem;
-            color: #4b5563;
-        }
-        .vitrin-item-title {
-            padding: 1rem;
-            text-align: center;
-            color: #ffffff;
-            font-weight: 700;
-            font-size: 1rem;
-            margin: 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        /* Vitrin CSS */
+        .vitrin-wrapper { position: relative; width: 100%; overflow: hidden; padding: 1rem 0; margin-bottom: 2rem; }
+        .vitrin-scroll { display: flex; gap: 1.5rem; overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
+        .vitrin-scroll::-webkit-scrollbar { display: none; }
+        .vitrin-item-link { flex: 0 0 220px; text-decoration: none; }
+        .vitrin-item { background: #111827; border: 1px solid #1e293b; border-radius: 12px; overflow: hidden; transition: transform 0.3s ease, border-color 0.3s ease; cursor: pointer; height: 100%; }
+        .vitrin-item:hover { transform: scale(1.05); border-color: #3b82f6; }
+        .vitrin-item-img { width: 100%; height: 280px; object-fit: cover; }
+        .vitrin-item-no-img { width: 100%; height: 280px; display: flex; align-items: center; justify-content: center; background-color: #1f2937; font-size: 4rem; color: #4b5563; }
+        .vitrin-item-title { padding: 1rem; text-align: center; color: #ffffff; font-weight: 700; font-size: 1rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .kategori-baslik { border-bottom: 2px solid #1e293b; padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #f8fafc; }
         
-        /* Kategori Başlıkları için Alt Çizgi Stili */
-        .kategori-baslik {
-            border-bottom: 2px solid #1e293b;
-            padding-bottom: 0.75rem;
-            margin-bottom: 1.5rem;
-            color: #f8fafc;
-        }
-        /* ============================================================== */
-
-        footer {
-            background-color: #0f172a;
-            border-top: 1px solid #1e293b;
-            padding: 2rem 0;
-            margin-top: 5rem;
-            text-align: center;
-            color: #64748b;
-        }
+        footer { background-color: #0f172a; border-top: 1px solid #1e293b; padding: 2rem 0; margin-top: 5rem; text-align: center; color: #64748b; }
     </style>
 </head>
 <body>
@@ -231,21 +142,12 @@
         document.getElementById('loading-overlay').style.display = 'none';
     });
 </script>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
-        <!-- Navigasyon Menüsü -->
         <div class="d-flex align-items-center gap-3">
             {% if not session.get('logged_in') %}
-                <!-- Henüz giriş yapmamışlar için şık buton -->
-                <a href="/basvuru" class="btn btn-outline-light rounded-pill px-4 shadow-sm" 
-                   style="transition: all 0.3s ease; border-width: 2px;">
-                    Ajansa Başvur
-                </a>
+                <a href="/basvuru" class="btn btn-outline-light rounded-pill px-4 shadow-sm" style="transition: all 0.3s ease; border-width: 2px;">Ajansa Başvur</a>
             {% else %}
-                <!-- Giriş yapmışlar için estetik çıkış butonu -->
-                <a href="/logout" class="btn btn-outline-danger rounded-pill px-3">
-                    Giriş Yapıldı
-                </a>
+                <a href="/logout" class="btn btn-outline-danger rounded-pill px-3">Giriş Yapıldı</a>
             {% endif %}
         </div>
         <div class="container">
@@ -258,7 +160,6 @@
             {% else %}
                 <a class="navbar-brand" href="/">🎭 NOVA CAST AJANS</a>
             {% endif %}
-            
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -274,6 +175,9 @@
                         {% if session.get('role') == 'admin' %}
                             <li class="nav-item">
                                 <a class="nav-link text-warning fw-bold ms-2" href="/admin/basvurular">📥 Başvurular</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="btn btn-warning btn-sm ms-2 px-3 fw-bold" href="{{ url_for('admin_onaylar') }}">⏳ Bekleyen Onaylar</a>
                             </li>
                             <li class="nav-item">
                                 <a class="btn btn-success btn-sm ms-2 px-3 fw-bold" href="/ekle">+ Oyuncu Ekle</a>
@@ -296,60 +200,47 @@
         </div>
     </nav>
 
-    <!-- Hero Bölümü -->
     <header class="hero-section">
         <div class="container">
             <h1 class="display-4 fw-extrabold text-white">Geleceğin Yıldızlarını Keşfedin</h1>
             <p class="lead text-muted">Nova Cast Ajans bünyesindeki profesyonel oyuncu kadrosuna göz atın.</p>
-            
-            <!-- GELİŞMİŞ FİLTRELEME ALANI -->
             <div class="search-box">
-                <!-- GELİŞMİŞ FİLTRELEME -->
-<div class="search-box">
-    <form action="/" method="GET" class="bg-dark p-4 rounded-4 shadow">
-        <div class="row g-2">
-            <!-- İsim Arama -->
-            <div class="col-12 col-md-6">
-                <div class="filter-label">İsim ile Ara</div>
-                <input type="text" name="q" class="form-control" placeholder="Oyuncu adı..." value="{{ arama_sorgusu or '' }}">
-            </div>
-            <!-- Cinsiyet -->
-            <div class="col-6 col-md-3">
-                <div class="filter-label">Cinsiyet</div>
-                <select name="cinsiyet" class="form-select">
-                    <option value="">Tümü</option>
-                    <option value="Erkek" {% if secili_cinsiyet == 'Erkek' %}selected{% endif %}>Erkek</option>
-                    <option value="Kadın" {% if secili_cinsiyet == 'Kadın' %}selected{% endif %}>Kadın</option>
-                </select>
-            </div>
-            <!-- Şehir -->
-            <div class="col-6 col-md-3">
-                <div class="filter-label">Şehir</div>
-                <input type="text" name="sehir" class="form-control" placeholder="Örn: İstanbul" value="{{ secili_sehir or '' }}">
-            </div>
-            <!-- Yaş Min/Max -->
-            <div class="col-6 col-md-3">
-                <div class="filter-label">Min Yaş</div>
-                <input type="number" name="yas_min" class="form-control" placeholder="18" value="{{ yas_min }}">
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="filter-label">Max Yaş</div>
-                <input type="number" name="yas_max" class="form-control" placeholder="50" value="{{ yas_max }}">
-            </div>
-            <!-- Arama Butonu -->
-            <div class="col-12 col-md-6 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary w-100 fw-bold">Filtreleri Uygula</button>
-            </div>
-        </div>
-    </form>
-</div>
+                <form action="/" method="GET" class="bg-dark p-4 rounded-4 shadow">
+                    <div class="row g-2">
+                        <div class="col-12 col-md-6">
+                            <div class="filter-label">İsim ile Ara</div>
+                            <input type="text" name="q" class="form-control" placeholder="Oyuncu adı..." value="{{ arama_sorgusu or '' }}">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="filter-label">Cinsiyet</div>
+                            <select name="cinsiyet" class="form-select">
+                                <option value="">Tümü</option>
+                                <option value="Erkek" {% if secili_cinsiyet == 'Erkek' %}selected{% endif %}>Erkek</option>
+                                <option value="Kadın" {% if secili_cinsiyet == 'Kadın' %}selected{% endif %}>Kadın</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="filter-label">Şehir</div>
+                            <input type="text" name="sehir" class="form-control" placeholder="Örn: İstanbul" value="{{ secili_sehir or '' }}">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="filter-label">Min Yaş</div>
+                            <input type="number" name="yas_min" class="form-control" placeholder="18" value="{{ yas_min }}">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="filter-label">Max Yaş</div>
+                            <input type="number" name="yas_max" class="form-control" placeholder="50" value="{{ yas_max }}">
+                        </div>
+                        <div class="col-12 col-md-6 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100 fw-bold">Filtreleri Uygula</button>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </header>
 
-    <!-- Ana İçerik -->
     <main class="container my-5">
-        <!-- Flash Mesajları -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -361,7 +252,6 @@
             {% endif %}
         {% endwith %}
 
-        <!-- ================= ÖZEL KURUCU BÖLÜMÜ ================= -->
         {% if kurucu and current_page == 1 %}
             <div class="row mb-5 justify-content-center">
                 <div class="col-12 text-center mb-4">
@@ -393,9 +283,7 @@
             </div>
             <hr style="border-color: #1e293b; margin-bottom: 4rem;">
         {% endif %}
-        <!-- ======================================================= -->
 
-        <!-- ================= OYUNCU VİTRİNİ BÖLÜMÜ (OTOMATİK KAYAN) ================= -->
         {% if oyuncular and current_page == 1 %}
             <div class="row mb-3">
                 <div class="col-12">
@@ -403,7 +291,6 @@
                     <p class="text-muted small">Tüm kadromuza hızlıca göz atın</p>
                 </div>
             </div>
-            
             <div class="vitrin-wrapper">
                 <div class="vitrin-scroll" id="vitrinScroll">
                     {% for oyuncu in oyuncular %}
@@ -422,16 +309,12 @@
             </div>
             <hr style="border-color: #1e293b; margin-bottom: 4rem;">
         {% endif %}
-        <!-- ======================================================= -->
 
-        <!-- ================= KATEGORİLENDİRİLMİŞ OYUNCU BÖLÜMÜ ================= -->
         {% macro render_kategori(liste, baslik, ikon) %}
             {% if liste|length > 0 %}
                 <div class="row mt-4 mb-3">
                     <div class="col-12">
-                        <h3 class="fw-bold kategori-baslik">
-                            {{ ikon }} {{ baslik }}
-                        </h3>
+                        <h3 class="fw-bold kategori-baslik">{{ ikon }} {{ baslik }}</h3>
                     </div>
                 </div>
                 <div class="row g-4 mb-5">
@@ -460,7 +343,6 @@
         {% endmacro %}
 
         {% if oyuncular %}
-            <!-- Oyuncuları Yaşlarına Göre Gruplama -->
             {% set cocuklar = [] %}
             {% set gencler = [] %}
             {% set ortalar = [] %}
@@ -483,13 +365,11 @@
                 {% endif %}
             {% endfor %}
 
-            <!-- Kategorileri Ekrana Basma -->
             {{ render_kategori(cocuklar, "Çocuk Oyuncu Kategorisi (0-15 Yaş)", "🧸") }}
             {{ render_kategori(gencler, "Genç Oyuncu Kategorisi (16-25 Yaş)", "🌟") }}
             {{ render_kategori(ortalar, "Orta Yaş Oyuncu Kategorisi (26-45 Yaş)", "🎬") }}
             {{ render_kategori(yaslilar, "Kıdemli / Usta Oyuncular (46+ Yaş)", "👑") }}
             {{ render_kategori(belirsizler, "Diğer Oyuncular", "👤") }}
-            
         {% else %}
             {% if not kurucu %}
                 <div class="col-12 text-center py-5">
@@ -498,9 +378,7 @@
                 </div>
             {% endif %}
         {% endif %}
-        <!-- ======================================================================= -->
 
-        <!-- ================= SAYFALANDIRMA BÖLÜMÜ ================= -->
         {% if total_pages > 1 %}
         <nav aria-label="Sayfa Gezinme" class="mt-5 mb-4">
             <ul class="pagination justify-content-center">
@@ -509,13 +387,11 @@
                     <a class="page-link bg-dark text-white border-secondary" href="?page={{ current_page - 1 }}&q={{ arama_sorgusu }}&cinsiyet={{ secili_cinsiyet }}&yas_min={{ yas_min }}&yas_max={{ yas_max }}&sehir={{ secili_sehir }}">Önceki</a>
                 </li>
                 {% endif %}
-                
                 {% for p in range(1, total_pages + 1) %}
                 <li class="page-item {% if p == current_page %}active{% endif %}">
                     <a class="page-link {% if p == current_page %}bg-primary border-primary text-white fw-bold{% else %}bg-dark text-white border-secondary{% endif %}" href="?page={{ p }}&q={{ arama_sorgusu }}&cinsiyet={{ secili_cinsiyet }}&yas_min={{ yas_min }}&yas_max={{ yas_max }}&sehir={{ secili_sehir }}">{{ p }}</a>
                 </li>
                 {% endfor %}
-                
                 {% if current_page < total_pages %}
                 <li class="page-item">
                     <a class="page-link bg-dark text-white border-secondary" href="?page={{ current_page + 1 }}&q={{ arama_sorgusu }}&cinsiyet={{ secili_cinsiyet }}&yas_min={{ yas_min }}&yas_max={{ yas_max }}&sehir={{ secili_sehir }}">Sonraki</a>
@@ -524,52 +400,36 @@
             </ul>
         </nav>
         {% endif %}
-
     </main>
 
-    <!-- Footer -->
     <footer>
         <div class="container">
             <p>&copy; 2026 Nova Cast Ajans. Tüm Hakları Saklıdır.</p>
         </div>
     </footer>
 
-    <!-- Bootstrap JS kütüphaneleri -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- ================= VİTRİN OTOMATİK KAYDIRMA SCRİPTİ ================= -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const scrollContainer = document.getElementById('vitrinScroll');
             if (scrollContainer) {
                 const content = scrollContainer.innerHTML;
                 scrollContainer.innerHTML += content;
-                
                 let isHovered = false;
-                
                 scrollContainer.addEventListener('mouseenter', () => isHovered = true);
                 scrollContainer.addEventListener('mouseleave', () => isHovered = false);
                 scrollContainer.addEventListener('touchstart', () => isHovered = true);
-                scrollContainer.addEventListener('touchend', () => {
-                    setTimeout(() => isHovered = false, 1000); 
-                });
-
+                scrollContainer.addEventListener('touchend', () => { setTimeout(() => isHovered = false, 1000); });
                 function autoScroll() {
                     if (!isHovered) {
                         scrollContainer.scrollLeft += 1; 
-                        
-                        if (scrollContainer.scrollLeft >= scrollContainer.scrollWidth / 2) {
-                            scrollContainer.scrollLeft = 0;
-                        }
+                        if (scrollContainer.scrollLeft >= scrollContainer.scrollWidth / 2) { scrollContainer.scrollLeft = 0; }
                     }
                     requestAnimationFrame(autoScroll);
                 }
-                
                 requestAnimationFrame(autoScroll);
             }
         });
     </script>
-    <!-- ==================================================================== -->
-
 </body>
 </html>
