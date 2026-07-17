@@ -333,7 +333,11 @@ def admin_basvurular():
     # En yeni başvuru en üstte gözüksün diye id'ye göre azalan (desc) sıraladık
     res = supabase.table("basvurular").select("*").order("id", desc=True).execute()
     return render_template('basvurular.html', basvurular=res.data)
+from flask import send_from_directory
 
+@app.route('/sitemap.xml')
+def sitemap():
+    return send_from_directory('static', 'sitemap.xml')
 @app.route('/admin/basvurular/sil/<int:b_id>', methods=['POST'])
 def basvuru_sil(b_id):
     if session.get('role') != 'admin':
