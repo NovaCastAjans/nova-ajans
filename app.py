@@ -84,7 +84,8 @@ def login():
             yetki = user[0].get('yetki', 'admin') 
             oyuncu_id = user[0].get('id', None) 
             
-            session.update({'logged_in': True, 'role': yetki, 'oyuncu_id': oyuncu_id})
+            # KULLANICI ADINI DA SESSION'A KAYDEDİYORUZ
+            session.update({'logged_in': True, 'role': yetki, 'oyuncu_id': oyuncu_id, 'kullanici_adi': k_adi})
             return redirect(url_for('index'))
         else:
             flash("Hatalı kullanıcı adı veya şifre", "danger")
