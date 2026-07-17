@@ -1,7 +1,8 @@
 import os
 import uuid
 import math
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory
+from werkzeug.utils import secure_filename
 from supabase import create_client
 from dotenv import load_dotenv
 
@@ -193,6 +194,7 @@ def oyuncu_ekle():
                 
         return redirect(url_for('index'))
     return render_template('ekle.html')
+
 # ================= MESAJ GÖNDERME (SADECE ADMİN) =================
 @app.route('/admin/mesaj_gonder', methods=['POST'])
 def mesaj_gonder():
@@ -204,7 +206,6 @@ def mesaj_gonder():
     mesaj = request.form.get('mesaj_metni')
     
     try:
-        # Mesajı Supabase'e kaydediyoruz
         supabase.table('mesajlar').insert({
             'alici_id': alici_id,
             'mesaj_metni': mesaj
@@ -213,32 +214,27 @@ def mesaj_gonder():
     except Exception as e:
         flash(f'Mesaj gönderilirken bir hata oluştu: {str(e)}', 'danger')
         
-    # İşlem bitince adminin geldiği sayfaya geri dön (genelde profil sayfasıdır)
     return redirect(request.referrer or url_for('index'))
 
 # ================= GELEN KUTUSU (OYUNCU) =================
 @app.route('/gelen_kutusu')
 def gelen_kutusu():
-    # Sadece giriş yapmış kişiler girebilir
     if not session.get('logged_in'):
         return redirect(url_for('login'))
         
-    # Adminin gelen kutusu olmaz, o sadece mesaj gönderir
     if session.get('role') == 'admin':
         return redirect(url_for('index'))
         
-    # Oyuncunun ID'sini alıyoruz (daha önce "oyuncu id yok id var" demiştin, o yüzden id alıyoruz)
-    # Eğer session'da oyuncu_id olarak tutuyorsan burayı session.get('oyuncu_id') yap
     kullanici_id = session.get('id') or session.get('oyuncu_id')
     
     try:
-        # Oyuncuya ait mesajları tarihe göre yeniden eskiye doğru çekiyoruz
         response = supabase.table('mesajlar').select('*').eq('alici_id', str(kullanici_id)).order('tarih', desc=True).execute()
         mesajlar = response.data
     except Exception as e:
         mesajlar = []
         
     return render_template('gelen_kutusu.html', mesajlar=mesajlar)
+
 @app.route('/oyuncu/<int:oyuncu_id>')
 def oyuncu_detay(oyuncu_id):
     res = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
@@ -293,28 +289,45 @@ def admin_duzenle(sayfa_adi):
     mevcut_veri = res.data[0] if res.data else {"baslik": "", "icerik": ""}
     return render_template('admin_duzenle.html', sayfa_adi=sayfa_adi, veri=mevcut_veri)
 
-# ================= YENİ: BAŞVURU YÖNETİMİ =================
 @app.route('/admin/basvurular')
 def admin_basvurular():
     if session.get('role') != 'admin':
         flash("Bu sayfayı görüntüleme yetkiniz yok.", "danger")
         return redirect(url_for('index'))
     
-    # En yeni başvuru en üstte gözüksün diye id'ye göre azalan (desc) sıraladık
     res = supabase.table("basvurular").select("*").order("id", desc=True).execute()
     return render_template('basvurular.html', basvurular=res.data)
-from flask import send_from_directory
+
 @app.route('/oyuncu/duzenle/<int:oyuncu_id>', methods=['GET', 'POST'])
 def oyuncu_duzenle(oyuncu_id):
     if not session.get('logged_in'): 
         return redirect(url_for('login'))
     
-    # Yetki kontrolü: Admin ise veya kendi profiliyse girebilir
     if session.get('role') != 'admin' and session.get('oyuncu_id') != oyuncu_id:
         flash("Bu profili düzenleme yetkiniz yok!", "danger")
         return redirect(url_for('index'))
 
     if request.method == 'POST':
+        # --- FOTOĞRAF YÜKLEME MANTIĞI ---
+        resim_url = None
+        file = request.files.get('profile_photo')
+        if file and file.filename != '':
+            try:
+                ext = os.path.splitext(file.filename)[1]
+                filename = f"{uuid.uuid4()}{ext}"
+                file_data = file.read()
+                
+                supabase.storage.from_("oyuncu-resimleri").upload(
+                    path=filename,
+                    file=file_data,
+                    file_options={"content-type": file.content_type}
+                )
+                
+                resim_url_res = supabase.storage.from_("oyuncu-resimleri").get_public_url(filename)
+                resim_url = resim_url_res if isinstance(resim_url_res, str) else getattr(resim_url_res, 'public_url', str(resim_url_res))
+            except Exception as e:
+                flash(f"Resim yüklenemedi: {str(e)}", "danger")
+
         # Değişiklikleri topluyoruz
         yeni_veriler = {
             "isim": request.form.get('isim'),
@@ -329,6 +342,9 @@ def oyuncu_duzenle(oyuncu_id):
             "eposta": request.form.get('eposta'),
             "deneyim": request.form.get('deneyim')
         }
+        
+        if resim_url:
+            yeni_veriler["resim_url"] = resim_url
 
         # --- YENİ MANTIĞIMIZ: ADMIN DEĞİLSE ONAYA GÖNDER ---
         if session.get('role') != 'admin':
@@ -344,14 +360,15 @@ def oyuncu_duzenle(oyuncu_id):
         flash("Profil güncellendi!", "success")
         return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
     
-    # GET isteği için mevcut verileri çek
     res = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
     oyuncu_veri = res.data[0] if res.data else {}
     
     return render_template('duzenle.html', oyuncu=oyuncu_veri)
+
 @app.route('/sitemap.xml')
 def sitemap():
     return send_from_directory('static', 'sitemap.xml')
+
 @app.route('/admin/basvurular/sil/<int:b_id>', methods=['POST'])
 def basvuru_sil(b_id):
     if session.get('role') != 'admin':
@@ -360,12 +377,11 @@ def basvuru_sil(b_id):
     supabase.table("basvurular").delete().eq("id", b_id).execute()
     flash("Başvuru reddedildi ve listeden kaldırıldı.", "success")
     return redirect(url_for('admin_basvurular'))
-# app.py dosyasında herhangi bir yere ekleyebilirsin
+
 @app.route('/admin/onaylar')
 def admin_onaylar():
     if session.get('role') != 'admin': return redirect(url_for('index'))
     
-    # Bekleyenleri çek
     bekleyenler = supabase.table("bekleyen_degisiklikler").select("*, oyuncular(isim)").execute().data
     return render_template('admin_onaylar.html', bekleyenler=bekleyenler)
 
@@ -374,11 +390,8 @@ def onay_islem(id, action):
     if session.get('role') != 'admin': return redirect(url_for('index'))
     
     if action == 'onayla':
-        # 1. Veriyi çek
         istek = supabase.table("bekleyen_degisiklikler").select("*").eq("id", id).single().execute().data
-        # 2. Oyuncular tablosunu güncelle
         supabase.table("oyuncular").update(istek['yeni_veriler']).eq("id", istek['oyuncu_id']).execute()
-        # 3. İsteği sil
         supabase.table("bekleyen_degisiklikler").delete().eq("id", id).execute()
         flash("Değişiklik onaylandı!", "success")
         
@@ -387,10 +400,9 @@ def onay_islem(id, action):
         flash("Değişiklik reddedildi.", "danger")
         
     return redirect(url_for('admin_onaylar'))
-# ================= ADMIN MESAJ PANELİ VE GÖNDERİMİ =================
+
 @app.route('/admin/mesajlar', methods=['GET', 'POST'])
 def admin_mesajlar():
-    # Güvenlik kontrolü: Sadece admin girebilir
     if session.get('role') != 'admin':
         flash('Bu işlem için yetkiniz yok!', 'danger')
         return redirect(url_for('index'))
@@ -405,23 +417,19 @@ def admin_mesajlar():
             
         try:
             if alici_id == 'hepsi':
-                # Veritabanındaki tüm oyuncuları çekiyoruz
                 oyuncular_resp = supabase.table('oyuncular').select('id').execute()
                 tum_oyuncular = oyuncular_resp.data
                 
                 if tum_oyuncular:
-                    # Supabase'e tek seferde basabilmek için toplu veri listesi oluşturuyoruz
                     toplu_mesajlar = [
                         {'alici_id': str(oyuncu['id']), 'mesaj_metni': mesaj}
                         for oyuncu in tum_oyuncular
                     ]
-                    # Tek bir sorgu ile tüm veriyi listeler halinde tek seferde veritabanına ekliyoruz
                     supabase.table('mesajlar').insert(toplu_mesajlar).execute()
                     flash(f'Mesaj başarıyla listedeki tüm oyunculara ({len(toplu_mesajlar)} kişi) iletildi.', 'success')
                 else:
                     flash('Sistemde kayıtlı hiç oyuncu bulunamadı.', 'warning')
             else:
-                # Sadece tek bir oyuncu seçildiyse normal işleyiş devam eder
                 supabase.table('mesajlar').insert({
                     'alici_id': str(alici_id),
                     'mesaj_metni': mesaj
@@ -432,7 +440,6 @@ def admin_mesajlar():
             flash(f'Mesaj gönderilirken bir hata oluştu: {str(e)}', 'danger')
         return redirect(url_for('admin_mesajlar'))
     
-    # GET İsteği: Dropdown listesi için tüm oyuncuların id ve isimlerini çekiyoruz
     try:
         response = supabase.table('oyuncular').select('id, isim').order('isim').execute()
         oyuncu_listesi = response.data
@@ -441,8 +448,10 @@ def admin_mesajlar():
         flash(f'Oyuncu listesi yüklenirken hata oluştu: {str(e)}', 'danger')
         
     return render_template('admin_mesaj_paneli.html', oyuncular=oyuncu_listesi)
+
 @app.route('/ping')
 def ping():
     return "Pong! Site uyanık.", 200
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

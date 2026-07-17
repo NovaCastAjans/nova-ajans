@@ -64,7 +64,6 @@
     <div class="form-container">
         <h2>Profil <span>Düzenle</span></h2>
         
-        <!-- Flash Hata Mesajları Bölümü -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -75,7 +74,6 @@
         
         <form action="{{ url_for('oyuncu_duzenle', oyuncu_id=oyuncu.id) }}" method="POST" enctype="multipart/form-data">
             
-            <!-- Resim Alanı ve Önizleme Düzeni -->
             <div class="form-group">
                 <label>Profil Fotoğrafı</label>
                 <div class="image-section">
@@ -88,7 +86,8 @@
                     {% endif %}
                     
                     <div class="file-upload-wrapper">
-                        <input type="file" name="resim" id="resim" accept="image/*">
+                        <!-- DÜZELTME: name="resim" yerine backend ile eşleşmesi için "profile_photo" yapıldı -->
+                        <input type="file" name="profile_photo" id="resim" accept="image/*">
                         <div class="file-upload-text">
                             <span id="file-name-text">Yeni fotoğraf seç</span> veya sürükleyin
                         </div>
@@ -96,7 +95,6 @@
                 </div>
             </div>
 
-            <!-- Giriş Bilgileri Bölümü (Kullanıcı Adı ve Şifre Güncelleme) -->
             <div style="border-bottom: 1px dashed rgba(255, 255, 255, 0.15); padding-bottom: 20px; margin-bottom: 25px;">
                 <h3 style="font-size: 18px; margin-bottom: 15px; color: #10b981;">Giriş ve Hesap Bilgileri</h3>
                 <div class="form-row">
