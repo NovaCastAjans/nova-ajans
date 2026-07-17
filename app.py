@@ -342,6 +342,9 @@ def basvuru_sil(b_id):
     supabase.table("basvurular").delete().eq("id", b_id).execute()
     flash("Başvuru reddedildi ve listeden kaldırıldı.", "success")
     return redirect(url_for('admin_basvurular'))
-
+# app.py dosyasında herhangi bir yere ekleyebilirsin
+@app.route('/ping')
+def ping():
+    return "Pong! Site uyanık.", 200
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
