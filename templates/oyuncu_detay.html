@@ -110,7 +110,7 @@
                             </li>
                         {% else %}
                             <li class="nav-item">
-                                <a class="btn btn-primary btn-sm ms-2 px-3 fw-bold" href="/oyuncu/{{ session.get('oyuncu_id') }}">Profilim</a>
+                                <a class="btn btn-primary btn-sm ms-2 px-3 fw-bold" href="{{ url_for('oyuncu_detay', oyuncu_id=session.get('oyuncu_id')) }}">Profilim</a>
                             </li>
                         {% endif %}
                         <li class="nav-item">

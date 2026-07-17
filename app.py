@@ -117,16 +117,29 @@ def login():
         
         user = supabase.table("kullanicilar").select("*").ilike("kullanici_adi", k_adi).execute().data
         
-        if user and str(user[0].get('sifre')) == str(sifre):
-            yetki = user[0].get('yetki', 'admin') 
-            oyuncu_id = user[0].get('id', None) 
+        if user:
+            # Şifre kontrolü
+           if str(user[0].get('sifre')) == str(sifre):
+            yetki = user[0].get('yetki', 'admin')
+            raw_id = user[0].get('id')
+            oyuncu_id = int(raw_id) if raw_id else None
             
-            session.update({'logged_in': True, 'role': yetki, 'oyuncu_id': oyuncu_id, 'kullanici_adi': k_adi})
+            # Oturumu manuel olarak güncelle ve kaydetmeye zorla
+            session['logged_in'] = True
+            session['role'] = yetki
+            session['oyuncu_id'] = oyuncu_id
+            session['kullanici_adi'] = k_adi
+            session.modified = True # <--- BU SATIR ÇOK ÖNEMLİ
+            
+            # Server tarafında doğru kaydedildiğini terminalden kontrol et
+            print(f"DEBUG: Session içeriği: {dict(session)}")
+            
             return redirect(url_for('index'))
-        else:
-            flash("Hatalı kullanıcı adı veya şifre", "danger")
+        
+        # Kullanıcı bulunamadıysa veya şifre yanlışsa
+        flash("Hatalı kullanıcı adı veya şifre", "danger")
+        
     return render_template('login.html')
-
 @app.route('/logout')
 def logout():
     session.clear()
@@ -452,6 +465,16 @@ def admin_mesajlar():
 @app.route('/ping')
 def ping():
     return "Pong! Site uyanık.", 200
-
+@app.route('/profilim')
+def profilim():
+    # Session'dan oyuncu_id'yi al
+    oyuncu_id = session.get('oyuncu_id')
+    
+    # Eğer id yoksa veya None ise hata almamak için ana sayfaya yolla
+    if not oyuncu_id:
+        return redirect(url_for('index'))
+        
+    # Varsa oyuncunun kendi profiline yönlendir
+    return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
