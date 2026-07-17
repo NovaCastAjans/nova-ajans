@@ -40,6 +40,16 @@ def index():
     yas_max = safe_int(request.args.get('yas_max'))
     sehir = request.args.get('sehir', '')
     
+    # 1. KURUCUYU AYRI SORGULA (Sayfalandırmadan etkilenmez)
+    kurucu_res = supabase.table("oyuncular").select("*").eq("id", 29).execute()
+    kurucu = kurucu_res.data[0] if kurucu_res.data else None
+
+    # Eğer arama yapıldıysa ve kurucu arama kriterine uymuyorsa kurucu bölümünü gizle
+    if arama and kurucu:
+        if arama.lower() not in kurucu.get('isim', '').lower():
+            kurucu = None
+            
+    # 2. DİĞER OYUNCULARI SORGULA VE FİLTRELE
     # count="exact" ile toplam kayıt sayısını da istiyoruz
     query = supabase.table("oyuncular").select("*", count="exact")
     
@@ -68,20 +78,8 @@ def index():
     total_count = res.count if hasattr(res, 'count') and res.count is not None else len(all_players)
     total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
     
-    kurucu = None
-    oyuncular_listesi = []
-    
-    # ID'si 29 olan "Kurucu" profilini ayırıp özel bölüme, diğerlerini genel listeye gönderiyoruz
-    for o in all_players:
-        if o.get('id') == 29:
-            kurucu = o
-        else:
-            oyuncular_listesi.append(o)
-            
-    # Eğer arama yapıldıysa ve kurucu arama kriterine uymuyorsa kurucu bölümünü gizle
-    if arama and kurucu:
-        if arama.lower() not in kurucu.get('isim', '').lower():
-            kurucu = None
+    # 3. KURUCUYU LİSTEDEN ÇIKAR (Mükerrer görünmesin diye)
+    oyuncular_listesi = [o for o in all_players if o.get('id') != 29]
             
     return render_template('index.html', 
                            oyuncular=oyuncular_listesi, 
@@ -129,17 +127,16 @@ def login():
             session['role'] = yetki
             session['oyuncu_id'] = oyuncu_id
             session['kullanici_adi'] = k_adi
-            session.modified = True # <--- BU SATIR ÇOK ÖNEMLİ
+            session.modified = True 
             
-            # Server tarafında doğru kaydedildiğini terminalden kontrol et
             print(f"DEBUG: Session içeriği: {dict(session)}")
             
             return redirect(url_for('index'))
         
-        # Kullanıcı bulunamadıysa veya şifre yanlışsa
         flash("Hatalı kullanıcı adı veya şifre", "danger")
         
     return render_template('login.html')
+
 @app.route('/logout')
 def logout():
     session.clear()
@@ -321,7 +318,6 @@ def oyuncu_duzenle(oyuncu_id):
         return redirect(url_for('index'))
 
     if request.method == 'POST':
-        # --- FOTOĞRAF YÜKLEME MANTIĞI ---
         resim_url = None
         file = request.files.get('profile_photo')
         if file and file.filename != '':
@@ -341,7 +337,6 @@ def oyuncu_duzenle(oyuncu_id):
             except Exception as e:
                 flash(f"Resim yüklenemedi: {str(e)}", "danger")
 
-        # Değişiklikleri topluyoruz
         yeni_veriler = {
             "isim": request.form.get('isim'),
             "yas": safe_int(request.form.get('yas')),
@@ -359,7 +354,6 @@ def oyuncu_duzenle(oyuncu_id):
         if resim_url:
             yeni_veriler["resim_url"] = resim_url
 
-        # --- YENİ MANTIĞIMIZ: ADMIN DEĞİLSE ONAYA GÖNDER ---
         if session.get('role') != 'admin':
             supabase.table("bekleyen_degisiklikler").insert({
                 "oyuncu_id": oyuncu_id,
@@ -368,7 +362,6 @@ def oyuncu_duzenle(oyuncu_id):
             flash("Değişiklik talebiniz yönetici onayına gönderildi.", "info")
             return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
 
-        # --- ADMIN İSE DİREKT GÜNCELLE ---
         supabase.table("oyuncular").update(yeni_veriler).eq("id", oyuncu_id).execute()
         flash("Profil güncellendi!", "success")
         return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
@@ -465,16 +458,15 @@ def admin_mesajlar():
 @app.route('/ping')
 def ping():
     return "Pong! Site uyanık.", 200
+
 @app.route('/profilim')
 def profilim():
-    # Session'dan oyuncu_id'yi al
     oyuncu_id = session.get('oyuncu_id')
     
-    # Eğer id yoksa veya None ise hata almamak için ana sayfaya yolla
     if not oyuncu_id:
         return redirect(url_for('index'))
         
-    # Varsa oyuncunun kendi profiline yönlendir
     return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
