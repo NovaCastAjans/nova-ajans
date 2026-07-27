@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Randevularım | Nova Cast Ajans</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { background: #0b0c10; color: #f1f5f9; font-family: 'Inter', sans-serif; }
+        .navbar { background: #0f172a; }
+        .randevu-card { background: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
+        .durum-badge { padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        .durum-beklemede { background: #f59e0b; color: #000; }
+        .durum-onaylandi { background: #10b981; color: #fff; }
+        .durum-iptal { background: #ef4444; color: #fff; }
+        .durum-tamamlandi { background: #6b7280; color: #fff; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark py-3">
+        <div class="container">
+            <a class="navbar-brand" href="/">🎭 Nova Cast Ajans</a>
+            <div>
+                <a href="/" class="btn btn-outline-light btn-sm">Ana Sayfa</a>
+                <a href="/logout" class="btn btn-danger btn-sm ms-2">Çıkış</a>
+            </div>
+        </div>
+    </nav>
+    <div class="container my-5">
+        <h2 class="fw-bold mb-4">📅 Randevularım</h2>
+        {% if randevular %}
+            {% for r in randevular %}
+            <div class="randevu-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ r.tarih }}</strong> - {{ r.saat }}
+                    </div>
+                    <span class="durum-badge 
+                        {% if r.durum == 'beklemede' %}durum-beklemede
+                        {% elif r.durum == 'onaylandi' %}durum-onaylandi
+                        {% elif r.durum == 'iptal' %}durum-iptal
+                        {% elif r.durum == 'tamamlandi' %}durum-tamamlandi{% endif %}">
+                        {{ r.durum|capitalize }}
+                    </span>
+                </div>
+                {% if r.notlar %}
+                <p class="text-muted mt-2 mb-0">{{ r.notlar }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-center py-5">
+                <h4 class="text-muted">Henüz randevunuz yok.</h4>
+                <p class="text-secondary">Ajans tarafından size randevu oluşturulduğunda burada görünecektir.</p>
+            </div>
+        {% endif %}
+        <a href="/" class="btn btn-secondary mt-4">← Ana Sayfa</a>
+    </div>
+</body>
+</html>
