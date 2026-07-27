@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Randevu Ekle</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>body{background:#0b0c10;color:#f1f5f9;}</style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark"><div class="container"><a class="navbar-brand" href="/">Nova Admin</a></div></nav>
+    <div class="container my-5">
+        <h2>📅 Yeni Randevu Oluştur</h2>
+        <form method="POST" class="mt-4 bg-dark p-4 rounded">
+            <div class="mb-3">
+                <label>Oyuncu Seç</label>
+                <select name="oyuncu_id" class="form-select bg-dark text-white" required>
+                    <option value="">Seçin...</option>
+                    {% for o in oyuncular %}
+                        <option value="{{ o.id }}">{{ o.isim }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3"><label>Tarih</label><input type="date" name="tarih" class="form-control bg-dark text-white" required></div>
+            <div class="mb-3"><label>Saat</label><input type="time" name="saat" class="form-control bg-dark text-white" required></div>
+            <div class="mb-3"><label>Notlar</label><textarea name="notlar" class="form-control bg-dark text-white" rows="3"></textarea></div>
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/admin/randevular" class="btn btn-secondary">Geri</a>
+        </form>
+    </div>
+</body>
+</html>

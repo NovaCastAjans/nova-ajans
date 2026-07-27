@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ oyuncu.isim }} - Nova Cast Ajans</title>
+    <title>{{ meta.baslik if meta else oyuncu.isim + ' - Nova Cast Ajans' }}</title>
+    <meta name="description" content="{{ meta.aciklama if meta else oyuncu.isim + ' profili' }}">
+    <meta name="keywords" content="{{ meta.anahtar_kelimeler if meta else 'oyuncu, cast, ajans' }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -87,6 +89,12 @@
             font-weight: 700;
             margin-bottom: 1rem;
         }
+        .qr-container {
+            background: white;
+            border-radius: 12px;
+            padding: 10px;
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
@@ -97,25 +105,19 @@
             <a class="navbar-brand" href="/">🎭 NOVA CAST AJANS</a>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">Ana Sayfa</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/hakkimizda">Hakkımızda</a>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" href="/">Ana Sayfa</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/hakkimizda">Hakkımızda</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/duyurular">📢 Duyurular</a></li>
                     {% if session.get('logged_in') %}
                         {% if session.get('role') == 'admin' %}
-                            <li class="nav-item">
-                                <a class="btn btn-success btn-sm ms-2 px-3 fw-bold" href="/ekle">+ Oyuncu Ekle</a>
-                            </li>
+                            <li class="nav-item"><a class="nav-link text-info fw-bold" href="/admin/dashboard">📊 Dashboard</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/admin/randevular">📅 Randevular</a></li>
+                            <li class="nav-item"><a class="btn btn-success btn-sm ms-2 px-3 fw-bold" href="/ekle">+ Oyuncu Ekle</a></li>
                         {% else %}
-                            <li class="nav-item">
-                                <a class="btn btn-primary btn-sm ms-2 px-3 fw-bold" href="{{ url_for('oyuncu_detay', oyuncu_id=session.get('oyuncu_id')) }}">Profilim</a>
-                            </li>
+                            <li class="nav-item"><a class="nav-link" href="/oyuncu/randevular">📅 Randevularım</a></li>
+                            <li class="nav-item"><a class="btn btn-primary btn-sm ms-2 px-3 fw-bold" href="{{ url_for('oyuncu_detay', oyuncu_id=session.get('oyuncu_id')) }}">Profilim</a></li>
                         {% endif %}
-                        <li class="nav-item">
-                            <a class="nav-link text-danger fw-bold ms-2" href="/logout">Çıkış Yap</a>
-                        </li>
+                        <li class="nav-item"><a class="nav-link text-danger fw-bold ms-2" href="/logout">Çıkış Yap</a></li>
                     {% endif %}
                 </ul>
             </div>
@@ -136,7 +138,7 @@
         {% endwith %}
 
         <div class="row mt-4">
-            <!-- Sol Sütun: Fotoğraf ve İşlemler -->
+            <!-- Sol Sütun: Fotoğraf, QR, Ses ve İşlemler -->
             <div class="col-md-5 mb-4">
                 {% if oyuncu.resim_url %}
                     <img src="{{ oyuncu.resim_url }}" class="detay-img img-fluid shadow" alt="Oyuncu Resmi">
@@ -144,23 +146,40 @@
                     <div class="no-img-box">👤</div>
                 {% endif %}
                 
+                <!-- QR KOD -->
+                <div class="text-center mt-3">
+                    <div class="qr-container">
+                        <img src="/oyuncu/{{ oyuncu.id }}/qr" alt="QR Kod" style="width: 150px; height: 150px;">
+                    </div>
+                    <p class="text-muted small mt-2">📱 Profili QR kod ile paylaş</p>
+                </div>
+                
+                <!-- SESLİ CV -->
+                {% if oyuncu.ses_url %}
+                <div class="mt-3">
+                    <h6 class="text-white">🎤 Sesli CV</h6>
+                    <audio controls style="width: 100%; border-radius: 8px;">
+                        <source src="{{ oyuncu.ses_url }}" type="audio/mpeg">
+                        Tarayıcınız ses oynatmayı desteklemiyor.
+                    </audio>
+                </div>
+                {% endif %}
+                
                 <!-- Buton Grubu -->
                 <div class="d-grid gap-2 mt-3">
-                    <!-- Düzenleme: Admin veya Profil Sahibi yapabilir -->
                     {% if session.get('role') == 'admin' or session.get('oyuncu_id') == oyuncu.id %}
                         <a href="/oyuncu/duzenle/{{ oyuncu.id }}" class="btn btn-warning fw-bold">Bilgileri Düzenle</a>
                     {% endif %}
-                    
-                    <!-- Silme: SADECE Admin yapabilir -->
+                    <a href="/oyuncu/{{ oyuncu.id }}/pdf" class="btn btn-outline-info fw-bold" target="_blank">📄 CV'yi PDF İndir</a>
                     {% if session.get('role') == 'admin' %}
                         <form action="/oyuncu/sil/{{ oyuncu.id }}" method="post" onsubmit="return confirm('Bu oyuncuyu silmek istediğinize emin misiniz?');">
                             <button type="submit" class="btn btn-danger fw-bold w-100">Oyuncuyu Sil</button>
                         </form>
                     {% endif %}
                 </div>
-            </div> <!-- BU ETİKET DÜZELTİLDİ: Sol sütunu kapatarak sağ sütunun doğru yere oturmasını sağlar -->
+            </div>
 
-            <!-- Sağ Sütun: Kişisel Bilgiler ve Deneyimler -->
+            <!-- Sağ Sütun: Kişisel Bilgiler -->
             <div class="col-md-7">
                 <h1 class="oyuncu-isim">{{ oyuncu.isim or "İsimsiz Oyuncu" }}</h1>
 
@@ -191,11 +210,11 @@
                     </div>
                 </div>
 
-                {% if oyuncu.deneyimler %}
+                {% if oyuncu.deneyim %}
                     <div class="deneyim-section shadow">
                         <h4 class="deneyim-baslik">Hakkında / Özgeçmiş</h4>
                         <p style="white-space: pre-line; line-height: 1.8; color: #cbd5e1;">
-                            {{ oyuncu.deneyimler | safe }}
+                            {{ oyuncu.deneyim | safe }}
                         </p>
                     </div>
                 {% endif %}

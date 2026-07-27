@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta Düzenle - {{ meta.sayfa_adi }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { background: #0b0c10; color: #f1f5f9; font-family: 'Inter', sans-serif; }
+        .navbar { background: #0f172a; border-bottom: 1px solid #1e293b; }
+        .form-container { background: #111827; border: 1px solid #1e293b; border-radius: 16px; padding: 2.5rem; max-width: 700px; margin: 2rem auto; }
+        .form-label { color: #94a3b8; font-weight: 600; }
+        .form-control { background: #0f172a; border: 1px solid #1e293b; color: #fff; border-radius: 10px; padding: 0.75rem; }
+        .form-control:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+        .form-control::placeholder { color: #64748b; }
+        .btn-save { background: #3b82f6; border: none; color: #fff; font-weight: 700; padding: 0.7rem 2rem; border-radius: 10px; transition: 0.3s; }
+        .btn-save:hover { background: #2563eb; transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark py-3">
+        <div class="container">
+            <a class="navbar-brand" href="/admin/meta">🔍 Meta Yönetimi</a>
+            <a href="/admin/meta" class="btn btn-outline-light btn-sm">← Listeye Dön</a>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="form-container">
+            <h3 class="fw-bold mb-4">✏️ '{{ meta.sayfa_adi }}' Sayfası Meta Bilgileri</h3>
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">Sayfa Başlığı (Title)</label>
+                    <input type="text" name="baslik" class="form-control" value="{{ meta.baslik or '' }}" placeholder="Örn: Nova Cast Ajans | Ana Sayfa">
+                    <small class="text-muted">Arama sonuçlarında görünen başlık. 50-60 karakter ideal.</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Açıklama (Meta Description)</label>
+                    <textarea name="aciklama" class="form-control" rows="3" placeholder="Sayfanın kısa açıklaması...">{{ meta.aciklama or '' }}</textarea>
+                    <small class="text-muted">Arama sonuçlarında başlığın altında görünür. 150-160 karakter ideal.</small>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Anahtar Kelimeler (Keywords)</label>
+                    <input type="text" name="anahtar_kelimeler" class="form-control" value="{{ meta.anahtar_kelimeler or '' }}" placeholder="oyuncu, cast, ajans, yetenek">
+                    <small class="text-muted">Virgülle ayrılmış anahtar kelimeler.</small>
+                </div>
+                <div class="d-flex gap-3">
+                    <button type="submit" class="btn btn-save flex-grow-1">💾 Kaydet</button>
+                    <a href="/admin/meta" class="btn btn-secondary flex-grow-1">İptal</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

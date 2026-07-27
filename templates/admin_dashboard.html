@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard | Nova Cast</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #0b0c10; color: #f1f5f9; font-family: 'Inter', sans-serif; }
+        .navbar { background: #0f172a; }
+        .stat-card { background: #111827; border: 1px solid #1e293b; border-radius: 16px; padding: 1.5rem; text-align: center; }
+        .stat-number { font-size: 2.5rem; font-weight: 800; color: #3b82f6; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark py-3">
+        <div class="container">
+            <a class="navbar-brand" href="/">👑 Nova Admin</a>
+            <div>
+                <a href="/" class="btn btn-outline-light btn-sm">Ana Sayfa</a>
+                <a href="/logout" class="btn btn-danger btn-sm ms-2">Çıkış</a>
+            </div>
+        </div>
+    </nav>
+    <div class="container my-5">
+        <h2 class="fw-bold mb-4">📊 Yönetim Paneli</h2>
+        <div class="row g-4 mb-5">
+            <div class="col-md-3"><div class="stat-card"><div class="stat-number">{{ oyuncu_sayisi }}</div><div>Toplam Oyuncu</div></div></div>
+            <div class="col-md-3"><div class="stat-card"><div class="stat-number">{{ bekleyen_basvuru }}</div><div>Bekleyen Başvuru</div></div></div>
+            <div class="col-md-3"><div class="stat-card"><div class="stat-number">{{ bekleyen_onay }}</div><div>Bekleyen Onay</div></div></div>
+            <div class="col-md-3"><div class="stat-card"><div class="stat-number">{{ randevu_sayisi }}</div><div>Toplam Randevu</div></div></div>
+        </div>
+        <h4 class="fw-bold">📅 Bugünkü Randevular</h4>
+        {% if bugun_randevular %}
+            <ul class="list-group bg-dark text-white">
+            {% for r in bugun_randevular %}
+                <li class="list-group-item bg-dark text-white border-secondary">{{ r.tarih }} {{ r.saat }} - Oyuncu ID: {{ r.oyuncu_id }}</li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">Bugün randevu yok.</p>
+        {% endif %}
+    </div>
+    <!-- Mevcut kartlardan sonra -->
+<div class="row g-4 mb-5">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-number">{{ toplam_goruntulenme }}</div>
+            <div>📊 Toplam Sayfa Görüntülenme</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-number">{{ son24_goruntulenme }}</div>
+            <div>⏰ Son 24 Saat Görüntülenme</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-number">{{ benzersiz_ziyaretci }}</div>
+            <div>👤 Benzersiz Ziyaretçi (24s)</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-number">{{ en_cok_oyuncu or 'Veri yok' }}</div>
+            <div>🏆 En Çok Ziyaret Edilen Oyuncu</div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
