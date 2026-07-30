@@ -11,14 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         .filter-label { font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.25rem; text-align: left; font-weight: 600; }
-        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0b0c10; display: flex; justify-content: center; align-items: center; z-index: 9999; }
-        .spinner { border: 4px solid #1e293b; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         body { background-color: #0b0c10 !important; color: #f1f5f9 !important; font-family: 'Inter', sans-serif !important; }
-        .navbar { background-color: #0f172a !important; }
-        .navbar-brand { color: #ffffff !important; font-weight: 800 !important; }
-        .nav-link { color: #e2e8f0 !important; font-weight: 600 !important; }
-        .nav-link:hover, .nav-link.active { color: #3b82f6 !important; }
         .hero-section { background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border-bottom: 1px solid #1e293b; padding: 5rem 0; text-align: center; }
         .search-box { max-width: 800px; margin: 2rem auto 0 auto; }
         .oyuncu-card { background: #111827; border: 1px solid #1e293b; border-radius: 16px; overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease; height: 100%; display: flex; flex-direction: column; }
@@ -42,15 +35,9 @@
         .vitrin-item-title { padding: 1rem; text-align: center; color: #ffffff; font-weight: 700; font-size: 1rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .kategori-baslik { border-bottom: 2px solid #1e293b; padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #f8fafc; }
         footer { background-color: #0f172a; border-top: 1px solid #1e293b; padding: 2rem 0; margin-top: 5rem; text-align: center; color: #64748b; }
-        .galeri-slider { display: flex; gap: 1rem; overflow-x: auto; padding: 1rem 0; }
-        .galeri-slider img, .galeri-slider video { height: 200px; object-fit: cover; border-radius: 8px; flex: 0 0 auto; }
     </style>
 </head>
 <body>
-<div id="loading-overlay"><div class="spinner"></div></div>
-<script>
-    window.addEventListener('load', () => { document.getElementById('loading-overlay').style.display = 'none'; });
-</script>
 
 <nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container">
@@ -70,7 +57,6 @@
                     <li class="nav-item"><a class="nav-link" href="/admin/onaylar">⏳ Onaylar</a></li>
                     <li class="nav-item"><a class="nav-link" href="/admin/yorumlar">💬 Yorumlar</a></li>
                     <li class="nav-item"><a class="nav-link" href="/admin/ayarlar">⚙️ Ayarlar</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/admin/mesajlar">✉️ Mesaj</a></li>
                     <li class="nav-item"><a class="btn btn-success btn-sm ms-2 px-3 fw-bold" href="/ekle">+ Oyuncu Ekle</a></li>
                 {% elif session.get('logged_in') %}
                     <li class="nav-item"><a class="nav-link" href="/profilim">Profilim</a></li>
@@ -81,7 +67,6 @@
                     <li class="nav-item"><a class="nav-link text-danger fw-bold ms-2" href="/logout">Çıkış Yap</a></li>
                 {% else %}
                     <li class="nav-item"><a class="btn btn-outline-light btn-sm ms-2 px-3 fw-bold" href="/login">Giriş Yap</a></li>
-                    <li class="nav-item"><a class="btn btn-outline-light btn-sm ms-2 px-3 fw-bold" href="/basvuru">Ajansa Başvur</a></li>
                 {% endif %}
             </ul>
         </div>
@@ -92,7 +77,22 @@
     <div class="container">
         <h1 class="display-4 fw-extrabold text-white">Geleceğin Yıldızlarını Keşfedin</h1>
         <p class="lead text-muted">Nova Cast Ajans bünyesindeki profesyonel oyuncu kadrosuna göz atın.</p>
-        <div class="search-box">
+
+        <!-- ========================================== -->
+        <!-- YENİ EKLENEN AJANSA BAŞVUR BÖLÜMÜ -->
+        <!-- ========================================== -->
+        {% if not session.get('logged_in') %}
+        <div class="mt-5 mb-4 text-center">
+            <h3 class="fw-bold text-uppercase text-warning" style="letter-spacing: 2px; text-shadow: 0 0 20px rgba(255, 193, 7, 0.3);">SENDE ARAMIZA KATIL</h3>
+            <a href="/basvuru" class="btn btn-lg btn-warning fw-bold px-5 py-3 shadow-lg mt-2" 
+               style="border-radius: 50px; font-size: 1.2rem; letter-spacing: 1.5px; transition: all 0.3s ease;">
+                AJANSA BAŞVUR
+            </a>
+        </div>
+        {% endif %}
+        <!-- ========================================== -->
+
+        <div class="search-box mt-4">
             <form action="/" method="GET" class="bg-dark p-4 rounded-4 shadow">
                 <div class="row g-2">
                     <div class="col-12 col-md-6"><div class="filter-label">İsim ile Ara</div><input type="text" name="q" class="form-control" placeholder="Oyuncu adı..." value="{{ arama_sorgusu or '' }}"></div>
@@ -138,7 +138,7 @@
     {% endif %}
 
     {% if vitrin_oyuncular and current_page == 1 %}
-    <div class="row mb-3"><div class="col-12"><h4 class="fw-bold text-white mb-1">⭐ Yıldız Vitrini</h4><p class="text-muted small">Admin tarafından seçilen özel profiller</p></div></div>
+    <div class="row mb-3"><div class="col-12"><h4 class="fw-bold text-white mb-1">⭐ Yıldız Vitrini</h4><p class="text-muted small">Özel olarak seçilen profiller</p></div></div>
     <div class="vitrin-wrapper"><div class="vitrin-scroll" id="vitrinScroll">
         {% for oyuncu in vitrin_oyuncular %}
             <a href="/oyuncu/{{ oyuncu.id }}" class="vitrin-item-link"><div class="vitrin-item shadow">{% if oyuncu.resim_url %}<img src="{{ oyuncu.resim_url }}" class="vitrin-item-img" alt="{{ oyuncu.isim }}" loading="lazy">{% else %}<div class="vitrin-item-no-img">👤</div>{% endif %}<h5 class="vitrin-item-title">{{ oyuncu.isim or "İsimsiz Oyuncu" }}</h5></div></a>
@@ -198,9 +198,7 @@
     </nav>
     {% endif %}
 </main>
-
 <footer><div class="container"><p>&copy; NOVA MEDİA \/ 2026 Nova Cast Ajans. Tüm Hakları Saklıdır.</p></div></footer>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
