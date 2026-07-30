@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta name="google-site-verification" content="HM-UkDvalFd7vG0Pt7D49CtFwryaEdS1OAeHmip2tAs" />
@@ -137,10 +137,10 @@
     <hr style="border-color: #1e293b; margin-bottom: 4rem;">
     {% endif %}
 
-    {% if oyuncular and current_page == 1 %}
-    <div class="row mb-3"><div class="col-12"><h4 class="fw-bold text-white mb-1">⭐ Yıldız Vitrini</h4><p class="text-muted small">Tüm kadromuza hızlıca göz atın</p></div></div>
+    {% if vitrin_oyuncular and current_page == 1 %}
+    <div class="row mb-3"><div class="col-12"><h4 class="fw-bold text-white mb-1">⭐ Yıldız Vitrini</h4><p class="text-muted small">Admin tarafından seçilen özel profiller</p></div></div>
     <div class="vitrin-wrapper"><div class="vitrin-scroll" id="vitrinScroll">
-        {% for oyuncu in oyuncular %}
+        {% for oyuncu in vitrin_oyuncular %}
             <a href="/oyuncu/{{ oyuncu.id }}" class="vitrin-item-link"><div class="vitrin-item shadow">{% if oyuncu.resim_url %}<img src="{{ oyuncu.resim_url }}" class="vitrin-item-img" alt="{{ oyuncu.isim }}" loading="lazy">{% else %}<div class="vitrin-item-no-img">👤</div>{% endif %}<h5 class="vitrin-item-title">{{ oyuncu.isim or "İsimsiz Oyuncu" }}</h5></div></a>
         {% endfor %}
     </div></div>

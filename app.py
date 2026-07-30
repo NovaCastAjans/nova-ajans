@@ -139,9 +139,20 @@ def index():
     total_count = res.count if hasattr(res, 'count') and res.count is not None else len(all_players)
     total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
     oyuncular_listesi = [o for o in all_players if o.get('id') != 29]
+    
+    # ========= YENİ EKLENEN VİTRİN KODU =========
+    vitrin_oyuncular = []
+    if page == 1:  # Sadece 1. sayfada çalışsın
+        # SADECE admin'in "vitrin = true" yaptığı oyuncuları çeker.
+        # Limit 15 koyarak sistemi zorlamamasını ve en fazla 15 kişi dönmesini sağladık.
+        vitrin_query = supabase.table("oyuncular").select("*").eq("vitrin", True).limit(15)
+        vitrin_res = vitrin_query.execute()
+        vitrin_oyuncular = vitrin_res.data if vitrin_res.data else []
+    # ===========================================
             
     return render_template('index.html', 
-                           oyuncular=oyuncular_listesi, 
+                           oyuncular=oyuncular_listesi,
+                           vitrin_oyuncular=vitrin_oyuncular, # <-- YENİ DEĞİŞKEN
                            kurucu=kurucu, 
                            arama_sorgusu=arama, 
                            secili_cinsiyet=cinsiyet,
