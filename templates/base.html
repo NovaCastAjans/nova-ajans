@@ -50,10 +50,11 @@
         .btn-outline-light-custom {
             border: 2px solid #e2e8f0;
             border-radius: 50px;
-            padding: 0.375rem 1.2rem;
+            padding: 0.4rem 1.2rem;
             font-weight: 600;
             color: #e2e8f0;
             transition: all 0.3s ease;
+            white-space: nowrap;
         }
         .btn-outline-light-custom:hover {
             background: #e2e8f0;
@@ -161,11 +162,11 @@
         });
     </script>
 
-    <!-- ================= NAVBAR (LOGONUN YANINDA SABİT BUTON) ================= -->
+    <!-- ================= NAVBAR (SON VE KESİN DÜZELTME) ================= -->
     <nav class="navbar navbar-expand-lg navbar-dark py-3">
-        <div class="container d-flex align-items-center">
+        <div class="container d-flex align-items-center justify-content-between">
             
-            <!-- Logo -->
+            <!-- Sol Taraf: Logo -->
             <a class="navbar-brand" href="/">
                 {% if session.get('logged_in') %}
                     {% if session.get('role') == 'admin' %}
@@ -178,17 +179,21 @@
                 {% endif %}
             </a>
 
-            <!-- AJANSA BAŞVUR BUTONU (LOGONUN HEMEN YANINDA - HER ZAMAN GÖRÜNÜR) -->
-            {% if not session.get('logged_in') %}
-            <a href="/basvuru" class="btn btn-outline-light-custom fw-bold ms-3 me-2">Ajansa Başvur</a>
-            {% endif %}
+            <!-- Orta / Sağ Taraf: Bağımsız Buton ve Hamburger Menü -->
+            <div class="d-flex align-items-center">
+                
+                <!-- AJANSA BAŞVUR BUTONU (MENÜNÜN TAMAMEN DIŞINDA, LOGONUN YANINDA SABİT) -->
+                {% if not session.get('logged_in') %}
+                <a href="/basvuru" class="btn btn-outline-light-custom fw-bold me-2">Ajansa Başvur</a>
+                {% endif %}
 
-            <!-- Hamburger Menü -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+                <!-- Hamburger Menü Tetikleyicisi -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
 
-            <!-- Menü İçeriği (Açılır Kapanır Kısım) -->
+            <!-- Düşen Menü İçeriği (Buradaki butonlar artık sadece ana sayfa linkleri) -->
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item"><a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">Ana Sayfa</a></li>
