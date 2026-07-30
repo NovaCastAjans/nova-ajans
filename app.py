@@ -343,6 +343,14 @@ def oyuncu_detay(oyuncu_id):
         toplam = sum(y.get('puan', 0) for y in yorumlar if y.get('puan'))
         ortalama_puan = round(toplam / len(yorumlar), 1) if toplam else 0
     
+    # ======== YENİ EKLENEN KISIM: PROFİL GÖRÜNTÜLENME SAYACI ========
+    goruntulenme_sayisi = 0
+    try:
+        goruntulenme_sayisi = supabase.table('sayfa_goruntulenme').select('id', count='exact').eq('oyuncu_id', oyuncu_id).execute().count or 0
+    except:
+        goruntulenme_sayisi = 0
+    # ================================================================
+
     meta = {
         'baslik': f"{oyuncu.get('isim', 'Oyuncu')} | Nova Cast Ajans",
         'aciklama': f"{oyuncu.get('isim')} profili",
@@ -353,7 +361,8 @@ def oyuncu_detay(oyuncu_id):
                            oyuncu=oyuncu,
                            meta=meta,
                            yorumlar=yorumlar,
-                           ortalama_puan=ortalama_puan)
+                           ortalama_puan=ortalama_puan,
+                           goruntulenme_sayisi=goruntulenme_sayisi)
 
 # ----------------- YORUM EKLE -----------------
 @app.route('/yorum/ekle', methods=['POST'])
@@ -390,6 +399,7 @@ def yorum_ekle():
         flash(f'Yorum gönderilirken hata: {str(e)}', 'danger')
     
     return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
+
 # ----------------- ADMIN YORUM YÖNETİMİ -----------------
 @app.route('/admin/yorumlar')
 def admin_yorumlar():
@@ -675,7 +685,7 @@ def oyuncu_qr(oyuncu_id):
     buffer.seek(0)
     return send_file(buffer, mimetype='image/png')
 
-# ----- KARTVİZİT PDF -----
+# ----- KARTVİZİT PDF (LOGO ENTEGRELİ YENİ TASARIM) -----
 @app.route('/oyuncu/<int:oyuncu_id>/kartvizit')
 def kartvizit_pdf(oyuncu_id):
     res = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
@@ -685,55 +695,61 @@ def kartvizit_pdf(oyuncu_id):
     oyuncu = res.data[0]
     
     buffer = BytesIO()
-    c = canvas.Canvas(buffer, pagesize=A4)
-    width, height = A4
-    c.setFillColor(lightgrey)
-    c.rect(0, 0, width, height, fill=1, stroke=0)
-    c.setFillColor(darkblue)
-    c.rect(0, height-3*cm, width, 3*cm, fill=1, stroke=0)
+    # Standart Kartvizit Boyutu: 8.5cm x 5.5cm
+    k_width = 8.5 * cm
+    k_height = 5.5 * cm
+    c = canvas.Canvas(buffer, pagesize=(k_width, k_height))
+    
+    # Arka Plan
     c.setFillColor(white)
-    c.setFont(FONT_BOLD, 20)
-    c.drawCentredString(width/2, height-1.8*cm, "NOVA CAST AJANS")
-    c.setFont(FONT_NAME, 12)
-    c.drawCentredString(width/2, height-2.6*cm, "Dijital Kartvizit")
-    y = height - 5*cm
-    c.setFillColor(black)
-    c.setFont(FONT_BOLD, 18)
-    c.drawString(2*cm, y, oyuncu.get('isim', 'İsimsiz'))
-    y -= 1.2*cm
-    c.setFont(FONT_NAME, 12)
-    bilgiler = [
-        ("Yaş", oyuncu.get('yas')),
-        ("Boy", f"{oyuncu.get('boy')} cm" if oyuncu.get('boy') else '-'),
-        ("Kilo", f"{oyuncu.get('kilo')} kg" if oyuncu.get('kilo') else '-'),
-        ("Cinsiyet", oyuncu.get('cinsiyet', '-')),
-        ("Göz Rengi", oyuncu.get('goz_rengi', '-')),
-        ("Saç Rengi", oyuncu.get('sac_rengi', '-')),
-        ("Şehir", oyuncu.get('sehir', '-')),
-        ("Telefon", oyuncu.get('telefon', '-')),
-        ("E-posta", oyuncu.get('eposta', '-'))
-    ]
-    for etiket, deger in bilgiler:
-        if deger:
-            c.setFillColor(grey)
-            c.drawString(2*cm, y, f"{etiket}:")
-            c.setFillColor(black)
-            c.drawString(5*cm, y, str(deger))
-            y -= 0.8*cm
+    c.rect(0, 0, k_width, k_height, fill=1, stroke=0)
+    
+    # ========= YENİ EKLENEN: LOGO (Sol Üstte) =========
+    try:
+        logo_path = os.path.join("static", "images", "logo.png")
+        with open(logo_path, "rb") as f:
+            logo_img = ImageReader(f)
+            # Logoyu sol üst tarafa, boyutunu küçülterek yerleştiriyoruz
+            c.drawImage(logo_img, 0.5*cm, k_height - 2.5*cm, width=2.0*cm, height=2.0*cm, preserveAspectRatio=True, mask='auto')
+    except:
+        pass
+    # ==================================================
+
+    # Ad Soyad (Logonun altına, ortaya hizalı)
+    c.setFillColor(navy)
+    c.setFont(FONT_BOLD, 14)
+    c.drawString(2.8*cm, k_height - 2.2*cm, oyuncu.get('isim', 'İsimsiz'))
+    
+    # Unvan
+    c.setFont(FONT_NAME, 9)
+    c.setFillColor(navy)
+    c.drawString(2.8*cm, k_height - 2.9*cm, "NOVA CAST AJANS OYUNCUSU")
+    
+    # İletişim Bilgileri (Sağ Alt)
+    c.setFont(FONT_NAME, 8)
+    c.setFillColor(grey)
+    y_pos = k_height - 3.8*cm
+    if oyuncu.get('telefon'):
+        c.drawString(2.8*cm, y_pos, f"📞 {oyuncu.get('telefon')}")
+        y_pos -= 0.6*cm
+    if oyuncu.get('eposta'):
+        c.drawString(2.8*cm, y_pos, f"✉️ {oyuncu.get('eposta')}")
+        y_pos -= 0.6*cm
+    if oyuncu.get('sehir'):
+        c.drawString(2.8*cm, y_pos, f"📍 {oyuncu.get('sehir')}")
+
+    # Sağ Alt Köşede QR Kod
     try:
         qr_url = url_for('oyuncu_qr', oyuncu_id=oyuncu_id, _external=True)
         qr_img = requests.get(qr_url, timeout=5).content
         qr_reader = ImageReader(BytesIO(qr_img))
-        c.drawImage(qr_reader, width-6*cm, 2*cm, width=4*cm, height=4*cm)
+        c.drawImage(qr_reader, k_width - 2.8*cm, 0.4*cm, width=2.2*cm, height=2.2*cm)
     except:
         pass
-    c.setFont(FONT_NAME, 9)
-    c.setFillColor(grey)
-    c.drawCentredString(width/2, 1*cm, "© Nova Cast Ajans - Dijital Kartvizit")
+
     c.save()
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name=f"Kartvizit_{oyuncu.get('isim', 'oyuncu')}.pdf", mimetype='application/pdf')
-
 # ----- CANLI İSTATİSTİKLER (ADMIN DASHBOARD) -----
 @app.route('/admin/dashboard')
 def admin_dashboard():
@@ -911,7 +927,7 @@ def admin_meta_duzenle(sayfa_adi):
     meta = mevcut[0] if mevcut else {'sayfa_adi': sayfa_adi, 'baslik': '', 'aciklama': '', 'anahtar_kelimeler': ''}
     return render_template('admin_meta_duzenle.html', meta=meta)
 
-# ----------------- PDF CV İNDİR -----------------
+# ----------------- PDF CV İNDİR (LOGO ENTEGRELİ) -----------------
 @app.route('/oyuncu/<int:oyuncu_id>/pdf')
 def oyuncu_pdf(oyuncu_id):
     res = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
@@ -923,34 +939,58 @@ def oyuncu_pdf(oyuncu_id):
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
+    
+    # Arka Plan
     c.setFillColor(white)
     c.rect(0, 0, width, height, fill=1, stroke=0)
+    
+    # Üst Başlık (Koyu Mavi)
     c.setFillColor(navy)
     c.rect(0, height-3.5*cm, width, 3.5*cm, fill=1, stroke=0)
     c.setFillColor(white)
-    c.setFont(FONT_BOLD, 24)
-    c.drawCentredString(width/2, height-1.8*cm, "CV - Özgeçmiş")
-    c.setFont(FONT_NAME, 14)
-    c.drawCentredString(width/2, height-2.8*cm, oyuncu.get('isim', 'İsimsiz'))
+    c.setFont(FONT_BOLD, 26)
+    c.drawCentredString(width/2, height-1.8*cm, "NOVA CAST AJANS")
+    c.setFont(FONT_NAME, 12)
+    c.drawCentredString(width/2, height-2.8*cm, "PROFESYONEL OYUNCU ÖZGEÇMİŞİ")
+    
+    # ========= YENİ EKLENEN: LOGO =========
+    try:
+        logo_path = os.path.join("static", "images", "logo.png")
+        with open(logo_path, "rb") as f:
+            logo_img = ImageReader(f)
+            # Logoyu sağ üst köşeye koyuyoruz
+            c.drawImage(logo_img, width - 3.5*cm, height - 3*cm, width=2.5*cm, height=2.5*cm, preserveAspectRatio=True, mask='auto')
+    except:
+        pass # Dosya yoksa çökmez, görsel olmaz
+    # =====================================
+
+    # Fotoğraf (Sağ Üstte)
     if oyuncu.get('resim_url'):
         try:
             img_data = requests.get(oyuncu.get('resim_url'), timeout=5).content
             img_reader = ImageReader(BytesIO(img_data))
-            c.drawImage(img_reader, width-5*cm, height-8*cm, width=4*cm, height=4*cm, preserveAspectRatio=True, mask='auto')
+            c.drawImage(img_reader, width-5.5*cm, height-8*cm, width=4*cm, height=4*cm, preserveAspectRatio=True, mask='auto')
         except:
             pass
+
+    # Kişisel Bilgiler Başlığı
     y = height - 6*cm
-    c.setFillColor(black)
-    c.setFont(FONT_BOLD, 14)
-    c.drawString(2*cm, y, "Kişisel Bilgiler")
+    c.setFillColor(navy)
+    c.setFont(FONT_BOLD, 16)
+    c.drawString(2*cm, y, "KİŞİSEL BİLGİLER")
     y -= 0.8*cm
-    c.setFont(FONT_NAME, 12)
-    c.line(2*cm, y+0.3*cm, 10*cm, y+0.3*cm)
+    c.setStrokeColor(navy)
+    c.setLineWidth(1)
+    c.line(2*cm, y+0.3*cm, 11*cm, y+0.3*cm)
     y -= 0.5*cm
+
+    # Bilgi Listesi (Daha düzenli)
+    c.setFont(FONT_NAME, 12)
     bilgiler = [
-        ("Yaş", oyuncu.get('yas')),
-        ("Boy", f"{oyuncu.get('boy')} cm" if oyuncu.get('boy') else '-'),
-        ("Kilo", f"{oyuncu.get('kilo')} kg" if oyuncu.get('kilo') else '-'),
+        ("Ad Soyad", oyuncu.get('isim', '-')),
+        ("Yaş", oyuncu.get('yas', '-')),
+        ("Boy", f"{oyuncu.get('boy', '-')} cm"),
+        ("Kilo", f"{oyuncu.get('kilo', '-')} kg"),
         ("Cinsiyet", oyuncu.get('cinsiyet', '-')),
         ("Göz Rengi", oyuncu.get('goz_rengi', '-')),
         ("Saç Rengi", oyuncu.get('sac_rengi', '-')),
@@ -958,22 +998,23 @@ def oyuncu_pdf(oyuncu_id):
         ("Telefon", oyuncu.get('telefon', '-')),
         ("E-posta", oyuncu.get('eposta', '-'))
     ]
+    
     for etiket, deger in bilgiler:
-        if deger:
-            c.setFillColor(grey)
-            c.drawString(2*cm, y, f"{etiket}:")
-            c.setFillColor(black)
-            c.drawString(6*cm, y, str(deger))
-            y -= 0.7*cm
+        c.setFillColor(grey)
+        c.drawString(2*cm, y, f"{etiket}:")
+        c.setFillColor(black)
+        c.drawString(5*cm, y, str(deger))
+        y -= 0.7*cm
+
+    # Deneyim Bölümü
     if oyuncu.get('deneyim'):
         y -= 0.5*cm
-        c.setFillColor(black)
+        c.setFillColor(navy)
         c.setFont(FONT_BOLD, 14)
-        c.drawString(2*cm, y, "Deneyim / Özgeçmiş")
-        y -= 0.8*cm
+        c.drawString(2*cm, y, "DENEYİM / ÖZGEÇMİŞ")
+        y -= 1.2*cm
         c.setFont(FONT_NAME, 11)
-        c.line(2*cm, y+0.3*cm, 12*cm, y+0.3*cm)
-        y -= 0.5*cm
+        
         metin = oyuncu.get('deneyim')
         satirlar = metin.split('\n')
         for satir in satirlar:
@@ -984,12 +1025,15 @@ def oyuncu_pdf(oyuncu_id):
             else:
                 c.drawString(2*cm, y, satir)
                 y -= 0.6*cm
+
+    # Alt Bilgi
     c.setFont(FONT_NAME, 9)
     c.setFillColor(grey)
-    c.drawCentredString(width/2, 1*cm, f"© Nova Cast Ajans - {oyuncu.get('isim', '')} | {datetime.now().strftime('%d.%m.%Y')}")
+    c.drawCentredString(width/2, 1*cm, f"© Nova Cast Ajans - {datetime.now().strftime('%d.%m.%Y')}")
     c.save()
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name=f"CV_{oyuncu.get('isim', 'oyuncu')}.pdf", mimetype='application/pdf')
+
 
 # ----------------- AYARLAR (HOŞ GELDİN MESAJI) -----------------
 @app.route('/admin/ayarlar', methods=['GET', 'POST'])
@@ -1010,6 +1054,42 @@ def admin_ayarlar():
     hos_mesaj = supabase.table('ayarlar').select('deger').eq('anahtar', 'hos_geldin_mesaji').execute()
     hos_mesaj = hos_mesaj.data[0]['deger'] if hos_mesaj.data else "Ajansımıza hoş geldiniz!"
     return render_template('admin_ayarlar.html', hos_mesaj=hos_mesaj)
+
+# ================= YENİ EKLENEN VİTRİN YÖNETİMİ ROUTE'LARI =================
+
+# ----------------- VİTRİN YÖNETİMİ (ADMİN PANELİ) -----------------
+@app.route('/admin/vitrin_yonetimi')
+def admin_vitrin_yonetimi():
+    if session.get('role') != 'admin':
+        flash('Yetkiniz yok!', 'danger')
+        return redirect(url_for('index'))
+    
+    # Tüm oyuncuları çek
+    oyuncular = supabase.table('oyuncular').select('id, isim, vitrin').order('isim').execute().data
+    return render_template('admin_vitrin_yonetimi.html', oyuncular=oyuncular)
+
+@app.route('/admin/vitrin/toggle/<int:oyuncu_id>')
+def admin_vitrin_toggle(oyuncu_id):
+    if session.get('role') != 'admin':
+        flash('Yetkiniz yok!', 'danger')
+        return redirect(url_for('index'))
+    
+    # Mevcut durumu al
+    res = supabase.table('oyuncular').select('vitrin').eq('id', oyuncu_id).execute()
+    if not res.data:
+        flash('Oyuncu bulunamadı.', 'danger')
+        return redirect(url_for('admin_vitrin_yonetimi'))
+    
+    mevcut_durum = res.data[0]['vitrin']
+    yeni_durum = not mevcut_durum # True ise False, False ise True yap
+    
+    # Güncelle
+    supabase.table('oyuncular').update({'vitrin': yeni_durum}).eq('id', oyuncu_id).execute()
+    
+    flash(f"Vitrin durumu güncellendi!", "success")
+    return redirect(url_for('admin_vitrin_yonetimi'))
+
+# ===================================================================
 
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 5000))

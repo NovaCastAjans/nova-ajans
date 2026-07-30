@@ -114,6 +114,12 @@
 
             <div class="col-md-7">
                 <h1 class="oyuncu-isim">{{ oyuncu.isim or "İsimsiz Oyuncu" }}</h1>
+                
+                <!-- YENİ EKLENEN SAYAÇ -->
+                <div class="mb-3 text-muted small">
+                    👁️ Bu profil <strong class="text-white">{{ goruntulenme_sayisi }}</strong> kez görüntülendi.
+                </div>
+
                 {% if ortalama_puan > 0 %}
                 <div class="mb-3">
                     <span class="fw-bold text-warning">⭐ {{ ortalama_puan }}</span>
@@ -135,7 +141,7 @@
                 </div>
                 {% endif %}
 
-                             <!-- YORUMLAR BÖLÜMÜ -->
+                <!-- YORUMLAR BÖLÜMÜ -->
                 <div class="mt-4">
                     <h4 class="text-white">💬 Yorumlar</h4>
                     {% if yorumlar %}
@@ -212,4 +218,4 @@
         .deneyim-baslik { color: #3b82f6; font-weight: 700; margin-bottom: 1rem; }
     </style>
 </body>
-</html> 
+</html>
