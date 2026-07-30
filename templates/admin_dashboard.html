@@ -9,6 +9,10 @@
         .navbar { background: #0f172a; }
         .stat-card { background: #111827; border: 1px solid #1e293b; border-radius: 16px; padding: 1.5rem; text-align: center; }
         .stat-number { font-size: 2.5rem; font-weight: 800; color: #3b82f6; }
+        .stat-number.green { color: #10b981; }
+        .stat-number.orange { color: #f59e0b; }
+        .stat-number.purple { color: #8b5cf6; }
+        .stat-number.pink { color: #ec4899; }
     </style>
 </head>
 <body>
@@ -25,47 +29,24 @@
         <h2 class="fw-bold mb-4">📊 Yönetim Paneli</h2>
         <div class="row g-4 mb-5">
             <div class="col-md-3"><div class="stat-card"><div class="stat-number">{{ oyuncu_sayisi }}</div><div>Toplam Oyuncu</div></div></div>
-            <div class="col-md-3"><div class="stat-card"><div class="stat-number">{{ bekleyen_basvuru }}</div><div>Bekleyen Başvuru</div></div></div>
-            <div class="col-md-3"><div class="stat-card"><div class="stat-number">{{ bekleyen_onay }}</div><div>Bekleyen Onay</div></div></div>
-            <div class="col-md-3"><div class="stat-card"><div class="stat-number">{{ randevu_sayisi }}</div><div>Toplam Randevu</div></div></div>
+            <div class="col-md-3"><div class="stat-card"><div class="stat-number orange">{{ bekleyen_basvuru }}</div><div>Bekleyen Başvuru</div></div></div>
+            <div class="col-md-3"><div class="stat-card"><div class="stat-number orange">{{ bekleyen_onay }}</div><div>Bekleyen Onay</div></div></div>
+            <div class="col-md-3"><div class="stat-card"><div class="stat-number purple">{{ randevu_sayisi }}</div><div>Toplam Randevu</div></div></div>
+            <div class="col-md-3"><div class="stat-card"><div class="stat-number pink">{{ yorum_sayisi }}</div><div>Onay Bekleyen Yorum</div></div></div>
+            <div class="col-md-3"><div class="stat-card"><div class="stat-number">{{ toplam_goruntulenme }}</div><div>📊 Toplam Görüntülenme</div></div></div>
+            <div class="col-md-3"><div class="stat-card"><div class="stat-number">{{ son24_goruntulenme }}</div><div>⏰ Son 24 Saat</div></div></div>
         </div>
         <h4 class="fw-bold">📅 Bugünkü Randevular</h4>
         {% if bugun_randevular %}
             <ul class="list-group bg-dark text-white">
             {% for r in bugun_randevular %}
-                <li class="list-group-item bg-dark text-white border-secondary">{{ r.tarih }} {{ r.saat }} - Oyuncu ID: {{ r.oyuncu_id }}</li>
+                <li class="list-group-item bg-dark text-white border-secondary">{{ r.tarih }} {{ r.saat }} - {{ r.oyuncular.isim if r.oyuncular else 'Oyuncu' }}</li>
             {% endfor %}
             </ul>
         {% else %}
             <p class="text-muted">Bugün randevu yok.</p>
         {% endif %}
+        <a href="/" class="btn btn-secondary mt-4">← Ana Sayfa</a>
     </div>
-    <!-- Mevcut kartlardan sonra -->
-<div class="row g-4 mb-5">
-    <div class="col-md-3">
-        <div class="stat-card">
-            <div class="stat-number">{{ toplam_goruntulenme }}</div>
-            <div>📊 Toplam Sayfa Görüntülenme</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card">
-            <div class="stat-number">{{ son24_goruntulenme }}</div>
-            <div>⏰ Son 24 Saat Görüntülenme</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card">
-            <div class="stat-number">{{ benzersiz_ziyaretci }}</div>
-            <div>👤 Benzersiz Ziyaretçi (24s)</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card">
-            <div class="stat-number">{{ en_cok_oyuncu or 'Veri yok' }}</div>
-            <div>🏆 En Çok Ziyaret Edilen Oyuncu</div>
-        </div>
-    </div>
-</div>
 </body>
 </html>

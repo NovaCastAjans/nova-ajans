@@ -3,140 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ sayfa.baslik }} - Nova Cast Ajans</title>
+    <title>{% if meta and meta.baslik %}{{ meta.baslik }}{% else %}{{ sayfa.baslik }} - Nova Cast Ajans{% endif %}</title>
+    <meta name="description" content="{% if meta and meta.aciklama %}{{ meta.aciklama }}{% else %}Nova Cast Ajans hakkında bilgi.{% endif %}">
+    <meta name="keywords" content="{% if meta and meta.anahtar_kelimeler %}{{ meta.anahtar_kelimeler }}{% else %}hakkimizda, ajans, kurumsal{% endif %}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            background-color: #0b0c10 !important;
-            color: #f1f5f9 !important;
-            font-family: 'Inter', sans-serif !important;
-        }
-        .navbar {
-            background-color: #0f172a !important;
-        }
-        .navbar-brand {
-            color: #ffffff !important;
-            font-weight: 800 !important;
-        }
-        .nav-link {
-            color: #e2e8f0 !important;
-            font-weight: 600 !important;
-        }
-        .nav-link:hover, .nav-link.active {
-            color: #3b82f6 !important;
-        }
-        .content-section {
-            background: #111827;
-            border: 1px solid #1e293b;
-            border-radius: 16px;
-            padding: 3rem;
-            margin-top: 3rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        }
-        .page-title {
-            color: #ffffff;
-            font-weight: 800;
-            border-bottom: 2px solid #3b82f6;
-            padding-bottom: 1rem;
-            margin-bottom: 2rem;
-            display: inline-block;
-        }
-        .page-content {
-            color: #cbd5e1;
-            line-height: 1.8;
-            font-size: 1.1rem;
-            white-space: pre-line; /* Yazdığın metindeki Enter/Satır atlamalarını korur */
-        }
-        footer {
-            background-color: #0f172a;
-            border-top: 1px solid #1e293b;
-            padding: 2rem 0;
-            margin-top: 5rem;
-            text-align: center;
-            color: #64748b;
-        }
+        body { background-color: #0b0c10 !important; color: #f1f5f9 !important; font-family: 'Inter', sans-serif !important; }
+        .navbar { background-color: #0f172a !important; }
+        .navbar-brand { color: #ffffff !important; font-weight: 800 !important; }
+        .nav-link { color: #e2e8f0 !important; font-weight: 600 !important; }
+        .nav-link:hover, .nav-link.active { color: #3b82f6 !important; }
+        .content-section { background: #111827; border: 1px solid #1e293b; border-radius: 16px; padding: 3rem; margin-top: 3rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+        .page-title { color: #ffffff; font-weight: 800; border-bottom: 2px solid #3b82f6; padding-bottom: 1rem; margin-bottom: 2rem; display: inline-block; }
+        .page-content { color: #cbd5e1; line-height: 1.8; font-size: 1.1rem; white-space: pre-line; }
+        footer { background-color: #0f172a; border-top: 1px solid #1e293b; padding: 2rem 0; margin-top: 5rem; text-align: center; color: #64748b; }
+        .galeri-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem; }
+        .galeri-grid img, .galeri-grid video { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; }
     </style>
 </head>
 <body>
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/">🎭 NOVA CAST AJANS</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-center">
+                <li class="nav-item"><a class="nav-link" href="/">Ana Sayfa</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/hakkimizda">Hakkımızda</a></li>
+                <li class="nav-item"><a class="nav-link" href="/duyurular">📢 Duyurular</a></li>
+                {% if session.get('logged_in') and session.get('role') == 'admin' %}
+                    <li class="nav-item"><a class="nav-link text-info fw-bold" href="/admin/dashboard">📊 Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/admin/randevular">📅 Randevular</a></li>
+                    <li class="nav-item"><a class="nav-link text-warning fw-bold" href="/admin/basvurular">📥 Başvurular</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/admin/onaylar">⏳ Onaylar</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/admin/yorumlar">💬 Yorumlar</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/admin/ayarlar">⚙️ Ayarlar</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/admin/mesajlar">✉️ Mesaj</a></li>
+                    <li class="nav-item"><a class="btn btn-success btn-sm ms-2 px-3 fw-bold" href="/ekle">+ Oyuncu Ekle</a></li>
+                {% elif session.get('logged_in') %}
+                    <li class="nav-item"><a class="nav-link" href="/profilim">Profilim</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/oyuncu/randevular">📅 Randevularım</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/gelen_kutusu">✉️ Gelen Kutusu</a></li>
+                {% endif %}
+                {% if session.get('logged_in') %}
+                    <li class="nav-item"><a class="nav-link text-danger fw-bold ms-2" href="/logout">Çıkış Yap</a></li>
+                {% else %}
+                    <li class="nav-item"><a class="btn btn-outline-light btn-sm ms-2 px-3 fw-bold" href="/login">Giriş Yap</a></li>
+                    <li class="nav-item"><a class="btn btn-outline-light btn-sm ms-2 px-3 fw-bold" href="/basvuru">Ajansa Başvur</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/">🎭 NOVA CAST AJANS</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">Ana Sayfa</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/hakkimizda">Hakkımızda</a>
-                    </li>
-                    {% if session.get('logged_in') %}
-                        {% if session.get('role') == 'admin' %}
-                            <li class="nav-item">
-                                <a class="btn btn-success btn-sm ms-2 px-3 fw-bold" href="/ekle">+ Oyuncu Ekle</a>
-                            </li>
-                        {% else %}
-                            <li class="nav-item">
-                                <a class="btn btn-primary btn-sm ms-2 px-3 fw-bold" href="/oyuncu/{{ session.get('oyuncu_id') }}">Profilim</a>
-                            </li>
-                        {% endif %}
-                        <li class="nav-item">
-                            <a class="nav-link text-danger fw-bold ms-2" href="/logout">Çıkış Yap</a>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="btn btn-outline-light btn-sm ms-2 px-3 fw-bold" href="/login">Giriş Yap</a>
-                        </li>
-                    {% endif %}
-                </ul>
+<main class="container mb-5">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}<div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button></div>{% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="content-section">
+        {% if session.get('role') == 'admin' %}
+            <div class="d-flex justify-content-end mb-4"><a href="/admin/duzenle/hakkimizda" class="btn btn-warning fw-bold px-4 py-2 shadow-sm" style="border-radius: 8px;">✏️ Sayfayı Düzenle</a></div>
+        {% endif %}
+        <h1 class="page-title">{{ sayfa.baslik }}</h1>
+        <div class="page-content">{{ sayfa.icerik }}</div>
             </div>
-        </div>
-    </nav>
+    </div>
+</main>
 
-    <!-- Ana İçerik -->
-    <main class="container mb-5">
-        
-        <!-- Bildirim Mesajları -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="mt-4">
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
-                    </div>
-                {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-
-        <div class="content-section">
-            <!-- SADECE ADMİN GÖREBİLİR: Düzenleme Butonu -->
-            {% if session.get('role') == 'admin' %}
-                <div class="d-flex justify-content-end mb-4">
-                    <a href="/admin/duzenle/hakkimizda" class="btn btn-warning fw-bold px-4 py-2 shadow-sm" style="border-radius: 8px;">
-                        ✏️ Sayfayı Düzenle
-                    </a>
-                </div>
-            {% endif %}
-
-            <h1 class="page-title">{{ sayfa.baslik }}</h1>
-            <div class="page-content">{{ sayfa.icerik }}</div>
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <p>&copy; 2026 Nova Cast Ajans. Tüm Hakları Saklıdır.</p>
-        </div>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<footer><div class="container"><p>&copy; 2026 Nova Cast Ajans. Tüm Hakları Saklıdır.</p></div></footer>
 </body>
-</html>
+</html> 

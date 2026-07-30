@@ -4,119 +4,33 @@
     <meta name="google-site-verification" content="HM-UkDvalFd7vG0Pt7D49CtFwryaEdS1OAeHmip2tAs" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nova Cast Ajans | Profesyonel Oyuncu ve Cast Ajansı</title>
+    <title>{% if meta and meta.baslik %}{{ meta.baslik }}{% else %}Nova Cast Ajans | Profesyonel Oyuncu ve Cast Ajansı{% endif %}</title>
+    <meta name="description" content="{% if meta and meta.aciklama %}{{ meta.aciklama }}{% else %}Nova Cast Ajans, oyuncu ve cast ajansı olarak sektörün en yetenekli isimlerini bir araya getirir. Başvurularınızı bekliyoruz.{% endif %}">
+    <meta name="keywords" content="{% if meta and meta.anahtar_kelimeler %}{{ meta.anahtar_kelimeler }}{% else %}oyuncu, cast, ajans, yetenek, dizi, film, reklam{% endif %}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         .filter-label { font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.25rem; text-align: left; font-weight: 600; }
-        #loading-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #0b0c10;
-            display: flex;
-            justify-content: center; align-items: center;
-            z-index: 9999;
-        }
-        .spinner {
-            border: 4px solid #1e293b;
-            border-top: 4px solid #3b82f6;
-            border-radius: 50%;
-            width: 40px; height: 40px;
-            animation: spin 1s linear infinite;
-        }
+        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0b0c10; display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .spinner { border: 4px solid #1e293b; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        body {
-            background-color: #0b0c10 !important;
-            color: #f1f5f9 !important;
-            font-family: 'Inter', sans-serif !important;
-        }
-        .navbar {
-            background-color: #0f172a !important;
-        }
-        .navbar-brand {
-            color: #ffffff !important;
-            font-weight: 800 !important;
-        }
-        .nav-link {
-            color: #e2e8f0 !important;
-            font-weight: 600 !important;
-        }
-        .nav-link:hover, .nav-link.active {
-            color: #3b82f6 !important;
-        }
-        .hero-section {
-            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
-            border-bottom: 1px solid #1e293b;
-            padding: 5rem 0;
-            text-align: center;
-        }
-        .search-box {
-            max-width: 800px;
-            margin: 2rem auto 0 auto;
-        }
-        .oyuncu-card {
-            background: #111827;
-            border: 1px solid #1e293b;
-            border-radius: 16px;
-            overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-        .oyuncu-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-        }
-        .oyuncu-img-container {
-            width: 100%;
-            height: 320px;
-            overflow: hidden;
-            background-color: #1f2937;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .oyuncu-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .oyuncu-no-img {
-            color: #4b5563;
-            font-size: 4rem;
-        }
-        .card-body-custom {
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-        }
-        .card-title-custom {
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 0.5rem;
-        }
-        .card-text-custom {
-            color: #94a3b8;
-            font-size: 0.9rem;
-            margin-bottom: 0.25rem;
-        }
-        .btn-detail {
-            background-color: #1e293b !important;
-            border: 1px solid #334155 !important;
-            color: #f1f5f9 !important;
-            font-weight: 600 !important;
-            border-radius: 8px !important;
-            margin-top: auto;
-            text-decoration: none;
-            text-align: center;
-            padding: 0.5rem;
-        }
-        .btn-detail:hover {
-            background-color: #334155 !important;
-            color: #ffffff !important;
-        }
+        body { background-color: #0b0c10 !important; color: #f1f5f9 !important; font-family: 'Inter', sans-serif !important; }
+        .navbar { background-color: #0f172a !important; }
+        .navbar-brand { color: #ffffff !important; font-weight: 800 !important; }
+        .nav-link { color: #e2e8f0 !important; font-weight: 600 !important; }
+        .nav-link:hover, .nav-link.active { color: #3b82f6 !important; }
+        .hero-section { background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border-bottom: 1px solid #1e293b; padding: 5rem 0; text-align: center; }
+        .search-box { max-width: 800px; margin: 2rem auto 0 auto; }
+        .oyuncu-card { background: #111827; border: 1px solid #1e293b; border-radius: 16px; overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease; height: 100%; display: flex; flex-direction: column; }
+        .oyuncu-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3); }
+        .oyuncu-img-container { width: 100%; height: 320px; overflow: hidden; background-color: #1f2937; display: flex; align-items: center; justify-content: center; }
+        .oyuncu-img { width: 100%; height: 100%; object-fit: cover; }
+        .oyuncu-no-img { color: #4b5563; font-size: 4rem; }
+        .card-body-custom { padding: 1.5rem; display: flex; flex-direction: column; flex-grow: 1; }
+        .card-title-custom { font-weight: 700; color: #ffffff; margin-bottom: 0.5rem; }
+        .card-text-custom { color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.25rem; }
+        .btn-detail { background-color: #1e293b !important; border: 1px solid #334155 !important; color: #f1f5f9 !important; font-weight: 600 !important; border-radius: 8px !important; margin-top: auto; text-decoration: none; text-align: center; padding: 0.5rem; }
+        .btn-detail:hover { background-color: #334155 !important; color: #ffffff !important; }
         .vitrin-wrapper { position: relative; width: 100%; overflow: hidden; padding: 1rem 0; margin-bottom: 2rem; }
         .vitrin-scroll { display: flex; gap: 1.5rem; overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
         .vitrin-scroll::-webkit-scrollbar { display: none; }
@@ -128,293 +42,187 @@
         .vitrin-item-title { padding: 1rem; text-align: center; color: #ffffff; font-weight: 700; font-size: 1rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .kategori-baslik { border-bottom: 2px solid #1e293b; padding-bottom: 0.75rem; margin-bottom: 1.5rem; color: #f8fafc; }
         footer { background-color: #0f172a; border-top: 1px solid #1e293b; padding: 2rem 0; margin-top: 5rem; text-align: center; color: #64748b; }
+        .galeri-slider { display: flex; gap: 1rem; overflow-x: auto; padding: 1rem 0; }
+        .galeri-slider img, .galeri-slider video { height: 200px; object-fit: cover; border-radius: 8px; flex: 0 0 auto; }
     </style>
 </head>
 <body>
 <div id="loading-overlay"><div class="spinner"></div></div>
 <script>
-    window.addEventListener('load', () => {
-        document.getElementById('loading-overlay').style.display = 'none';
-    });
+    window.addEventListener('load', () => { document.getElementById('loading-overlay').style.display = 'none'; });
 </script>
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="d-flex align-items-center gap-3">
-            {% if not session.get('logged_in') %}
-                <a href="/basvuru" class="btn btn-outline-light rounded-pill px-4 shadow-sm" style="transition: all 0.3s ease; border-width: 2px;">Ajansa Başvur</a>
-            {% else %}
-                <a href="/logout" class="btn btn-outline-danger rounded-pill px-3">Giriş Yapıldı</a>
-            {% endif %}
-        </div>
-        <div class="container">
-            {% if session.get('logged_in') %}
-                {% if session.get('role') == 'admin' %}
-                    <a class="navbar-brand" href="/">Hoş geldin, Admin 👑</a>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/">🎭 NOVA CAST AJANS</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-center">
+                <li class="nav-item"><a class="nav-link active" href="/">Ana Sayfa</a></li>
+                <li class="nav-item"><a class="nav-link" href="/hakkimizda">Hakkımızda</a></li>
+                <li class="nav-item"><a class="nav-link" href="/duyurular">📢 Duyurular</a></li>
+                {% if session.get('logged_in') and session.get('role') == 'admin' %}
+                    <li class="nav-item"><a class="nav-link text-info fw-bold" href="/admin/dashboard">📊 Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/admin/randevular">📅 Randevular</a></li>
+                    <li class="nav-item"><a class="nav-link text-warning fw-bold" href="/admin/basvurular">📥 Başvurular</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/admin/onaylar">⏳ Onaylar</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/admin/yorumlar">💬 Yorumlar</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/admin/ayarlar">⚙️ Ayarlar</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/admin/mesajlar">✉️ Mesaj</a></li>
+                    <li class="nav-item"><a class="btn btn-success btn-sm ms-2 px-3 fw-bold" href="/ekle">+ Oyuncu Ekle</a></li>
+                {% elif session.get('logged_in') %}
+                    <li class="nav-item"><a class="nav-link" href="/profilim">Profilim</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/oyuncu/randevular">📅 Randevularım</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/gelen_kutusu">✉️ Gelen Kutusu</a></li>
+                {% endif %}
+                {% if session.get('logged_in') %}
+                    <li class="nav-item"><a class="nav-link text-danger fw-bold ms-2" href="/logout">Çıkış Yap</a></li>
                 {% else %}
-                    <a class="navbar-brand" href="/">Hoş geldin, {{ session.get('kullanici_adi') | capitalize }} 🎭</a>
-                {% endif %}
-            {% else %}
-                <a class="navbar-brand" href="/">🎭 NOVA CAST AJANS</a>
-            {% endif %}
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item"><a class="nav-link active" href="/">Ana Sayfa</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/hakkimizda">Hakkımızda</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/duyurular">📢 Duyurular</a></li>
-                    {% if session.get('logged_in') %}
-                        {% if session.get('role') == 'admin' %}
-                            <li class="nav-item"><a class="nav-link text-info fw-bold" href="/admin/dashboard">📊 Dashboard</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/admin/randevular">📅 Randevular</a></li>
-                            <li class="nav-item"><a class="nav-link text-warning fw-bold ms-2" href="/admin/basvurular">📥 Başvurular</a></li>
-                            <li class="nav-item"><a class="btn btn-warning btn-sm ms-2 px-3 fw-bold" href="{{ url_for('admin_onaylar') }}">⏳ Bekleyen Onaylar</a></li>
-                            <li class="nav-item"><a class="btn btn-info btn-sm ms-2 px-3 fw-bold text-dark" style="background-color: #38bdf8; border: none;" href="/admin/mesajlar">✉️ Mesaj Gönder</a></li>
-                            <li class="nav-item"><a class="btn btn-success btn-sm ms-2 px-3 fw-bold" href="/ekle">+ Oyuncu Ekle</a></li>
-                        {% else %}
-                            <li class="nav-item"><a href="{{ url_for('profilim') }}">Profilim</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/oyuncu/randevular">📅 Randevularım</a></li>
-                            <li class="nav-item"><a class="btn btn-info btn-sm ms-2 px-3 fw-bold text-dark" style="background-color: #38bdf8; border: none;" href="/gelen_kutusu">✉️ Gelen Kutusu</a></li>
-                        {% endif %}
-                        <li class="nav-item"><a class="nav-link text-danger fw-bold ms-2" href="/logout">Çıkış Yap</a></li>
-                    {% else %}
-                        <li class="nav-item"><a class="btn btn-outline-light btn-sm ms-2 px-3 fw-bold" href="/login">Giriş Yap</a></li>
-                    {% endif %}
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <header class="hero-section">
-        <div class="container">
-            <h1 class="display-4 fw-extrabold text-white">Geleceğin Yıldızlarını Keşfedin</h1>
-            <p class="lead text-muted">Nova Cast Ajans bünyesindeki profesyonel oyuncu kadrosuna göz atın.</p>
-            <div class="search-box">
-                <form action="/" method="GET" class="bg-dark p-4 rounded-4 shadow">
-                    <div class="row g-2">
-                        <div class="col-12 col-md-6">
-                            <div class="filter-label">İsim ile Ara</div>
-                            <input type="text" name="q" class="form-control" placeholder="Oyuncu adı..." value="{{ arama_sorgusu or '' }}">
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="filter-label">Cinsiyet</div>
-                            <select name="cinsiyet" class="form-select">
-                                <option value="">Tümü</option>
-                                <option value="Erkek" {% if secili_cinsiyet == 'Erkek' %}selected{% endif %}>Erkek</option>
-                                <option value="Kadın" {% if secili_cinsiyet == 'Kadın' %}selected{% endif %}>Kadın</option>
-                            </select>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="filter-label">Şehir</div>
-                            <input type="text" name="sehir" class="form-control" placeholder="Örn: İstanbul" value="{{ secili_sehir or '' }}">
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="filter-label">Min Yaş</div>
-                            <input type="number" name="yas_min" class="form-control" placeholder="18" value="{{ yas_min }}">
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="filter-label">Max Yaş</div>
-                            <input type="number" name="yas_max" class="form-control" placeholder="50" value="{{ yas_max }}">
-                        </div>
-                        <div class="col-12 col-md-6 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary w-100 fw-bold">Filtreleri Uygula</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </header>
-
-    <main class="container my-5">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        {% if kurucu and current_page == 1 %}
-            <div class="row mb-5 justify-content-center">
-                <div class="col-12 text-center mb-4">
-                    <h2 class="fw-bold text-uppercase" style="letter-spacing: 2px; color: #3b82f6;">Ajans Sahibi & Kurucu</h2>
-                    <div style="width: 60px; height: 4px; background: #3b82f6; margin: 10px auto; border-radius: 2px;"></div>
-                </div>
-                <div class="col-12 col-md-8 col-lg-6">
-                    <div class="oyuncu-card p-4" style="border: 2px solid #3b82f6; background: linear-gradient(135deg, #111827 0%, #1e1b4b 100%);">
-                        <div class="row align-items-center">
-                            <div class="col-12 col-sm-5 text-center mb-3 mb-sm-0">
-                                <div class="oyuncu-img-container" style="height: 250px; border-radius: 12px; overflow: hidden;">
-                                    {% if kurucu.resim_url %}
-                                        <img src="{{ kurucu.resim_url }}" class="oyuncu-img" alt="Kurucu Resmi" loading="lazy">
-                                    {% else %}
-                                        <div class="oyuncu-no-img">👤</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-12 col-sm-7 text-center text-sm-start ps-sm-4 d-flex flex-column h-100">
-                                <span class="badge bg-danger mb-2 px-3 py-2 fw-bold align-self-center align-self-sm-start" style="font-size: 0.8rem; letter-spacing: 1px;">AJANS KURUCUSU</span>
-                                <h3 class="fw-extrabold text-white mb-2">{{ kurucu.isim }}</h3>
-                                <p class="card-text-custom mb-1"><strong>Şehir:</strong> {{ kurucu.sehir or "-" }}</p>
-                                <p class="card-text-custom mb-3"><strong>Boy/Kilo:</strong> {{ kurucu.boy or "-" }} cm / {{ kurucu.kilo or "-" }} kg</p>
-                                <a href="/oyuncu/{{ kurucu.id }}" class="btn-detail w-100 py-2">Profili İncele</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <hr style="border-color: #1e293b; margin-bottom: 4rem;">
-        {% endif %}
-
-        {% if oyuncular and current_page == 1 %}
-            <div class="row mb-3">
-                <div class="col-12">
-                    <h4 class="fw-bold text-white mb-1">⭐ Yıldız Vitrini</h4>
-                    <p class="text-muted small">Tüm kadromuza hızlıca göz atın</p>
-                </div>
-            </div>
-            <div class="vitrin-wrapper">
-                <div class="vitrin-scroll" id="vitrinScroll">
-                    {% for oyuncu in oyuncular %}
-                        <a href="/oyuncu/{{ oyuncu.id }}" class="vitrin-item-link">
-                            <div class="vitrin-item shadow">
-                                {% if oyuncu.resim_url %}
-                                    <img src="{{ oyuncu.resim_url }}" class="vitrin-item-img" alt="{{ oyuncu.isim }}" loading="lazy">
-                                {% else %}
-                                    <div class="vitrin-item-no-img">👤</div>
-                                {% endif %}
-                                <h5 class="vitrin-item-title">{{ oyuncu.isim or "İsimsiz Oyuncu" }}</h5>
-                            </div>
-                        </a>
-                    {% endfor %}
-                </div>
-            </div>
-            <hr style="border-color: #1e293b; margin-bottom: 4rem;">
-        {% endif %}
-
-        {% macro render_kategori(liste, baslik, ikon) %}
-            {% if liste|length > 0 %}
-                <div class="row mt-4 mb-3">
-                    <div class="col-12">
-                        <h3 class="fw-bold kategori-baslik">{{ ikon }} {{ baslik }}</h3>
-                    </div>
-                </div>
-                <div class="row g-4 mb-5">
-                    {% for oyuncu in liste %}
-                        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                            <div class="oyuncu-card">
-                                <div class="oyuncu-img-container">
-                                    {% if oyuncu.resim_url %}
-                                        <img src="{{ oyuncu.resim_url }}" class="oyuncu-img" alt="Oyuncu Resmi" loading="lazy">
-                                    {% else %}
-                                        <div class="oyuncu-no-img">👤</div>
-                                    {% endif %}
-                                </div>
-                                <div class="card-body-custom">
-                                    <h5 class="card-title-custom">{{ oyuncu.isim or "İsimsiz Oyuncu" }}</h5>
-                                    <p class="card-text-custom"><strong>Yaş:</strong> {{ oyuncu.yas or "-" }}</p>
-                                    <p class="card-text-custom"><strong>Boy/Kilo:</strong> {{ oyuncu.boy or "-" }} cm / {{ oyuncu.kilo or "-" }} kg</p>
-                                    <p class="card-text-custom"><strong>Şehir:</strong> {{ oyuncu.sehir or "-" }}</p>
-                                    <a href="/oyuncu/{{ oyuncu.id }}" class="btn-detail mt-3">Profili İncele</a>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endmacro %}
-
-        {% if oyuncular %}
-            {% set cocuklar = [] %}
-            {% set gencler = [] %}
-            {% set ortalar = [] %}
-            {% set yaslilar = [] %}
-            {% set belirsizler = [] %}
-
-            {% for oyuncu in oyuncular %}
-                {% if oyuncu.yas != None %}
-                    {% if oyuncu.yas <= 15 %}
-                        {% set _ = cocuklar.append(oyuncu) %}
-                    {% elif oyuncu.yas <= 25 %}
-                        {% set _ = gencler.append(oyuncu) %}
-                    {% elif oyuncu.yas <= 45 %}
-                        {% set _ = ortalar.append(oyuncu) %}
-                    {% else %}
-                        {% set _ = yaslilar.append(oyuncu) %}
-                    {% endif %}
-                {% else %}
-                    {% set _ = belirsizler.append(oyuncu) %}
-                {% endif %}
-            {% endfor %}
-
-            {{ render_kategori(cocuklar, "Çocuk Oyuncu Kategorisi (0-15 Yaş)", "🧸") }}
-            {{ render_kategori(gencler, "Genç Oyuncu Kategorisi (16-25 Yaş)", "🌟") }}
-            {{ render_kategori(ortalar, "Orta Yaş Oyuncu Kategorisi (26-45 Yaş)", "🎬") }}
-            {{ render_kategori(yaslilar, "Kıdemli / Usta Oyuncular (46+ Yaş)", "👑") }}
-            {{ render_kategori(belirsizler, "Diğer Oyuncular", "👤") }}
-        {% else %}
-            {% if not kurucu %}
-                <div class="col-12 text-center py-5">
-                    <h3 class="text-muted">Aramanıza uygun oyuncu bulunamadı.</h3>
-                    <a href="/" class="btn btn-outline-primary mt-3">Tüm Kadroyu Göster</a>
-                </div>
-            {% endif %}
-        {% endif %}
-
-        {% if total_pages > 1 %}
-        <nav aria-label="Sayfa Gezinme" class="mt-5 mb-4">
-            <ul class="pagination justify-content-center">
-                {% if current_page > 1 %}
-                <li class="page-item">
-                    <a class="page-link bg-dark text-white border-secondary" href="?page={{ current_page - 1 }}&q={{ arama_sorgusu }}&cinsiyet={{ secili_cinsiyet }}&yas_min={{ yas_min }}&yas_max={{ yas_max }}&sehir={{ secili_sehir }}">Önceki</a>
-                </li>
-                {% endif %}
-                {% for p in range(1, total_pages + 1) %}
-                <li class="page-item {% if p == current_page %}active{% endif %}">
-                    <a class="page-link {% if p == current_page %}bg-primary border-primary text-white fw-bold{% else %}bg-dark text-white border-secondary{% endif %}" href="?page={{ p }}&q={{ arama_sorgusu }}&cinsiyet={{ secili_cinsiyet }}&yas_min={{ yas_min }}&yas_max={{ yas_max }}&sehir={{ secili_sehir }}">{{ p }}</a>
-                </li>
-                {% endfor %}
-                {% if current_page < total_pages %}
-                <li class="page-item">
-                    <a class="page-link bg-dark text-white border-secondary" href="?page={{ current_page + 1 }}&q={{ arama_sorgusu }}&cinsiyet={{ secili_cinsiyet }}&yas_min={{ yas_min }}&yas_max={{ yas_max }}&sehir={{ secili_sehir }}">Sonraki</a>
-                </li>
+                    <li class="nav-item"><a class="btn btn-outline-light btn-sm ms-2 px-3 fw-bold" href="/login">Giriş Yap</a></li>
+                    <li class="nav-item"><a class="btn btn-outline-light btn-sm ms-2 px-3 fw-bold" href="/basvuru">Ajansa Başvur</a></li>
                 {% endif %}
             </ul>
-        </nav>
-        {% endif %}
-    </main>
-
-    <footer>
-        <div class="container">
-            <p>&copy; NOVA MEDİA \/ 2026 Nova Cast Ajans. Tüm Hakları Saklıdır.</p>
         </div>
-    </footer>
+    </div>
+</nav>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const scrollContainer = document.getElementById('vitrinScroll');
-            if (scrollContainer) {
-                const content = scrollContainer.innerHTML;
-                scrollContainer.innerHTML += content;
-                let isHovered = false;
-                scrollContainer.addEventListener('mouseenter', () => isHovered = true);
-                scrollContainer.addEventListener('mouseleave', () => isHovered = false);
-                scrollContainer.addEventListener('touchstart', () => isHovered = true);
-                scrollContainer.addEventListener('touchend', () => { setTimeout(() => isHovered = false, 1000); });
-                function autoScroll() {
-                    if (!isHovered) {
-                        scrollContainer.scrollLeft += 1; 
-                        if (scrollContainer.scrollLeft >= scrollContainer.scrollWidth / 2) { scrollContainer.scrollLeft = 0; }
-                    }
-                    requestAnimationFrame(autoScroll);
+<header class="hero-section">
+    <div class="container">
+        <h1 class="display-4 fw-extrabold text-white">Geleceğin Yıldızlarını Keşfedin</h1>
+        <p class="lead text-muted">Nova Cast Ajans bünyesindeki profesyonel oyuncu kadrosuna göz atın.</p>
+        <div class="search-box">
+            <form action="/" method="GET" class="bg-dark p-4 rounded-4 shadow">
+                <div class="row g-2">
+                    <div class="col-12 col-md-6"><div class="filter-label">İsim ile Ara</div><input type="text" name="q" class="form-control" placeholder="Oyuncu adı..." value="{{ arama_sorgusu or '' }}"></div>
+                    <div class="col-6 col-md-3"><div class="filter-label">Cinsiyet</div><select name="cinsiyet" class="form-select"><option value="">Tümü</option><option value="Erkek" {% if secili_cinsiyet == 'Erkek' %}selected{% endif %}>Erkek</option><option value="Kadın" {% if secili_cinsiyet == 'Kadın' %}selected{% endif %}>Kadın</option></select></div>
+                    <div class="col-6 col-md-3"><div class="filter-label">Şehir</div><input type="text" name="sehir" class="form-control" placeholder="Örn: İstanbul" value="{{ secili_sehir or '' }}"></div>
+                    <div class="col-6 col-md-3"><div class="filter-label">Min Yaş</div><input type="number" name="yas_min" class="form-control" placeholder="18" value="{{ yas_min }}"></div>
+                    <div class="col-6 col-md-3"><div class="filter-label">Max Yaş</div><input type="number" name="yas_max" class="form-control" placeholder="50" value="{{ yas_max }}"></div>
+                    <div class="col-12 col-md-6 d-flex align-items-end"><button type="submit" class="btn btn-primary w-100 fw-bold">Filtreleri Uygula</button></div>
+                </div>
+            </form>
+        </div>
+    </div>
+</header>
+
+<main class="container my-5">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button></div>{% endfor %}{% endif %}
+    {% endwith %}
+
+    {% if kurucu and current_page == 1 %}
+    <div class="row mb-5 justify-content-center">
+        <div class="col-12 text-center mb-4"><h2 class="fw-bold text-uppercase" style="letter-spacing: 2px; color: #3b82f6;">Ajans Sahibi & Kurucu</h2><div style="width: 60px; height: 4px; background: #3b82f6; margin: 10px auto; border-radius: 2px;"></div></div>
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="oyuncu-card p-4" style="border: 2px solid #3b82f6; background: linear-gradient(135deg, #111827 0%, #1e1b4b 100%);">
+                <div class="row align-items-center">
+                    <div class="col-12 col-sm-5 text-center mb-3 mb-sm-0">
+                        <div class="oyuncu-img-container" style="height: 250px; border-radius: 12px; overflow: hidden;">
+                            {% if kurucu.resim_url %}<img src="{{ kurucu.resim_url }}" class="oyuncu-img" alt="Kurucu Resmi" loading="lazy">{% else %}<div class="oyuncu-no-img">👤</div>{% endif %}
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-7 text-center text-sm-start ps-sm-4 d-flex flex-column h-100">
+                        <span class="badge bg-danger mb-2 px-3 py-2 fw-bold align-self-center align-self-sm-start" style="font-size: 0.8rem; letter-spacing: 1px;">AJANS KURUCUSU</span>
+                        <h3 class="fw-extrabold text-white mb-2">{{ kurucu.isim }}</h3>
+                        <p class="card-text-custom mb-1"><strong>Şehir:</strong> {{ kurucu.sehir or "-" }}</p>
+                        <p class="card-text-custom mb-3"><strong>Boy/Kilo:</strong> {{ kurucu.boy or "-" }} cm / {{ kurucu.kilo or "-" }} kg</p>
+                        <a href="/oyuncu/{{ kurucu.id }}" class="btn-detail w-100 py-2">Profili İncele</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <hr style="border-color: #1e293b; margin-bottom: 4rem;">
+    {% endif %}
+
+    {% if oyuncular and current_page == 1 %}
+    <div class="row mb-3"><div class="col-12"><h4 class="fw-bold text-white mb-1">⭐ Yıldız Vitrini</h4><p class="text-muted small">Tüm kadromuza hızlıca göz atın</p></div></div>
+    <div class="vitrin-wrapper"><div class="vitrin-scroll" id="vitrinScroll">
+        {% for oyuncu in oyuncular %}
+            <a href="/oyuncu/{{ oyuncu.id }}" class="vitrin-item-link"><div class="vitrin-item shadow">{% if oyuncu.resim_url %}<img src="{{ oyuncu.resim_url }}" class="vitrin-item-img" alt="{{ oyuncu.isim }}" loading="lazy">{% else %}<div class="vitrin-item-no-img">👤</div>{% endif %}<h5 class="vitrin-item-title">{{ oyuncu.isim or "İsimsiz Oyuncu" }}</h5></div></a>
+        {% endfor %}
+    </div></div>
+    <hr style="border-color: #1e293b; margin-bottom: 4rem;">
+    {% endif %}
+
+    {% macro render_kategori(liste, baslik, ikon) %}
+        {% if liste|length > 0 %}
+            <div class="row mt-4 mb-3"><div class="col-12"><h3 class="fw-bold kategori-baslik">{{ ikon }} {{ baslik }}</h3></div></div>
+            <div class="row g-4 mb-5">
+                {% for oyuncu in liste %}
+                    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                        <div class="oyuncu-card">
+                            <div class="oyuncu-img-container">{% if oyuncu.resim_url %}<img src="{{ oyuncu.resim_url }}" class="oyuncu-img" alt="Oyuncu Resmi" loading="lazy">{% else %}<div class="oyuncu-no-img">👤</div>{% endif %}</div>
+                            <div class="card-body-custom">
+                                <h5 class="card-title-custom">{{ oyuncu.isim or "İsimsiz Oyuncu" }}</h5>
+                                <p class="card-text-custom"><strong>Yaş:</strong> {{ oyuncu.yas or "-" }}</p>
+                                <p class="card-text-custom"><strong>Boy/Kilo:</strong> {{ oyuncu.boy or "-" }} cm / {{ oyuncu.kilo or "-" }} kg</p>
+                                <p class="card-text-custom"><strong>Şehir:</strong> {{ oyuncu.sehir or "-" }}</p>
+                                <a href="/oyuncu/{{ oyuncu.id }}" class="btn-detail mt-3">Profili İncele</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endmacro %}
+
+    {% if oyuncular %}
+        {% set cocuklar = [] %}{% set gencler = [] %}{% set ortalar = [] %}{% set yaslilar = [] %}{% set belirsizler = [] %}
+        {% for oyuncu in oyuncular %}
+            {% if oyuncu.yas != None %}
+                {% if oyuncu.yas <= 15 %}{% set _ = cocuklar.append(oyuncu) %}
+                {% elif oyuncu.yas <= 25 %}{% set _ = gencler.append(oyuncu) %}
+                {% elif oyuncu.yas <= 45 %}{% set _ = ortalar.append(oyuncu) %}
+                {% else %}{% set _ = yaslilar.append(oyuncu) %}{% endif %}
+            {% else %}{% set _ = belirsizler.append(oyuncu) %}{% endif %}
+        {% endfor %}
+        {{ render_kategori(cocuklar, "Çocuk Oyuncu Kategorisi (0-15 Yaş)", "🧸") }}
+        {{ render_kategori(gencler, "Genç Oyuncu Kategorisi (16-25 Yaş)", "🌟") }}
+        {{ render_kategori(ortalar, "Orta Yaş Oyuncu Kategorisi (26-45 Yaş)", "🎬") }}
+        {{ render_kategori(yaslilar, "Kıdemli / Usta Oyuncular (46+ Yaş)", "👑") }}
+        {{ render_kategori(belirsizler, "Diğer Oyuncular", "👤") }}
+    {% else %}
+        {% if not kurucu %}<div class="col-12 text-center py-5"><h3 class="text-muted">Aramanıza uygun oyuncu bulunamadı.</h3><a href="/" class="btn btn-outline-primary mt-3">Tüm Kadroyu Göster</a></div>{% endif %}
+    {% endif %}
+
+    {% if total_pages > 1 %}
+    <nav aria-label="Sayfa Gezinme" class="mt-5 mb-4">
+        <ul class="pagination justify-content-center">
+            {% if current_page > 1 %}<li class="page-item"><a class="page-link bg-dark text-white border-secondary" href="?page={{ current_page - 1 }}&q={{ arama_sorgusu }}&cinsiyet={{ secili_cinsiyet }}&yas_min={{ yas_min }}&yas_max={{ yas_max }}&sehir={{ secili_sehir }}">Önceki</a></li>{% endif %}
+            {% for p in range(1, total_pages + 1) %}<li class="page-item {% if p == current_page %}active{% endif %}"><a class="page-link {% if p == current_page %}bg-primary border-primary text-white fw-bold{% else %}bg-dark text-white border-secondary{% endif %}" href="?page={{ p }}&q={{ arama_sorgusu }}&cinsiyet={{ secili_cinsiyet }}&yas_min={{ yas_min }}&yas_max={{ yas_max }}&sehir={{ secili_sehir }}">{{ p }}</a></li>{% endfor %}
+            {% if current_page < total_pages %}<li class="page-item"><a class="page-link bg-dark text-white border-secondary" href="?page={{ current_page + 1 }}&q={{ arama_sorgusu }}&cinsiyet={{ secili_cinsiyet }}&yas_min={{ yas_min }}&yas_max={{ yas_max }}&sehir={{ secili_sehir }}">Sonraki</a></li>{% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</main>
+
+<footer><div class="container"><p>&copy; NOVA MEDİA \/ 2026 Nova Cast Ajans. Tüm Hakları Saklıdır.</p></div></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const scrollContainer = document.getElementById('vitrinScroll');
+        if (scrollContainer) {
+            const content = scrollContainer.innerHTML;
+            scrollContainer.innerHTML += content;
+            let isHovered = false;
+            scrollContainer.addEventListener('mouseenter', () => isHovered = true);
+            scrollContainer.addEventListener('mouseleave', () => isHovered = false);
+            scrollContainer.addEventListener('touchstart', () => isHovered = true);
+            scrollContainer.addEventListener('touchend', () => { setTimeout(() => isHovered = false, 1000); });
+            function autoScroll() {
+                if (!isHovered) {
+                    scrollContainer.scrollLeft += 1;
+                    if (scrollContainer.scrollLeft >= scrollContainer.scrollWidth / 2) { scrollContainer.scrollLeft = 0; }
                 }
                 requestAnimationFrame(autoScroll);
             }
-        });
-    </script>
+            requestAnimationFrame(autoScroll);
+        }
+    });
+</script>
 </body>
 </html>

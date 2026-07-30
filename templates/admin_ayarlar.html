@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ayarlar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>body{background:#0b0c10;color:#f1f5f9;}</style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark"><div class="container"><a class="navbar-brand" href="/">Nova Admin</a></div></nav>
+    <div class="container my-5">
+        <h2>⚙️ Ayarlar</h2>
+        <form method="POST" class="bg-dark p-4 rounded">
+            <div class="mb-3">
+                <label>Hoş Geldin Mesajı (Yeni oyuncu eklendiğinde otomatik gönderilir)</label>
+                <textarea name="hos_geldin_mesaji" class="form-control bg-dark text-white" rows="4">{{ hos_mesaj }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+            <a href="/" class="btn btn-secondary">Geri</a>
+        </form>
+    </div>
+</body>
+</html>

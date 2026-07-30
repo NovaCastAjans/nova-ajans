@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Galeri Yönetimi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>body{background:#0b0c10;color:#f1f5f9;}</style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark"><div class="container"><a class="navbar-brand" href="/">Nova Admin</a></div></nav>
+    <div class="container my-5">
+        <div class="d-flex justify-content-between">
+            <h2>🖼️ Galeri Yönetimi</h2>
+            <a href="/admin/galeri/ekle" class="btn btn-success">+ Yeni Ekle</a>
+        </div>
+        <div class="row mt-4">
+            {% for item in galeri %}
+            <div class="col-md-3 mb-3">
+                <div class="bg-dark p-2 rounded border border-secondary">
+                    {% if item.dosya_tipi == 'resim' %}
+                        <img src="{{ item.dosya_url }}" class="img-fluid rounded" style="height:150px;width:100%;object-fit:cover;">
+                    {% else %}
+                        <video src="{{ item.dosya_url }}" class="img-fluid rounded" style="height:150px;width:100%;object-fit:cover;" controls></video>
+                    {% endif %}
+                    <p class="mt-1 mb-0 text-center">{{ item.baslik or 'Başlıksız' }}</p>
+                    <form action="/admin/galeri/sil/{{ item.id }}" method="POST" class="text-center">
+                        <button class="btn btn-danger btn-sm" onclick="return confirm('Silmek istediğine emin misin?')">Sil</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <a href="/" class="btn btn-secondary mt-4">← Ana Sayfa</a>
+    </div>
+</body>
+</html>

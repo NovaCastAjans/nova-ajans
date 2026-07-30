@@ -3,20 +3,31 @@ import uuid
 import math
 import random
 import string
+import ssl
+import httpx
 from datetime import date, datetime, timedelta
 from io import BytesIO
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, send_file
 from werkzeug.utils import secure_filename
-from supabase import create_client
+# DÜZELTME BURADA: supabase._async.client yerine supabase'den import ediyoruz
+from supabase import create_client, AsyncClientOptions
 from dotenv import load_dotenv
 import requests
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import ImageReader
 from reportlab.lib.units import cm
+from reportlab.lib.colors import black, white, grey, lightgrey, darkblue, navy
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 import qrcode
 from PIL import Image
 import time
+
+# SSL HATASINI KÖKTEN ÇÖZ (Local ve Geliştirme ortamı için)
+os.environ['CURL_CA_BUNDLE'] = ''
+os.environ['SSL_CERT_FILE'] = ''
+ssl._create_default_https_context = ssl._create_unverified_context
 
 load_dotenv()
 
@@ -25,7 +36,41 @@ app.secret_key = os.getenv("SECRET_KEY", "nova_ajans_varsayilan_anahtar_2026")
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+
+# DÜZELTME: http_client parametresi desteklenmediği için kaldırıldı.
+options = AsyncClientOptions() 
+
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY, options=options)
+
+if SUPABASE_SERVICE_KEY:
+    # DÜZELTME: Admin client için de http_client kaldırıldı.
+    admin_options = AsyncClientOptions()
+    supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY, options=admin_options)
+else:
+    supabase_admin = supabase
+
+# requests uyarılarını kapat
+requests.packages.urllib3.disable_warnings()
+import urllib3
+urllib3.disable_warnings()
+
+# ... (diğer route'lar aynen devam eder)
+# ... geri kalan route'lar (index, basvuru, login, vb.) aynen devam eder ...
+# Font (varsa DejaVu kullan)
+FONT_NAME = 'Helvetica'
+FONT_BOLD = 'Helvetica-Bold'
+FONT_PATH = os.path.join("static", "fonts", "DejaVuSans.ttf")
+if os.path.exists(FONT_PATH):
+    try:
+        pdfmetrics.registerFont(TTFont('DejaVu', FONT_PATH))
+        bold_path = FONT_PATH.replace('.ttf', '-Bold.ttf')
+        if os.path.exists(bold_path):
+            pdfmetrics.registerFont(TTFont('DejaVu-Bold', bold_path))
+            FONT_BOLD = 'DejaVu-Bold'
+        FONT_NAME = 'DejaVu'
+    except:
+        pass
 
 # ----------------- YARDIMCI FONKSİYONLAR -----------------
 def safe_int(val):
@@ -223,6 +268,13 @@ def oyuncu_ekle():
                     "id": yeni_oyuncu_id
                 }
                 supabase.table("kullanicilar").insert(yeni_kullanici).execute()
+                # Hoş geldin mesajı gönder
+                hos_mesaj = supabase.table('ayarlar').select('deger').eq('anahtar', 'hos_geldin_mesaji').execute()
+                mesaj_metni = hos_mesaj.data[0]['deger'] if hos_mesaj.data else "Ajansımıza hoş geldiniz!"
+                supabase.table('mesajlar').insert({
+                    'alici_id': str(yeni_oyuncu_id),
+                    'mesaj_metni': mesaj_metni
+                }).execute()
         return redirect(url_for('index'))
     return render_template('ekle.html')
 
@@ -268,13 +320,92 @@ def oyuncu_detay(oyuncu_id):
         return redirect(url_for('index'))
     oyuncu = res.data[0]
     
+    # YORUMLARI ÇEK
+    yorumlar = []
+    try:
+        yorumlar = supabase.table('yorumlar').select('*').eq('oyuncu_id', oyuncu_id).eq('onaylandi', True).order('created_at', desc=True).execute().data
+    except:
+        yorumlar = []
+    
+    ortalama_puan = 0
+    if yorumlar:
+        toplam = sum(y.get('puan', 0) for y in yorumlar if y.get('puan'))
+        ortalama_puan = round(toplam / len(yorumlar), 1) if toplam else 0
+    
     meta = {
         'baslik': f"{oyuncu.get('isim', 'Oyuncu')} | Nova Cast Ajans",
-        'aciklama': f"{oyuncu.get('isim')} profili, yaş: {oyuncu.get('yas', '')}, boy: {oyuncu.get('boy', '')}, şehir: {oyuncu.get('sehir', '')}",
-        'anahtar_kelimeler': f"{oyuncu.get('isim')}, oyuncu, cast, yetenek"
+        'aciklama': f"{oyuncu.get('isim')} profili",
+        'anahtar_kelimeler': f"{oyuncu.get('isim')}, oyuncu, cast"
     }
     
-    return render_template('oyuncu_detay.html', oyuncu=oyuncu, meta=meta)
+    return render_template('oyuncu_detay.html',
+                           oyuncu=oyuncu,
+                           meta=meta,
+                           yorumlar=yorumlar,
+                           ortalama_puan=ortalama_puan)
+
+# ----------------- YORUM EKLE -----------------
+@app.route('/yorum/ekle', methods=['POST'])
+def yorum_ekle():
+    if not session.get('logged_in'):
+        flash('Yorum yapmak için giriş yapmalısınız.', 'warning')
+        return redirect(url_for('login'))
+    
+    oyuncu_id = request.form.get('oyuncu_id')
+    yorum = request.form.get('yorum')
+    puan = safe_int(request.form.get('puan'))
+    
+    if not yorum or not oyuncu_id:
+        flash('Yorum ve puan zorunludur.', 'danger')
+        return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
+    
+    try:
+        # Yeni eklenen kısım: Yorum yapan kişinin yetkisini session'dan al (admin ise admin, değilse oyuncu)
+        kullanici_adi = session.get('kullanici_adi', 'Anonim')
+        yetki = session.get('role', 'oyuncu')
+        if yetki is None:
+            yetki = 'oyuncu'
+
+        supabase.table('yorumlar').insert({
+            'oyuncu_id': int(oyuncu_id),
+            'kullanici_adi': kullanici_adi,
+            'yorum': yorum,
+            'puan': puan if puan else None,
+            'onaylandi': False,
+            'yetki': yetki  # Veritabanına yeni sütunu ekledik
+        }).execute()
+        flash('Yorumunuz admin onayına gönderildi.', 'success')
+    except Exception as e:
+        flash(f'Yorum gönderilirken hata: {str(e)}', 'danger')
+    
+    return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
+# ----------------- ADMIN YORUM YÖNETİMİ -----------------
+@app.route('/admin/yorumlar')
+def admin_yorumlar():
+    if session.get('role') != 'admin':
+        flash('Yetkiniz yok!', 'danger')
+        return redirect(url_for('index'))
+    bekleyen = supabase.table('yorumlar').select('*, oyuncular(isim)').eq('onaylandi', False).order('created_at', desc=True).execute().data
+    onaylanan = supabase.table('yorumlar').select('*, oyuncular(isim)').eq('onaylandi', True).order('created_at', desc=True).execute().data
+    return render_template('admin_yorumlar.html', bekleyen=bekleyen, onaylanan=onaylanan)
+
+@app.route('/admin/yorum/onay/<int:yorum_id>')
+def yorum_onay(yorum_id):
+    if session.get('role') != 'admin':
+        flash('Yetkiniz yok!', 'danger')
+        return redirect(url_for('index'))
+    supabase.table('yorumlar').update({'onaylandi': True}).eq('id', yorum_id).execute()
+    flash('Yorum onaylandı.', 'success')
+    return redirect(url_for('admin_yorumlar'))
+
+@app.route('/admin/yorum/sil/<int:yorum_id>')
+def yorum_sil(yorum_id):
+    if session.get('role') != 'admin':
+        flash('Yetkiniz yok!', 'danger')
+        return redirect(url_for('index'))
+    supabase.table('yorumlar').delete().eq('id', yorum_id).execute()
+    flash('Yorum silindi.', 'success')
+    return redirect(url_for('admin_yorumlar'))
 
 # ----------------- OYUNCU SİL -----------------
 @app.route('/oyuncu/sil/<int:oyuncu_id>', methods=['GET', 'POST'])
@@ -520,16 +651,11 @@ def profilim():
 
 # ================= YENİ ÖZELLİKLER =================
 
-# ----- 1. QR KOD OLUŞTURMA -----
+# ----- QR KOD -----
 @app.route('/oyuncu/<int:oyuncu_id>/qr')
 def oyuncu_qr(oyuncu_id):
     profil_url = url_for('oyuncu_detay', oyuncu_id=oyuncu_id, _external=True)
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=10,
-        border=4,
-    )
+    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
     qr.add_data(profil_url)
     qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white")
@@ -538,9 +664,66 @@ def oyuncu_qr(oyuncu_id):
     buffer.seek(0)
     return send_file(buffer, mimetype='image/png')
 
-# ----- 2. SESLİ CV (SES DOSYASI YÜKLEME) - EKLEME SAYFASINDA ZATEN VAR -----
+# ----- KARTVİZİT PDF -----
+@app.route('/oyuncu/<int:oyuncu_id>/kartvizit')
+def kartvizit_pdf(oyuncu_id):
+    res = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
+    if not res.data:
+        flash('Oyuncu bulunamadı.', 'danger')
+        return redirect(url_for('index'))
+    oyuncu = res.data[0]
+    
+    buffer = BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+    c.setFillColor(lightgrey)
+    c.rect(0, 0, width, height, fill=1, stroke=0)
+    c.setFillColor(darkblue)
+    c.rect(0, height-3*cm, width, 3*cm, fill=1, stroke=0)
+    c.setFillColor(white)
+    c.setFont(FONT_BOLD, 20)
+    c.drawCentredString(width/2, height-1.8*cm, "NOVA CAST AJANS")
+    c.setFont(FONT_NAME, 12)
+    c.drawCentredString(width/2, height-2.6*cm, "Dijital Kartvizit")
+    y = height - 5*cm
+    c.setFillColor(black)
+    c.setFont(FONT_BOLD, 18)
+    c.drawString(2*cm, y, oyuncu.get('isim', 'İsimsiz'))
+    y -= 1.2*cm
+    c.setFont(FONT_NAME, 12)
+    bilgiler = [
+        ("Yaş", oyuncu.get('yas')),
+        ("Boy", f"{oyuncu.get('boy')} cm" if oyuncu.get('boy') else '-'),
+        ("Kilo", f"{oyuncu.get('kilo')} kg" if oyuncu.get('kilo') else '-'),
+        ("Cinsiyet", oyuncu.get('cinsiyet', '-')),
+        ("Göz Rengi", oyuncu.get('goz_rengi', '-')),
+        ("Saç Rengi", oyuncu.get('sac_rengi', '-')),
+        ("Şehir", oyuncu.get('sehir', '-')),
+        ("Telefon", oyuncu.get('telefon', '-')),
+        ("E-posta", oyuncu.get('eposta', '-'))
+    ]
+    for etiket, deger in bilgiler:
+        if deger:
+            c.setFillColor(grey)
+            c.drawString(2*cm, y, f"{etiket}:")
+            c.setFillColor(black)
+            c.drawString(5*cm, y, str(deger))
+            y -= 0.8*cm
+    try:
+        qr_url = url_for('oyuncu_qr', oyuncu_id=oyuncu_id, _external=True)
+        qr_img = requests.get(qr_url, timeout=5).content
+        qr_reader = ImageReader(BytesIO(qr_img))
+        c.drawImage(qr_reader, width-6*cm, 2*cm, width=4*cm, height=4*cm)
+    except:
+        pass
+    c.setFont(FONT_NAME, 9)
+    c.setFillColor(grey)
+    c.drawCentredString(width/2, 1*cm, "© Nova Cast Ajans - Dijital Kartvizit")
+    c.save()
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True, download_name=f"Kartvizit_{oyuncu.get('isim', 'oyuncu')}.pdf", mimetype='application/pdf')
 
-# ----- 3. CANLI İSTATİSTİKLER VE ANLIK ZİYARETÇİ SAYACI (ADMIN DASHBOARD) -----
+# ----- CANLI İSTATİSTİKLER (ADMIN DASHBOARD) -----
 @app.route('/admin/dashboard')
 def admin_dashboard():
     if session.get('role') != 'admin':
@@ -551,6 +734,7 @@ def admin_dashboard():
     bekleyen_basvuru = supabase.table('basvurular').select('id', count='exact').execute().count
     bekleyen_onay = supabase.table('bekleyen_degisiklikler').select('id', count='exact').execute().count
     randevu_sayisi = supabase.table('randevular').select('id', count='exact').execute().count
+    bekleyen_yorum = supabase.table('yorumlar').select('id', count='exact').eq('onaylandi', False).execute().count
     
     bugun = date.today().isoformat()
     bugun_randevular = supabase.table('randevular').select('*, oyuncular(isim)').eq('tarih', bugun).execute().data
@@ -588,6 +772,7 @@ def admin_dashboard():
                            bekleyen_basvuru=bekleyen_basvuru,
                            bekleyen_onay=bekleyen_onay,
                            randevu_sayisi=randevu_sayisi,
+                           yorum_sayisi=bekleyen_yorum,
                            bugun_randevular=bugun_randevular,
                            toplam_goruntulenme=toplam_goruntulenme,
                            son24_goruntulenme=son24_goruntulenme,
@@ -684,14 +869,14 @@ def duyurular_listesi():
     duyurular = supabase.table('duyurular').select('*').eq('aktif', True).order('created_at', desc=True).execute().data
     return render_template('duyurular.html', duyurular=duyurular, meta=meta)
 
-# ----------------- META YÖNETİMİ ROUTELARI -----------------
+# ----------------- META YÖNETİMİ -----------------
 @app.route('/admin/meta')
 def admin_meta():
     if session.get('role') != 'admin':
         flash('Yetkiniz yok!', 'danger')
         return redirect(url_for('index'))
     meta_list = supabase.table('meta').select('*').order('sayfa_adi').execute().data
-    return render_template('admin_meta.html', meta_list=meta_list)
+    return render_template('admin_meta_listesi.html', meta_list=meta_list)
 
 @app.route('/admin/meta/duzenle/<sayfa_adi>', methods=['GET', 'POST'])
 def admin_meta_duzenle(sayfa_adi):
@@ -727,49 +912,94 @@ def oyuncu_pdf(oyuncu_id):
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
-    
-    c.setFont("Helvetica-Bold", 20)
-    c.drawString(2*cm, height-2*cm, f"CV - {oyuncu.get('isim', 'İsimsiz')}")
-    c.line(2*cm, height-2.2*cm, width-2*cm, height-2.2*cm)
-    
-    y = height - 4*cm
-    c.setFont("Helvetica", 12)
-    bilgiler = [
-        ("Yaş", oyuncu.get('yas')),
-        ("Boy", f"{oyuncu.get('boy')} cm" if oyuncu.get('boy') else ''),
-        ("Kilo", f"{oyuncu.get('kilo')} kg" if oyuncu.get('kilo') else ''),
-        ("Cinsiyet", oyuncu.get('cinsiyet')),
-        ("Göz Rengi", oyuncu.get('goz_rengi')),
-        ("Saç Rengi", oyuncu.get('sac_rengi')),
-        ("Şehir", oyuncu.get('sehir')),
-        ("Telefon", oyuncu.get('telefon')),
-        ("E-posta", oyuncu.get('eposta'))
-    ]
-    for etiket, deger in bilgiler:
-        if deger:
-            c.drawString(2*cm, y, f"{etiket}: {deger}")
-            y -= 0.8*cm
-    
-    if oyuncu.get('deneyim'):
-        y -= 0.5*cm
-        c.setFont("Helvetica-Bold", 14)
-        c.drawString(2*cm, y, "Deneyim / Özgeçmiş")
-        y -= 0.8*cm
-        c.setFont("Helvetica", 12)
-        c.drawString(2*cm, y, oyuncu.get('deneyim')[:200] + ("..." if len(oyuncu.get('deneyim')) > 200 else ""))
-    
+    c.setFillColor(white)
+    c.rect(0, 0, width, height, fill=1, stroke=0)
+    c.setFillColor(navy)
+    c.rect(0, height-3.5*cm, width, 3.5*cm, fill=1, stroke=0)
+    c.setFillColor(white)
+    c.setFont(FONT_BOLD, 24)
+    c.drawCentredString(width/2, height-1.8*cm, "CV - Özgeçmiş")
+    c.setFont(FONT_NAME, 14)
+    c.drawCentredString(width/2, height-2.8*cm, oyuncu.get('isim', 'İsimsiz'))
     if oyuncu.get('resim_url'):
         try:
             img_data = requests.get(oyuncu.get('resim_url'), timeout=5).content
-            img = ImageReader(BytesIO(img_data))
-            c.drawImage(img, width-6*cm, height-8*cm, width=4*cm, height=4*cm, preserveAspectRatio=True, mask='auto')
+            img_reader = ImageReader(BytesIO(img_data))
+            c.drawImage(img_reader, width-5*cm, height-8*cm, width=4*cm, height=4*cm, preserveAspectRatio=True, mask='auto')
         except:
             pass
-    
+    y = height - 6*cm
+    c.setFillColor(black)
+    c.setFont(FONT_BOLD, 14)
+    c.drawString(2*cm, y, "Kişisel Bilgiler")
+    y -= 0.8*cm
+    c.setFont(FONT_NAME, 12)
+    c.line(2*cm, y+0.3*cm, 10*cm, y+0.3*cm)
+    y -= 0.5*cm
+    bilgiler = [
+        ("Yaş", oyuncu.get('yas')),
+        ("Boy", f"{oyuncu.get('boy')} cm" if oyuncu.get('boy') else '-'),
+        ("Kilo", f"{oyuncu.get('kilo')} kg" if oyuncu.get('kilo') else '-'),
+        ("Cinsiyet", oyuncu.get('cinsiyet', '-')),
+        ("Göz Rengi", oyuncu.get('goz_rengi', '-')),
+        ("Saç Rengi", oyuncu.get('sac_rengi', '-')),
+        ("Şehir", oyuncu.get('sehir', '-')),
+        ("Telefon", oyuncu.get('telefon', '-')),
+        ("E-posta", oyuncu.get('eposta', '-'))
+    ]
+    for etiket, deger in bilgiler:
+        if deger:
+            c.setFillColor(grey)
+            c.drawString(2*cm, y, f"{etiket}:")
+            c.setFillColor(black)
+            c.drawString(6*cm, y, str(deger))
+            y -= 0.7*cm
+    if oyuncu.get('deneyim'):
+        y -= 0.5*cm
+        c.setFillColor(black)
+        c.setFont(FONT_BOLD, 14)
+        c.drawString(2*cm, y, "Deneyim / Özgeçmiş")
+        y -= 0.8*cm
+        c.setFont(FONT_NAME, 11)
+        c.line(2*cm, y+0.3*cm, 12*cm, y+0.3*cm)
+        y -= 0.5*cm
+        metin = oyuncu.get('deneyim')
+        satirlar = metin.split('\n')
+        for satir in satirlar:
+            if len(satir) > 80:
+                for i in range(0, len(satir), 80):
+                    c.drawString(2*cm, y, satir[i:i+80])
+                    y -= 0.6*cm
+            else:
+                c.drawString(2*cm, y, satir)
+                y -= 0.6*cm
+    c.setFont(FONT_NAME, 9)
+    c.setFillColor(grey)
+    c.drawCentredString(width/2, 1*cm, f"© Nova Cast Ajans - {oyuncu.get('isim', '')} | {datetime.now().strftime('%d.%m.%Y')}")
     c.save()
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name=f"CV_{oyuncu.get('isim', 'oyuncu')}.pdf", mimetype='application/pdf')
 
+# ----------------- AYARLAR (HOŞ GELDİN MESAJI) -----------------
+@app.route('/admin/ayarlar', methods=['GET', 'POST'])
+def admin_ayarlar():
+    if session.get('role') != 'admin':
+        flash('Yetkiniz yok!', 'danger')
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        mesaj = request.form.get('hos_geldin_mesaji')
+        if mesaj:
+            supabase.table('ayarlar').update({'deger': mesaj}).eq('anahtar', 'hos_geldin_mesaji').execute()
+            flash('Hoş geldin mesajı güncellendi.', 'success')
+        else:
+            flash('Mesaj boş olamaz.', 'warning')
+        return redirect(url_for('admin_ayarlar'))
+    
+    hos_mesaj = supabase.table('ayarlar').select('deger').eq('anahtar', 'hos_geldin_mesaji').execute()
+    hos_mesaj = hos_mesaj.data[0]['deger'] if hos_mesaj.data else "Ajansımıza hoş geldiniz!"
+    return render_template('admin_ayarlar.html', hos_mesaj=hos_mesaj)
+
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 5000))
-    app.run(host='0.0.0.0', debug=False, port=port)  # debug=False yap
+    app.run(host='0.0.0.0', debug=False, port=port)
