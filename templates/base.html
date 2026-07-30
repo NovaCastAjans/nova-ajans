@@ -161,16 +161,10 @@
         });
     </script>
 
-    <!-- ================= NAVBAR ================= -->
+       <!-- ================= NAVBAR ================= -->
     <nav class="navbar navbar-expand-lg navbar-dark py-3">
         <div class="container">
-            <div class="d-flex align-items-center gap-3 me-3">
-                {% if not session.get('logged_in') %}
-                    <a href="/basvuru" class="btn btn-outline-light-custom">Ajansa Başvur</a>
-                {% else %}
-                    <a href="/logout" class="btn btn-danger-custom btn-outline-danger">Çıkış Yap</a>
-                {% endif %}
-            </div>
+            <!-- Logo / Hoş Geldiniz Yazısı -->
             <a class="navbar-brand" href="/">
                 {% if session.get('logged_in') %}
                     {% if session.get('role') == 'admin' %}
@@ -182,14 +176,27 @@
                     🎭 NOVA CAST AJANS
                 {% endif %}
             </a>
+
+            <!-- Sağ Üst Menü ve Hamburger Butonu -->
+            <!-- DÜZELTME: Buton artık buranın içinde ve her yerde görünür -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
+
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
+                    
+                    <!-- AJANSA BAŞVUR BUTONU (Artık listenin en başında ve görünür) -->
+                    {% if not session.get('logged_in') %}
+                    <li class="nav-item me-2">
+                        <a href="/basvuru" class="btn btn-outline-light-custom fw-bold px-3 py-2">Ajansa Başvur</a>
+                    </li>
+                    {% endif %}
+
                     <li class="nav-item"><a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">Ana Sayfa</a></li>
                     <li class="nav-item"><a class="nav-link {% if request.path == '/hakkimizda' %}active{% endif %}" href="/hakkimizda">Hakkımızda</a></li>
                     <li class="nav-item"><a class="nav-link {% if request.path == '/duyurular' %}active{% endif %}" href="/duyurular">📢 Duyurular</a></li>
+                    
                     {% if session.get('logged_in') %}
                         {% if session.get('role') == 'admin' %}
                             <li class="nav-item"><a class="nav-link text-info fw-bold" href="/admin/dashboard">📊 Dashboard</a></li>
@@ -227,4 +234,4 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_scripts %}{% endblock %}
 </body>
-</html>
+</html> 
