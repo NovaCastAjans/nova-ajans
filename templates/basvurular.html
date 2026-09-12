@@ -50,6 +50,32 @@
             background-color: transparent !important;
             color: #e2e8f0;
         }
+        /* YENİ: Fotoğraf küçük resim stili */
+        .basvuru-foto {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid #3b82f6;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .basvuru-foto:hover {
+            transform: scale(1.1);
+            border-color: #60a5fa;
+        }
+        .foto-yok {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #1e293b;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-size: 24px;
+            border: 2px dashed #334155;
+        }
     </style>
 </head>
 <body>
@@ -62,7 +88,7 @@
         </div>
         <div class="container">
             <a class="navbar-brand" href="/">Hoş geldin, Admin 👑</a>
-            
+
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -115,17 +141,30 @@
                 <table class="table table-custom table-borderless align-middle mb-0">
                     <thead>
                         <tr>
+                            <th scope="col" style="width: 80px;">Fotoğraf</th>
                             <th scope="col">İsim Soyisim</th>
                             <th scope="col">Yaş</th>
                             <th scope="col">Boy</th>
                             <th scope="col">Telefon</th>
-                            <th scope="col" style="width: 35%;">Deneyim / Notlar</th>
+                            <th scope="col" style="width: 25%;">Deneyim / Notlar</th>
                             <th scope="col" class="text-end">İşlemler</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for b in basvurular %}
                         <tr>
+                            <!-- YENİ: Fotoğraf sütunu -->
+                            <td>
+                                {% if b.foto_url %}
+                                    <img src="{{ b.foto_url }}"
+                                         alt="{{ b.isim }}"
+                                         class="basvuru-foto"
+                                         onclick="fotoBuyut('{{ b.foto_url }}', '{{ b.isim }}')"
+                                         title="Büyütmek için tıklayın">
+                                {% else %}
+                                    <div class="foto-yok" title="Fotoğraf yüklenmemiş">👤</div>
+                                {% endif %}
+                            </td>
                             <td class="fw-bold text-white">{{ b.isim }}</td>
                             <td>{{ b.yas or '-' }}</td>
                             <td>{{ b.boy or '-' }} cm</td>
@@ -150,7 +189,22 @@
             {% endif %}
         </div>
     </main>
-    
+
+    <!-- YENİ: Fotoğraf Büyütme Modal -->
+    <div id="fotoModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; justify-content:center; align-items:center; flex-direction:column; cursor:pointer;" onclick="this.style.display='none'">
+        <img id="fotoModalImg" src="" alt="" style="max-width:90%; max-height:80%; border-radius:12px; border:3px solid #3b82f6;">
+        <p id="fotoModalIsim" style="color:white; margin-top:20px; font-weight:bold; font-size:20px;"></p>
+        <small style="color:#94a3b8; margin-top:8px;">Kapatmak için tıklayın</small>
+    </div>
+
+    <script>
+        function fotoBuyut(url, isim) {
+            document.getElementById('fotoModalImg').src = url;
+            document.getElementById('fotoModalIsim').textContent = isim;
+            document.getElementById('fotoModal').style.display = 'flex';
+        }
+    </script>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

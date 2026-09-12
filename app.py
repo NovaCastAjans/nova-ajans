@@ -170,12 +170,36 @@ def basvuru():
     meta = meta_res.data[0] if meta_res.data else None
     
     if request.method == 'POST':
+        # YENI: Fotograf yukleme
+        foto_url = None
+        foto = request.files.get('foto')
+        if foto and foto.filename != '':
+            try:
+                ext = os.path.splitext(foto.filename)[1].lower()
+                if ext in ['.jpg', '.jpeg', '.png', '.webp', '.gif']:
+                    filename = f"basvuru_{uuid.uuid4()}{ext}"
+                    foto_data = foto.read()
+                    supabase.storage.from_("basvuru-fotolari").upload(
+                        path=filename,
+                        file=foto_data,
+                        file_options={"content-type": foto.content_type}
+                    )
+                    foto_url_res = supabase.storage.from_("basvuru-fotolari").get_public_url(filename)
+                    if isinstance(foto_url_res, str):
+                        foto_url = foto_url_res
+                    elif isinstance(foto_url_res, dict):
+                        foto_url = foto_url_res.get('publicUrl') or foto_url_res.get('publicURL')
+                    else:
+                        foto_url = str(foto_url_res)
+            except Exception as e:
+                print(f"Fotograf yukleme hatasi: {e}")
         yeni_basvuru = {
             "isim": request.form.get('isim'),
             "yas": safe_int(request.form.get('yas')),
             "boy": safe_int(request.form.get('boy')),
             "telefon": request.form.get('telefon'),
-            "deneyim": request.form.get('deneyim')
+            "deneyim": request.form.get('deneyim'),
+            "foto_url": foto_url
         }
         supabase.table("basvurular").insert(yeni_basvuru).execute()
         flash("Başvurunuz alındı, teşekkürler!", "success")

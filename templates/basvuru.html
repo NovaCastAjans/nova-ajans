@@ -7,21 +7,20 @@
    <style>
         body { background: #0b0c10; color: #fff; font-family: 'Segoe UI', sans-serif; }
         .glass-card {
-            background: rgba(255, 255, 255, 0.05); /* Biraz daha belirgin yaptık */
+            background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.2); /* Çerçeveyi belirginleştirdik */
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 20px;
             padding: 40px;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
         }
         .form-control {
-            background: rgba(0, 0, 0, 0.2) !important; /* Arka planı daha koyu yaparak zıtlık oluşturduk */
+            background: rgba(0, 0, 0, 0.2) !important;
             border: 1px solid rgba(255, 255, 255, 0.3) !important;
-            color: #ffffff !important; /* Yazı rengini tam beyaz yaptık */
+            color: #ffffff !important;
             border-radius: 10px;
             padding: 12px;
         }
-        /* Burası çok önemli: Placeholder yazılarının rengini açtık */
         .form-control::placeholder {
             color: #adb5bd !important;
             opacity: 1;
@@ -42,15 +41,32 @@
             transition: 0.3s;
         }
         .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4); }
+        input[type="file"].form-control {
+            padding: 10px;
+            cursor: pointer;
+        }
+        input[type="file"].form-control::file-selector-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            margin-right: 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        input[type="file"].form-control::file-selector-button:hover {
+            background: #2563eb;
+        }
     </style>
 </head>
 <body class="d-flex align-items-center justify-content-center min-vh-100">
-    
+
     <div class="container" style="max-width: 500px;">
         <div class="glass-card">
             <h2 class="text-center mb-4">Yeni Yetenek Başvurusu</h2>
             <p class="text-center text-muted mb-4">Kariyerine bizimle başla.</p>
-            <form action="/basvuru" method="POST">
+            <form action="/basvuru" method="POST" enctype="multipart/form-data">
                 <input type="text" name="isim" class="form-control mb-3" placeholder="Ad Soyad" required>
                 <div class="row">
                     <div class="col"><input type="number" name="yas" class="form-control mb-3" placeholder="Yaş"></div>
@@ -58,6 +74,22 @@
                 </div>
                 <input type="text" name="telefon" class="form-control mb-3" placeholder="Telefon">
                 <textarea name="deneyim" class="form-control mb-3" rows="3" placeholder="Oyunculuk deneyiminizden kısaca bahsedin..."></textarea>
+
+                <!-- YENİ: Fotoğraf Yükleme Alanı -->
+                <div class="mb-3">
+                    <label for="foto" class="form-label text-white fw-bold">
+                        📸 Fotoğrafınız <small class="text-muted">(zorunlu değil, max 5MB)</small>
+                    </label>
+                    <input
+                        type="file"
+                        name="foto"
+                        id="foto"
+                        class="form-control"
+                        accept="image/jpeg,image/png,image/webp,image/jpg"
+                    >
+                    <small class="text-muted d-block mt-1">Kendinizi net gösteren bir vesikalık/fotoğraf yükleyin.</small>
+                </div>
+
                 <button type="submit" class="btn btn-primary w-100 btn-submit">Başvuruyu Tamamla</button>
             </form>
             <div class="text-center mt-3">
