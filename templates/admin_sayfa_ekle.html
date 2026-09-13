@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Yeni Sayfa - Admin{% endblock %}
+
+{% block extra_head %}
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+<style>
+    .ql-toolbar { background: #f8f9fa; border-radius: 8px 8px 0 0; }
+    .ql-container { background: #fff; color: #000; border-radius: 0 0 8px 8px; min-height: 300px; font-size: 16px; }
+    .ql-editor { min-height: 300px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5" style="max-width: 900px;">
+    <h2 class="fw-bold text-white mb-4">➕ Yeni Sayfa Ekle</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST" enctype="multipart/form-data" class="card bg-dark border-secondary p-4">
+        <div class="mb-3">
+            <label class="form-label text-white fw-bold">Sayfa Başlığı *</label>
+            <input type="text" name="baslik" class="form-control" required placeholder="Örn: Hizmetlerimiz">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label text-white fw-bold">URL (Slug)</label>
+            <input type="text" name="slug" class="form-control" placeholder="Boş bırakılırsa başlıktan otomatik üretilir">
+            <small class="text-muted">Örnek: hizmetlerimiz → /sayfa/hizmetlerimiz</small>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label text-white fw-bold">İçerik</label>
+            <div id="editor"></div>
+            <input type="hidden" name="icerik" id="icerikInput">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label text-white fw-bold">Kapak Resmi (opsiyonel)</label>
+            <input type="file" name="kapak_resmi" class="form-control" accept="image/*">
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label text-white fw-bold">Sıra</label>
+                <input type="number" name="sira" class="form-control" value="0">
+                <small class="text-muted">Menüde küçük sayı önce görünür</small>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label text-white fw-bold">Meta Başlık (SEO)</label>
+            <input type="text" name="meta_baslik" class="form-control" maxlength="70">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label text-white fw-bold">Meta Açıklama (SEO)</label>
+            <textarea name="meta_aciklama" class="form-control" rows="2" maxlength="160"></textarea>
+        </div>
+
+        <div class="form-check mb-2">
+            <input type="checkbox" name="menude_goster" class="form-check-input" id="menude">
+            <label class="form-check-label text-white" for="menude">Navbar menüsünde göster</label>
+        </div>
+
+        <div class="form-check mb-4">
+            <input type="checkbox" name="yayinda" class="form-check-input" id="yayinda" checked>
+            <label class="form-check-label text-white" for="yayinda">Yayında (herkes görebilir)</label>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary fw-bold">Kaydet</button>
+            <a href="/admin/sayfalar" class="btn btn-outline-secondary">İptal</a>
+        </div>
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<script>
+    const quill = new Quill('#editor', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                [{ header: [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ list: 'ordered' }, { list: 'bullet' }],
+                ['blockquote', 'code-block'],
+                ['link', 'image'],
+                [{ align: [] }],
+                ['clean']
+            ]
+        }
+    });
+
+    document.querySelector('form').addEventListener('submit', function() {
+        document.getElementById('icerikInput').value = quill.root.innerHTML;
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ sayfa.meta_baslik or sayfa.baslik }}{% endblock %}
+{% block description %}{{ sayfa.meta_aciklama or '' }}{% endblock %}
+
+{% block content %}
+<article class="container my-5" style="max-width: 900px;">
+    {% if sayfa.kapak_resmi %}
+    <div class="mb-4" style="border-radius:16px; overflow:hidden;">
+        <img src="{{ sayfa.kapak_resmi }}" alt="{{ sayfa.baslik }}" style="width:100%; max-height:400px; object-fit:cover;">
+    </div>
+    {% endif %}
+
+    <h1 class="fw-bold text-white mb-3">{{ sayfa.baslik }}</h1>
+    <hr style="border-color:#334155;">
+
+    <div class="sayfa-icerik text-light" style="font-size:1.05rem; line-height:1.8;">
+        {{ sayfa.icerik | safe }}
+    </div>
+</article>
+
+<style>
+    .sayfa-icerik img { max-width: 100%; height: auto; border-radius: 8px; margin: 1rem 0; }
+    .sayfa-icerik h1, .sayfa-icerik h2, .sayfa-icerik h3 { color: #fff; margin-top: 1.5rem; }
+    .sayfa-icerik a { color: #60a5fa; }
+    .sayfa-icerik blockquote { border-left: 4px solid #3b82f6; padding-left: 1rem; color: #cbd5e1; font-style: italic; }
+    .sayfa-icerik pre { background: #1e293b; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+</style>
+{% endblock %}

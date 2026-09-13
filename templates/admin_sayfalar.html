@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Sayfa Yönetimi - Admin{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-white">📄 Sayfa Yönetimi</h2>
+            <p class="text-muted mb-0">Siteye özel sayfa ekleyebilir, düzenleyebilir ve silebilirsiniz.</p>
+        </div>
+        <a href="/admin/sayfa/ekle" class="btn btn-primary fw-bold">+ Yeni Sayfa</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <div class="card bg-dark border-secondary">
+        <div class="card-body p-0">
+            {% if sayfalar %}
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th>Sıra</th>
+                            <th>Başlık</th>
+                            <th>URL</th>
+                            <th>Menüde</th>
+                            <th>Yayında</th>
+                            <th class="text-end">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in sayfalar %}
+                        <tr>
+                            <td>{{ s.sira }}</td>
+                            <td class="fw-bold">{{ s.baslik }}</td>
+                            <td><a href="/sayfa/{{ s.slug }}" target="_blank" class="text-info">/sayfa/{{ s.slug }}</a></td>
+                            <td>{% if s.menude_goster %}✅{% else %}❌{% endif %}</td>
+                            <td>{% if s.yayinda %}<span class="badge bg-success">Yayında</span>{% else %}<span class="badge bg-secondary">Taslak</span>{% endif %}</td>
+                            <td class="text-end">
+                                <a href="/admin/sayfa/duzenle/{{ s.id }}" class="btn btn-sm btn-outline-warning">Düzenle</a>
+                                <form action="/admin/sayfa/sil/{{ s.id }}" method="POST" class="d-inline" onsubmit="return confirm('Silmek istediğinize emin misiniz?');">
+                                    <button class="btn btn-sm btn-outline-danger">Sil</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <p class="text-muted mb-2">Henüz sayfa eklenmemiş.</p>
+                <a href="/admin/sayfa/ekle" class="btn btn-primary">İlk sayfayı ekle</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{{ meta.baslik or 'Nova Cast Ajans' }}{% endblock %}</title>
-    <meta name="description" content="{% block description %}{{ meta.aciklama or 'Nova Cast Ajans - Profesyonel oyuncu ajansı' }}{% endblock %}">
-    <meta name="keywords" content="{% block keywords %}{{ meta.anahtar_kelimeler or 'oyuncu, cast, ajans, yetenek' }}{% endblock %}">
+<title>{% block title %}{% if meta %}{{ meta.baslik }}{% else %}Nova Cast Ajans{% endif %}{% endblock %}</title>
+<meta name="description" content="{% block description %}{% if meta %}{{ meta.aciklama }}{% else %}Nova Cast Ajans - Profesyonel oyuncu ajansı{% endif %}{% endblock %}">
+<meta name="keywords" content="{% block keywords %}{% if meta %}{{ meta.anahtar_kelimeler }}{% else %}oyuncu, cast, ajans, yetenek{% endif %}{% endblock %}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -45,9 +45,13 @@
                     <li class="nav-item"><a class="nav-link {% if request.path == '/hakkimizda' %}active{% endif %}" href="/hakkimizda">Hakkımızda</a></li>
                     <li class="nav-item"><a class="nav-link {% if request.path == '/duyurular' %}active{% endif %}" href="/duyurular">📢 Duyurular</a></li>
                     {% if session.get('logged_in') %}
+{% for s in menu_sayfalari %}
+<li class="nav-item"><a class="nav-link {% if request.path == '/sayfa/' ~ s.slug %}active{% endif %}" href="/sayfa/{{ s.slug }}">{{ s.baslik }}</a></li>
+{% endfor %}
                         {% if session.get('role') == 'admin' %}
                             <li class="nav-item"><a class="nav-link text-info fw-bold" href="/admin/dashboard">📊 Dashboard</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/admin/randevular">📅 Randevular</a></li>
+<li class="nav-item"><a class="nav-link" href="/admin/sayfalar">📄 Sayfalar</a></li>                        
+    <li class="nav-item"><a class="nav-link" href="/admin/randevular">📅 Randevular</a></li>
                             <li class="nav-item"><a class="nav-link text-warning fw-bold" href="/admin/basvurular">📥 Başvurular</a></li>
                             <li class="nav-item"><a class="btn btn-warning btn-sm ms-2 px-3 fw-bold" href="/admin/onaylar">⏳ Onaylar</a></li>
                             <li class="nav-item"><a class="btn btn-success btn-sm ms-2 px-3 fw-bold" href="/ekle">+ Oyuncu Ekle</a></li>

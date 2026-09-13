@@ -49,9 +49,13 @@
             <ul class="navbar-nav ms-auto align-items-center">
                 <li class="nav-item"><a class="nav-link active" href="/">Ana Sayfa</a></li>
                 <li class="nav-item"><a class="nav-link" href="/hakkimizda">Hakkımızda</a></li>
-                <li class="nav-item"><a class="nav-link" href="/duyurular">📢 Duyurular</a></li>
+{% for s in menu_sayfalari %}
+<li class="nav-item"><a class="nav-link" href="/sayfa/{{ s.slug }}">{{ s.baslik }}</a></li>
+{% endfor %}               
+ <li class="nav-item"><a class="nav-link" href="/duyurular">📢 Duyurular</a></li>
                 {% if session.get('logged_in') and session.get('role') == 'admin' %}
-                    <li class="nav-item"><a class="nav-link text-info fw-bold" href="/admin/dashboard">📊 Dashboard</a></li>
+<li class="nav-item"><a class="nav-link text-info fw-bold" href="/admin/sayfalar">📄 Sayfalar</a></li>                  
+  <li class="nav-item"><a class="nav-link text-info fw-bold" href="/admin/dashboard">📊 Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="/admin/randevular">📅 Randevular</a></li>
                     <li class="nav-item"><a class="nav-link text-warning fw-bold" href="/admin/basvurular">📥 Başvurular</a></li>
                     <li class="nav-item"><a class="nav-link" href="/admin/onaylar">⏳ Onaylar</a></li>

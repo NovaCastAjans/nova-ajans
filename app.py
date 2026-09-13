@@ -1114,6 +1114,196 @@ def admin_vitrin_toggle(oyuncu_id):
     return redirect(url_for('admin_vitrin_yonetimi'))
 
 # ===================================================================
+# ==================== ÖZEL SAYFA SİSTEMİ ====================
+
+def slug_olustur(baslik):
+    """Başlıktan URL slug'ı üretir"""
+    import unicodedata
+    baslik = baslik.lower()
+    # Türkçe karakter dönüşümü
+    ceviriler = {'ı': 'i', 'ğ': 'g', 'ü': 'u', 'ş': 's', 'ö': 'o', 'ç': 'c', 'İ': 'i'}
+    for tr, en in ceviriler.items():
+        baslik = baslik.replace(tr, en)
+    # Alfanumerik olmayanları tireye çevir
+    baslik = ''.join(c if c.isalnum() else '-' for c in baslik)
+    # Çoklu tireleri teke indir
+    while '--' in baslik:
+        baslik = baslik.replace('--', '-')
+    return baslik.strip('-')
+
+
+# --- Admin: Sayfa Listesi ---
+@app.route('/admin/sayfalar')
+def admin_sayfalar():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        flash('Yetkiniz yok.', 'danger')
+        return redirect(url_for('login'))
+    res = supabase.table('ozel_sayfalar').select('*').order('sira').execute()
+    sayfalar = res.data or []
+    return render_template('admin_sayfalar.html', sayfalar=sayfalar)
+
+
+# --- Admin: Yeni Sayfa Ekle ---
+@app.route('/admin/sayfa/ekle', methods=['GET', 'POST'])
+def admin_sayfa_ekle():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        flash('Yetkiniz yok.', 'danger')
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        baslik = request.form.get('baslik', '').strip()
+        slug = request.form.get('slug', '').strip() or slug_olustur(baslik)
+        icerik = request.form.get('icerik', '')
+        menude_goster = request.form.get('menude_goster') == 'on'
+        yayinda = request.form.get('yayinda') == 'on'
+        sira = safe_int(request.form.get('sira')) or 0
+        meta_baslik = request.form.get('meta_baslik', '')
+        meta_aciklama = request.form.get('meta_aciklama', '')
+        
+        # Kapak resmi yükleme
+        kapak_url = None
+        kapak = request.files.get('kapak_resmi')
+        if kapak and kapak.filename != '':
+            try:
+                ext = os.path.splitext(kapak.filename)[1].lower()
+                if ext in ['.jpg', '.jpeg', '.png', '.webp', '.gif']:
+                    filename = f"kapak_{uuid.uuid4()}{ext}"
+                    kapak_data = kapak.read()
+                    supabase.storage.from_("basvuru-fotolari").upload(
+                        path=filename,
+                        file=kapak_data,
+                        file_options={"content-type": kapak.content_type}
+                    )
+                    res = supabase.storage.from_("basvuru-fotolari").get_public_url(filename)
+                    if isinstance(res, str):
+                        kapak_url = res
+                    elif isinstance(res, dict):
+                        kapak_url = res.get('publicUrl') or res.get('publicURL')
+            except Exception as e:
+                print(f"Kapak yükleme hatası: {e}")
+        
+        try:
+            supabase.table('ozel_sayfalar').insert({
+                'slug': slug,
+                'baslik': baslik,
+                'icerik': icerik,
+                'kapak_resmi': kapak_url,
+                'menude_goster': menude_goster,
+                'yayinda': yayinda,
+                'sira': sira,
+                'meta_baslik': meta_baslik,
+                'meta_aciklama': meta_aciklama
+            }).execute()
+            flash('Sayfa başarıyla eklendi!', 'success')
+            return redirect(url_for('admin_sayfalar'))
+        except Exception as e:
+            flash(f'Hata: {str(e)}', 'danger')
+    
+    return render_template('admin_sayfa_ekle.html')
+
+
+# --- Admin: Sayfa Düzenle ---
+@app.route('/admin/sayfa/duzenle/<int:sayfa_id>', methods=['GET', 'POST'])
+def admin_sayfa_duzenle(sayfa_id):
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        flash('Yetkiniz yok.', 'danger')
+        return redirect(url_for('login'))
+    
+    res = supabase.table('ozel_sayfalar').select('*').eq('id', sayfa_id).execute()
+    if not res.data:
+        flash('Sayfa bulunamadı.', 'danger')
+        return redirect(url_for('admin_sayfalar'))
+    
+    sayfa = res.data[0]
+    
+    if request.method == 'POST':
+        baslik = request.form.get('baslik', '').strip()
+        slug = request.form.get('slug', '').strip() or slug_olustur(baslik)
+        icerik = request.form.get('icerik', '')
+        menude_goster = request.form.get('menude_goster') == 'on'
+        yayinda = request.form.get('yayinda') == 'on'
+        sira = safe_int(request.form.get('sira')) or 0
+        meta_baslik = request.form.get('meta_baslik', '')
+        meta_aciklama = request.form.get('meta_aciklama', '')
+        
+        guncelleme = {
+            'slug': slug,
+            'baslik': baslik,
+            'icerik': icerik,
+            'menude_goster': menude_goster,
+            'yayinda': yayinda,
+            'sira': sira,
+            'meta_baslik': meta_baslik,
+            'meta_aciklama': meta_aciklama,
+            'guncelleme_tarihi': datetime.now().isoformat()
+        }
+        
+        # Kapak resmi yükleme
+        kapak = request.files.get('kapak_resmi')
+        if kapak and kapak.filename != '':
+            try:
+                ext = os.path.splitext(kapak.filename)[1].lower()
+                if ext in ['.jpg', '.jpeg', '.png', '.webp', '.gif']:
+                    filename = f"kapak_{uuid.uuid4()}{ext}"
+                    kapak_data = kapak.read()
+                    supabase.storage.from_("basvuru-fotolari").upload(
+                        path=filename,
+                        file=kapak_data,
+                        file_options={"content-type": kapak.content_type}
+                    )
+                    res_u = supabase.storage.from_("basvuru-fotolari").get_public_url(filename)
+                    if isinstance(res_u, str):
+                        guncelleme['kapak_resmi'] = res_u
+                    elif isinstance(res_u, dict):
+                        guncelleme['kapak_resmi'] = res_u.get('publicUrl') or res_u.get('publicURL')
+            except Exception as e:
+                print(f"Kapak yükleme hatası: {e}")
+        
+        try:
+            supabase.table('ozel_sayfalar').update(guncelleme).eq('id', sayfa_id).execute()
+            flash('Sayfa güncellendi!', 'success')
+            return redirect(url_for('admin_sayfalar'))
+        except Exception as e:
+            flash(f'Hata: {str(e)}', 'danger')
+    
+    return render_template('admin_sayfa_duzenle.html', sayfa=sayfa)
+
+
+# --- Admin: Sayfa Sil ---
+@app.route('/admin/sayfa/sil/<int:sayfa_id>', methods=['POST'])
+def admin_sayfa_sil(sayfa_id):
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        flash('Yetkiniz yok.', 'danger')
+        return redirect(url_for('login'))
+    
+    try:
+        supabase.table('ozel_sayfalar').delete().eq('id', sayfa_id).execute()
+        flash('Sayfa silindi.', 'success')
+    except Exception as e:
+        flash(f'Hata: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin_sayfalar'))
+
+
+# --- Herkese Açık: Özel Sayfa Görüntüleme ---
+@app.route('/sayfa/<slug>')
+def ozel_sayfa_goruntule(slug):
+    res = supabase.table('ozel_sayfalar').select('*').eq('slug', slug).eq('yayinda', True).execute()
+    if not res.data:
+        flash('Sayfa bulunamadı.', 'warning')
+        return redirect(url_for('index'))
+    return render_template('ozel_sayfa.html', sayfa=res.data[0])
+
+
+# --- Herkese Açık: Menü Linkleri (Jinja için) ---
+@app.context_processor
+def menu_sayfalari_enjekte():
+    """Her template'e menüde gösterilecek sayfaları enjekte eder"""
+    try:
+        res = supabase.table('ozel_sayfalar').select('slug,baslik').eq('menude_goster', True).eq('yayinda', True).order('sira').execute()
+        return {'menu_sayfalari': res.data or []}
+    except:
+        return {'menu_sayfalari': []}
 
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 5000))
