@@ -5,11 +5,13 @@ import random
 import string
 import ssl
 import httpx
+import pdfkit
+import base64
+import secrets
 from datetime import date, datetime, timedelta
 from io import BytesIO
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, send_file
 from werkzeug.utils import secure_filename
-# DÜZELTME BURADA: supabase._async.client yerine supabase'den import ediyoruz
 from supabase import create_client, AsyncClientOptions
 from dotenv import load_dotenv
 import requests
@@ -24,7 +26,6 @@ import qrcode
 from PIL import Image
 import time
 
-# SSL HATASINI KÖKTEN ÇÖZ (Local ve Geliştirme ortamı için)
 os.environ['CURL_CA_BUNDLE'] = ''
 os.environ['SSL_CERT_FILE'] = ''
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -38,26 +39,19 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 
-# DÜZELTME: http_client parametresi desteklenmediği için kaldırıldı.
-options = AsyncClientOptions() 
-
+options = AsyncClientOptions()
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY, options=options)
 
 if SUPABASE_SERVICE_KEY:
-    # DÜZELTME: Admin client için de http_client kaldırıldı.
     admin_options = AsyncClientOptions()
     supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY, options=admin_options)
 else:
     supabase_admin = supabase
 
-# requests uyarılarını kapat
 requests.packages.urllib3.disable_warnings()
 import urllib3
 urllib3.disable_warnings()
 
-# ... (diğer route'lar aynen devam eder)
-# ... geri kalan route'lar (index, basvuru, login, vb.) aynen devam eder ...
-# Font (varsa DejaVu kullan)
 FONT_NAME = 'Helvetica'
 FONT_BOLD = 'Helvetica-Bold'
 FONT_PATH = os.path.join("static", "fonts", "DejaVuSans.ttf")
@@ -72,7 +66,10 @@ if os.path.exists(FONT_PATH):
     except:
         pass
 
-# ----------------- YARDIMCI FONKSİYONLAR -----------------
+WKHTMLTOPDF_PATH = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
+
+
 def safe_int(val):
     if not val or str(val).strip() == "":
         return None
@@ -81,7 +78,13 @@ def safe_int(val):
     except (ValueError, TypeError):
         return None
 
-# ----------------- SAYFA GÖRÜNTÜLENME LOGLAMA (MIDDLEWARE) -----------------
+
+def sertifika_kodu_uret():
+    yil = datetime.now().year
+    rastgele = secrets.token_hex(4).upper()
+    return f"NCA-{yil}-{rastgele}"
+
+
 @app.before_request
 def log_page_view():
     if request.endpoint and not request.endpoint.startswith('static') and request.endpoint != 'ping':
@@ -99,7 +102,7 @@ def log_page_view():
         except Exception:
             pass
 
-# ----------------- ANA SAYFA -----------------
+
 @app.route('/')
 def index():
     page = int(request.args.get('page', 1))
@@ -109,16 +112,16 @@ def index():
     yas_min = safe_int(request.args.get('yas_min'))
     yas_max = safe_int(request.args.get('yas_max'))
     sehir = request.args.get('sehir', '')
-    
+
     meta_res = supabase.table('meta').select('*').eq('sayfa_adi', 'index').execute()
     meta = meta_res.data[0] if meta_res.data else None
-    
+
     kurucu_res = supabase.table("oyuncular").select("*").eq("id", 29).execute()
     kurucu = kurucu_res.data[0] if kurucu_res.data else None
     if arama and kurucu:
         if arama.lower() not in kurucu.get('isim', '').lower():
             kurucu = None
-            
+
     query = supabase.table("oyuncular").select("*", count="exact")
     if arama:
         query = query.ilike("isim", f"%{arama}%")
@@ -130,7 +133,7 @@ def index():
         query = query.lte("yas", yas_max)
     if sehir:
         query = query.ilike("sehir", f"%{sehir}%")
-        
+
     start = (page - 1) * per_page
     end = start + per_page - 1
     query = query.range(start, end)
@@ -139,22 +142,18 @@ def index():
     total_count = res.count if hasattr(res, 'count') and res.count is not None else len(all_players)
     total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
     oyuncular_listesi = [o for o in all_players if o.get('id') != 29]
-    
-    # ========= YENİ EKLENEN VİTRİN KODU =========
+
     vitrin_oyuncular = []
-    if page == 1:  # Sadece 1. sayfada çalışsın
-        # SADECE admin'in "vitrin = true" yaptığı oyuncuları çeker.
-        # Limit 15 koyarak sistemi zorlamamasını ve en fazla 15 kişi dönmesini sağladık.
+    if page == 1:
         vitrin_query = supabase.table("oyuncular").select("*").eq("vitrin", True).limit(15)
         vitrin_res = vitrin_query.execute()
         vitrin_oyuncular = vitrin_res.data if vitrin_res.data else []
-    # ===========================================
-            
-    return render_template('index.html', 
+
+    return render_template('index.html',
                            oyuncular=oyuncular_listesi,
-                           vitrin_oyuncular=vitrin_oyuncular, # <-- YENİ DEĞİŞKEN
-                           kurucu=kurucu, 
-                           arama_sorgusu=arama, 
+                           vitrin_oyuncular=vitrin_oyuncular,
+                           kurucu=kurucu,
+                           arama_sorgusu=arama,
                            secili_cinsiyet=cinsiyet,
                            yas_min=yas_min if yas_min is not None else '',
                            yas_max=yas_max if yas_max is not None else '',
@@ -163,14 +162,13 @@ def index():
                            total_pages=total_pages,
                            meta=meta)
 
-# ----------------- BAŞVURU -----------------
+
 @app.route('/basvuru', methods=['GET', 'POST'])
 def basvuru():
     meta_res = supabase.table('meta').select('*').eq('sayfa_adi', 'basvuru').execute()
     meta = meta_res.data[0] if meta_res.data else None
-    
+
     if request.method == 'POST':
-        # YENI: Fotograf yukleme
         foto_url = None
         foto = request.files.get('foto')
         if foto and foto.filename != '':
@@ -206,12 +204,12 @@ def basvuru():
         return redirect(url_for('index'))
     return render_template('basvuru.html', meta=meta)
 
-# ----------------- GİRİŞ / ÇIKIŞ -----------------
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     meta_res = supabase.table('meta').select('*').eq('sayfa_adi', 'login').execute()
     meta = meta_res.data[0] if meta_res.data else None
-    
+
     if request.method == 'POST':
         k_adi = request.form.get('kullanici_adi')
         sifre = request.form.get('sifre')
@@ -230,12 +228,13 @@ def login():
         flash("Hatalı kullanıcı adı veya şifre", "danger")
     return render_template('login.html', meta=meta)
 
+
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
 
-# ----------------- OYUNCU EKLE -----------------
+
 @app.route('/ekle', methods=['GET', 'POST'])
 def oyuncu_ekle():
     if not session.get('logged_in'):
@@ -303,7 +302,6 @@ def oyuncu_ekle():
                     "id": yeni_oyuncu_id
                 }
                 supabase.table("kullanicilar").insert(yeni_kullanici).execute()
-                # Hoş geldin mesajı gönder
                 hos_mesaj = supabase.table('ayarlar').select('deger').eq('anahtar', 'hos_geldin_mesaji').execute()
                 mesaj_metni = hos_mesaj.data[0]['deger'] if hos_mesaj.data else "Ajansımıza hoş geldiniz!"
                 supabase.table('mesajlar').insert({
@@ -313,7 +311,7 @@ def oyuncu_ekle():
         return redirect(url_for('index'))
     return render_template('ekle.html')
 
-# ----------------- MESAJ GÖNDERME -----------------
+
 @app.route('/admin/mesaj_gonder', methods=['POST'])
 def mesaj_gonder():
     if session.get('role') != 'admin':
@@ -331,7 +329,7 @@ def mesaj_gonder():
         flash(f'Hata: {str(e)}', 'danger')
     return redirect(request.referrer or url_for('index'))
 
-# ----------------- GELEN KUTUSU -----------------
+
 @app.route('/gelen_kutusu')
 def gelen_kutusu():
     if not session.get('logged_in'):
@@ -346,7 +344,7 @@ def gelen_kutusu():
         mesajlar = []
     return render_template('gelen_kutusu.html', mesajlar=mesajlar)
 
-# ----------------- OYUNCU DETAY -----------------
+
 @app.route('/oyuncu/<int:oyuncu_id>')
 def oyuncu_detay(oyuncu_id):
     res = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
@@ -354,57 +352,70 @@ def oyuncu_detay(oyuncu_id):
         flash('Oyuncu bulunamadı.', 'danger')
         return redirect(url_for('index'))
     oyuncu = res.data[0]
-    
-    # YORUMLARI ÇEK
+
     yorumlar = []
     try:
         yorumlar = supabase.table('yorumlar').select('*').eq('oyuncu_id', oyuncu_id).eq('onaylandi', True).order('created_at', desc=True).execute().data
     except:
         yorumlar = []
-    
+
     ortalama_puan = 0
     if yorumlar:
         toplam = sum(y.get('puan', 0) for y in yorumlar if y.get('puan'))
         ortalama_puan = round(toplam / len(yorumlar), 1) if toplam else 0
-    
-    # ======== YENİ EKLENEN KISIM: PROFİL GÖRÜNTÜLENME SAYACI ========
+
     goruntulenme_sayisi = 0
     try:
         goruntulenme_sayisi = supabase.table('sayfa_goruntulenme').select('id', count='exact').eq('oyuncu_id', oyuncu_id).execute().count or 0
     except:
         goruntulenme_sayisi = 0
-    # ================================================================
+
+    sertifika_var = False
+    sertifika_kodu = None
+    try:
+        sert_res = supabase.table('sertifikalar').select('sertifika_kodu, aktif').eq('oyuncu_id', oyuncu_id).execute()
+        print(f"DEBUG Sertifika sorgusu oyuncu {oyuncu_id}: {sert_res.data}")
+        if sert_res.data:
+            for s in sert_res.data:
+                if s.get('aktif') == True:
+                    sertifika_var = True
+                    sertifika_kodu = s.get('sertifika_kodu')
+                    print(f"Aktif sertifika bulundu: {sertifika_kodu}")
+                    break
+    except Exception as e:
+        print(f"Sertifika sorgu hatasi: {e}")
 
     meta = {
         'baslik': f"{oyuncu.get('isim', 'Oyuncu')} | Nova Cast Ajans",
         'aciklama': f"{oyuncu.get('isim')} profili",
         'anahtar_kelimeler': f"{oyuncu.get('isim')}, oyuncu, cast"
     }
-    
+
     return render_template('oyuncu_detay.html',
                            oyuncu=oyuncu,
                            meta=meta,
                            yorumlar=yorumlar,
                            ortalama_puan=ortalama_puan,
-                           goruntulenme_sayisi=goruntulenme_sayisi)
+                           goruntulenme_sayisi=goruntulenme_sayisi,
+                           sertifika_var=sertifika_var,
+                           sertifika_kodu=sertifika_kodu)
 
-# ----------------- YORUM EKLE -----------------
+
 @app.route('/yorum/ekle', methods=['POST'])
 def yorum_ekle():
     if not session.get('logged_in'):
         flash('Yorum yapmak için giriş yapmalısınız.', 'warning')
         return redirect(url_for('login'))
-    
+
     oyuncu_id = request.form.get('oyuncu_id')
     yorum = request.form.get('yorum')
     puan = safe_int(request.form.get('puan'))
-    
+
     if not yorum or not oyuncu_id:
         flash('Yorum ve puan zorunludur.', 'danger')
         return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
-    
+
     try:
-        # Yeni eklenen kısım: Yorum yapan kişinin yetkisini session'dan al (admin ise admin, değilse oyuncu)
         kullanici_adi = session.get('kullanici_adi', 'Anonim')
         yetki = session.get('role', 'oyuncu')
         if yetki is None:
@@ -416,15 +427,15 @@ def yorum_ekle():
             'yorum': yorum,
             'puan': puan if puan else None,
             'onaylandi': False,
-            'yetki': yetki  # Veritabanına yeni sütunu ekledik
+            'yetki': yetki
         }).execute()
         flash('Yorumunuz admin onayına gönderildi.', 'success')
     except Exception as e:
         flash(f'Yorum gönderilirken hata: {str(e)}', 'danger')
-    
+
     return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
 
-# ----------------- ADMIN YORUM YÖNETİMİ -----------------
+
 @app.route('/admin/yorumlar')
 def admin_yorumlar():
     if session.get('role') != 'admin':
@@ -433,6 +444,7 @@ def admin_yorumlar():
     bekleyen = supabase.table('yorumlar').select('*, oyuncular(isim)').eq('onaylandi', False).order('created_at', desc=True).execute().data
     onaylanan = supabase.table('yorumlar').select('*, oyuncular(isim)').eq('onaylandi', True).order('created_at', desc=True).execute().data
     return render_template('admin_yorumlar.html', bekleyen=bekleyen, onaylanan=onaylanan)
+
 
 @app.route('/admin/yorum/onay/<int:yorum_id>')
 def yorum_onay(yorum_id):
@@ -443,6 +455,7 @@ def yorum_onay(yorum_id):
     flash('Yorum onaylandı.', 'success')
     return redirect(url_for('admin_yorumlar'))
 
+
 @app.route('/admin/yorum/sil/<int:yorum_id>')
 def yorum_sil(yorum_id):
     if session.get('role') != 'admin':
@@ -452,7 +465,7 @@ def yorum_sil(yorum_id):
     flash('Yorum silindi.', 'success')
     return redirect(url_for('admin_yorumlar'))
 
-# ----------------- OYUNCU SİL -----------------
+
 @app.route('/oyuncu/sil/<int:oyuncu_id>', methods=['GET', 'POST'])
 def oyuncu_sil(oyuncu_id):
     if not session.get('logged_in') or session.get('role') != 'admin':
@@ -462,7 +475,7 @@ def oyuncu_sil(oyuncu_id):
     supabase.table("oyuncular").delete().eq("id", oyuncu_id).execute()
     return redirect(url_for('index'))
 
-# ----------------- HAKKIMIZDA -----------------
+
 @app.route('/hakkimizda')
 def hakkimizda():
     meta_res = supabase.table('meta').select('*').eq('sayfa_adi', 'hakkimizda').execute()
@@ -471,7 +484,7 @@ def hakkimizda():
     sayfa_verisi = res.data[0] if res.data else {"baslik": "Hakkımızda", "icerik": "HAKIMIZDA"}
     return render_template('hakkimizda.html', sayfa=sayfa_verisi, meta=meta)
 
-# ----------------- ADMIN SAYFA DÜZENLE -----------------
+
 @app.route('/admin/duzenle/<sayfa_adi>', methods=['GET', 'POST'])
 def admin_duzenle(sayfa_adi):
     if session.get('role') != 'admin':
@@ -490,7 +503,7 @@ def admin_duzenle(sayfa_adi):
     mevcut_veri = res.data[0] if res.data else {"baslik": "", "icerik": ""}
     return render_template('admin_duzenle.html', sayfa_adi=sayfa_adi, veri=mevcut_veri)
 
-# ----------------- ADMIN BAŞVURULAR -----------------
+
 @app.route('/admin/basvurular')
 def admin_basvurular():
     if session.get('role') != 'admin':
@@ -499,7 +512,7 @@ def admin_basvurular():
     res = supabase.table("basvurular").select("*").order("id", desc=True).execute()
     return render_template('basvurular.html', basvurular=res.data)
 
-# ----------------- BAŞVURU ONAYLAMA -----------------
+
 @app.route('/admin/basvuru/onayla/<int:b_id>', methods=['POST'])
 def basvuru_onayla(b_id):
     if session.get('role') != 'admin':
@@ -533,10 +546,10 @@ def basvuru_onayla(b_id):
         "id": yeni_oyuncu_id
     }).execute()
     supabase.table("basvurular").delete().eq("id", b_id).execute()
-    flash(f'✅ Onaylandı! Kullanıcı: {username}, Şifre: {sifre}', 'success')
+    flash(f'Onaylandı! Kullanıcı: {username}, Şifre: {sifre}', 'success')
     return redirect(url_for('admin_basvurular'))
 
-# ----------------- OYUNCU DÜZENLE -----------------
+
 @app.route('/oyuncu/duzenle/<int:oyuncu_id>', methods=['GET', 'POST'])
 def oyuncu_duzenle(oyuncu_id):
     if not session.get('logged_in'):
@@ -561,7 +574,7 @@ def oyuncu_duzenle(oyuncu_id):
                 resim_url = resim_url_res if isinstance(resim_url_res, str) else getattr(resim_url_res, 'public_url', str(resim_url_res))
             except Exception as e:
                 flash(f"Resim yüklenemedi: {str(e)}", "danger")
-        
+
         ses_url = None
         ses_file = request.files.get('ses_dosyasi')
         if ses_file and ses_file.filename != '':
@@ -611,12 +624,12 @@ def oyuncu_duzenle(oyuncu_id):
     oyuncu_veri = res.data[0] if res.data else {}
     return render_template('duzenle.html', oyuncu=oyuncu_veri)
 
-# ----------------- SITEMAP -----------------
+
 @app.route('/sitemap.xml')
 def sitemap():
     return send_from_directory('static', 'sitemap.xml')
 
-# ----------------- BAŞVURU SİL -----------------
+
 @app.route('/admin/basvurular/sil/<int:b_id>', methods=['POST'])
 def basvuru_sil(b_id):
     if session.get('role') != 'admin':
@@ -625,13 +638,14 @@ def basvuru_sil(b_id):
     flash("Başvuru reddedildi.", "success")
     return redirect(url_for('admin_basvurular'))
 
-# ----------------- ONAYLAR -----------------
+
 @app.route('/admin/onaylar')
 def admin_onaylar():
     if session.get('role') != 'admin':
         return redirect(url_for('index'))
     bekleyenler = supabase.table("bekleyen_degisiklikler").select("*, oyuncular(isim)").execute().data
     return render_template('admin_onaylar.html', bekleyenler=bekleyenler)
+
 
 @app.route('/admin/onay/islem/<int:id>/<action>')
 def onay_islem(id, action):
@@ -647,7 +661,7 @@ def onay_islem(id, action):
         flash("Değişiklik reddedildi.", "danger")
     return redirect(url_for('admin_onaylar'))
 
-# ----------------- ADMIN MESAJ PANELİ -----------------
+
 @app.route('/admin/mesajlar', methods=['GET', 'POST'])
 def admin_mesajlar():
     if session.get('role') != 'admin':
@@ -681,12 +695,12 @@ def admin_mesajlar():
         oyuncu_listesi = []
     return render_template('admin_mesaj_paneli.html', oyuncular=oyuncu_listesi)
 
-# ----------------- PING -----------------
+
 @app.route('/ping')
 def ping():
     return "Pong!", 200
 
-# ----------------- PROFİLİM -----------------
+
 @app.route('/profilim')
 def profilim():
     oyuncu_id = session.get('oyuncu_id')
@@ -694,9 +708,7 @@ def profilim():
         return redirect(url_for('index'))
     return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
 
-# ================= YENİ ÖZELLİKLER =================
 
-# ----- QR KOD -----
 @app.route('/oyuncu/<int:oyuncu_id>/qr')
 def oyuncu_qr(oyuncu_id):
     profil_url = url_for('oyuncu_detay', oyuncu_id=oyuncu_id, _external=True)
@@ -709,7 +721,7 @@ def oyuncu_qr(oyuncu_id):
     buffer.seek(0)
     return send_file(buffer, mimetype='image/png')
 
-# ----- KARTVİZİT PDF (LOGO ENTEGRELİ YENİ TASARIM) -----
+
 @app.route('/oyuncu/<int:oyuncu_id>/kartvizit')
 def kartvizit_pdf(oyuncu_id):
     res = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
@@ -717,56 +729,47 @@ def kartvizit_pdf(oyuncu_id):
         flash('Oyuncu bulunamadı.', 'danger')
         return redirect(url_for('index'))
     oyuncu = res.data[0]
-    
+
     buffer = BytesIO()
-    # Standart Kartvizit Boyutu: 8.5cm x 5.5cm
     k_width = 8.5 * cm
     k_height = 5.5 * cm
     c = canvas.Canvas(buffer, pagesize=(k_width, k_height))
-    
-    # Arka Plan
+
     c.setFillColor(white)
     c.rect(0, 0, k_width, k_height, fill=1, stroke=0)
-    
-    # ========= YENİ EKLENEN: LOGO (Sol Üstte) =========
+
     try:
         logo_path = os.path.join("static", "images", "logo.png")
         with open(logo_path, "rb") as f:
             logo_img = ImageReader(f)
-            # Logoyu sol üst tarafa, boyutunu küçülterek yerleştiriyoruz
             c.drawImage(logo_img, 0.5*cm, k_height - 2.5*cm, width=2.0*cm, height=2.0*cm, preserveAspectRatio=True, mask='auto')
     except:
         pass
-    # ==================================================
 
-    # Ad Soyad (Logonun altına, ortaya hizalı)
     c.setFillColor(navy)
     c.setFont(FONT_BOLD, 14)
     c.drawString(2.8*cm, k_height - 2.2*cm, oyuncu.get('isim', 'İsimsiz'))
-    
-    # Unvan
+
     c.setFont(FONT_NAME, 9)
     c.setFillColor(navy)
     c.drawString(2.8*cm, k_height - 2.9*cm, "NOVA CAST AJANS OYUNCUSU")
-    
-    # İletişim Bilgileri (Sağ Alt)
+
     c.setFont(FONT_NAME, 8)
     c.setFillColor(grey)
     y_pos = k_height - 3.8*cm
     if oyuncu.get('telefon'):
-        c.drawString(2.8*cm, y_pos, f"📞 {oyuncu.get('telefon')}")
+        c.drawString(2.8*cm, y_pos, f"Tel: {oyuncu.get('telefon')}")
         y_pos -= 0.6*cm
     if oyuncu.get('eposta'):
-        c.drawString(2.8*cm, y_pos, f"✉️ {oyuncu.get('eposta')}")
+        c.drawString(2.8*cm, y_pos, f"E-posta: {oyuncu.get('eposta')}")
         y_pos -= 0.6*cm
     if oyuncu.get('sehir'):
-        c.drawString(2.8*cm, y_pos, f"📍 {oyuncu.get('sehir')}")
+        c.drawString(2.8*cm, y_pos, f"Sehir: {oyuncu.get('sehir')}")
 
-    # Sağ Alt Köşede QR Kod
     try:
         qr_url = url_for('oyuncu_qr', oyuncu_id=oyuncu_id, _external=True)
-        qr_img = requests.get(qr_url, timeout=5).content
-        qr_reader = ImageReader(BytesIO(qr_img))
+        qr_img_data = requests.get(qr_url, timeout=5).content
+        qr_reader = ImageReader(BytesIO(qr_img_data))
         c.drawImage(qr_reader, k_width - 2.8*cm, 0.4*cm, width=2.2*cm, height=2.2*cm)
     except:
         pass
@@ -774,27 +777,28 @@ def kartvizit_pdf(oyuncu_id):
     c.save()
     buffer.seek(0)
     return send_file(buffer, as_attachment=True, download_name=f"Kartvizit_{oyuncu.get('isim', 'oyuncu')}.pdf", mimetype='application/pdf')
-# ----- CANLI İSTATİSTİKLER (ADMIN DASHBOARD) -----
+
+
 @app.route('/admin/dashboard')
 def admin_dashboard():
     if session.get('role') != 'admin':
         flash('Yetkiniz yok!', 'danger')
         return redirect(url_for('index'))
-    
+
     oyuncu_sayisi = supabase.table('oyuncular').select('id', count='exact').execute().count
     bekleyen_basvuru = supabase.table('basvurular').select('id', count='exact').execute().count
     bekleyen_onay = supabase.table('bekleyen_degisiklikler').select('id', count='exact').execute().count
     randevu_sayisi = supabase.table('randevular').select('id', count='exact').execute().count
     bekleyen_yorum = supabase.table('yorumlar').select('id', count='exact').eq('onaylandi', False).execute().count
-    
+
     bugun = date.today().isoformat()
     bugun_randevular = supabase.table('randevular').select('*, oyuncular(isim)').eq('tarih', bugun).execute().data
-    
+
     toplam_goruntulenme = supabase.table('sayfa_goruntulenme').select('id', count='exact').execute().count or 0
     son_24 = datetime.now() - timedelta(hours=24)
     son_24_str = son_24.isoformat()
     son24_goruntulenme = supabase.table('sayfa_goruntulenme').select('id', count='exact').gte('tarih', son_24_str).execute().count or 0
-    
+
     benzersiz_ziyaretci = 0
     try:
         ip_res = supabase.table('sayfa_goruntulenme').select('ziyaretci_ip').gte('tarih', son_24_str).execute()
@@ -802,7 +806,7 @@ def admin_dashboard():
         benzersiz_ziyaretci = len(set(ips))
     except:
         benzersiz_ziyaretci = 0
-    
+
     en_cok_oyuncu = None
     try:
         goruntuler = supabase.table('sayfa_goruntulenme').select('oyuncu_id').not_.is_('oyuncu_id', 'null').execute().data
@@ -817,7 +821,7 @@ def admin_dashboard():
                     en_cok_oyuncu = oyuncu_res.data[0]['isim']
     except:
         en_cok_oyuncu = "Veri yok"
-    
+
     return render_template('admin_dashboard.html',
                            oyuncu_sayisi=oyuncu_sayisi,
                            bekleyen_basvuru=bekleyen_basvuru,
@@ -830,7 +834,7 @@ def admin_dashboard():
                            benzersiz_ziyaretci=benzersiz_ziyaretci,
                            en_cok_oyuncu=en_cok_oyuncu)
 
-# ----------------- RANDEVU ROUTELARI -----------------
+
 @app.route('/admin/randevu/ekle', methods=['GET', 'POST'])
 def admin_randevu_ekle():
     if session.get('role') != 'admin':
@@ -857,6 +861,7 @@ def admin_randevu_ekle():
         return redirect(url_for('admin_randevular'))
     return render_template('admin_randevu_ekle.html', oyuncular=oyuncular)
 
+
 @app.route('/admin/randevular')
 def admin_randevular():
     if session.get('role') != 'admin':
@@ -864,6 +869,7 @@ def admin_randevular():
         return redirect(url_for('index'))
     randevular = supabase.table('randevular').select('*, oyuncular(isim)').order('tarih', desc=True).execute().data
     return render_template('admin_randevular.html', randevular=randevular)
+
 
 @app.route('/oyuncu/randevular')
 def oyuncu_randevular():
@@ -874,7 +880,7 @@ def oyuncu_randevular():
     randevular = supabase.table('randevular').select('*').eq('oyuncu_id', oyuncu_id).order('tarih', desc=True).execute().data
     return render_template('oyuncu_randevular.html', randevular=randevular)
 
-# ----------------- DUYURU ROUTELARI -----------------
+
 @app.route('/admin/duyurular')
 def admin_duyurular():
     if session.get('role') != 'admin':
@@ -882,6 +888,7 @@ def admin_duyurular():
         return redirect(url_for('index'))
     duyurular = supabase.table('duyurular').select('*').order('created_at', desc=True).execute().data
     return render_template('admin_duyurular.html', duyurular=duyurular)
+
 
 @app.route('/admin/duyuru/ekle', methods=['GET', 'POST'])
 def admin_duyuru_ekle():
@@ -904,6 +911,7 @@ def admin_duyuru_ekle():
         return redirect(url_for('admin_duyurular'))
     return render_template('admin_duyuru_ekle.html')
 
+
 @app.route('/admin/duyuru/sil/<int:duyuru_id>', methods=['POST'])
 def admin_duyuru_sil(duyuru_id):
     if session.get('role') != 'admin':
@@ -913,6 +921,7 @@ def admin_duyuru_sil(duyuru_id):
     flash('Duyuru silindi.', 'success')
     return redirect(url_for('admin_duyurular'))
 
+
 @app.route('/duyurular')
 def duyurular_listesi():
     meta_res = supabase.table('meta').select('*').eq('sayfa_adi', 'duyurular').execute()
@@ -920,7 +929,7 @@ def duyurular_listesi():
     duyurular = supabase.table('duyurular').select('*').eq('aktif', True).order('created_at', desc=True).execute().data
     return render_template('duyurular.html', duyurular=duyurular, meta=meta)
 
-# ----------------- META YÖNETİMİ -----------------
+
 @app.route('/admin/meta')
 def admin_meta():
     if session.get('role') != 'admin':
@@ -928,6 +937,7 @@ def admin_meta():
         return redirect(url_for('index'))
     meta_list = supabase.table('meta').select('*').order('sayfa_adi').execute().data
     return render_template('admin_meta_listesi.html', meta_list=meta_list)
+
 
 @app.route('/admin/meta/duzenle/<sayfa_adi>', methods=['GET', 'POST'])
 def admin_meta_duzenle(sayfa_adi):
@@ -951,7 +961,7 @@ def admin_meta_duzenle(sayfa_adi):
     meta = mevcut[0] if mevcut else {'sayfa_adi': sayfa_adi, 'baslik': '', 'aciklama': '', 'anahtar_kelimeler': ''}
     return render_template('admin_meta_duzenle.html', meta=meta)
 
-# ----------------- PDF CV İNDİR (LOGO ENTEGRELİ) -----------------
+
 @app.route('/oyuncu/<int:oyuncu_id>/pdf')
 def oyuncu_pdf(oyuncu_id):
     res = supabase.table("oyuncular").select("*").eq("id", oyuncu_id).execute()
@@ -959,16 +969,14 @@ def oyuncu_pdf(oyuncu_id):
         flash('Oyuncu bulunamadı.', 'danger')
         return redirect(url_for('index'))
     oyuncu = res.data[0]
-    
+
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
-    
-    # Arka Plan
+
     c.setFillColor(white)
     c.rect(0, 0, width, height, fill=1, stroke=0)
-    
-    # Üst Başlık (Koyu Mavi)
+
     c.setFillColor(navy)
     c.rect(0, height-3.5*cm, width, 3.5*cm, fill=1, stroke=0)
     c.setFillColor(white)
@@ -976,19 +984,15 @@ def oyuncu_pdf(oyuncu_id):
     c.drawCentredString(width/2, height-1.8*cm, "NOVA CAST AJANS")
     c.setFont(FONT_NAME, 12)
     c.drawCentredString(width/2, height-2.8*cm, "PROFESYONEL OYUNCU ÖZGEÇMİŞİ")
-    
-    # ========= YENİ EKLENEN: LOGO =========
+
     try:
         logo_path = os.path.join("static", "images", "logo.png")
         with open(logo_path, "rb") as f:
             logo_img = ImageReader(f)
-            # Logoyu sağ üst köşeye koyuyoruz
             c.drawImage(logo_img, width - 3.5*cm, height - 3*cm, width=2.5*cm, height=2.5*cm, preserveAspectRatio=True, mask='auto')
     except:
-        pass # Dosya yoksa çökmez, görsel olmaz
-    # =====================================
+        pass
 
-    # Fotoğraf (Sağ Üstte)
     if oyuncu.get('resim_url'):
         try:
             img_data = requests.get(oyuncu.get('resim_url'), timeout=5).content
@@ -997,7 +1001,6 @@ def oyuncu_pdf(oyuncu_id):
         except:
             pass
 
-    # Kişisel Bilgiler Başlığı
     y = height - 6*cm
     c.setFillColor(navy)
     c.setFont(FONT_BOLD, 16)
@@ -1008,7 +1011,6 @@ def oyuncu_pdf(oyuncu_id):
     c.line(2*cm, y+0.3*cm, 11*cm, y+0.3*cm)
     y -= 0.5*cm
 
-    # Bilgi Listesi (Daha düzenli)
     c.setFont(FONT_NAME, 12)
     bilgiler = [
         ("Ad Soyad", oyuncu.get('isim', '-')),
@@ -1022,7 +1024,7 @@ def oyuncu_pdf(oyuncu_id):
         ("Telefon", oyuncu.get('telefon', '-')),
         ("E-posta", oyuncu.get('eposta', '-'))
     ]
-    
+
     for etiket, deger in bilgiler:
         c.setFillColor(grey)
         c.drawString(2*cm, y, f"{etiket}:")
@@ -1030,7 +1032,6 @@ def oyuncu_pdf(oyuncu_id):
         c.drawString(5*cm, y, str(deger))
         y -= 0.7*cm
 
-    # Deneyim Bölümü
     if oyuncu.get('deneyim'):
         y -= 0.5*cm
         c.setFillColor(navy)
@@ -1038,7 +1039,7 @@ def oyuncu_pdf(oyuncu_id):
         c.drawString(2*cm, y, "DENEYİM / ÖZGEÇMİŞ")
         y -= 1.2*cm
         c.setFont(FONT_NAME, 11)
-        
+
         metin = oyuncu.get('deneyim')
         satirlar = metin.split('\n')
         for satir in satirlar:
@@ -1050,7 +1051,6 @@ def oyuncu_pdf(oyuncu_id):
                 c.drawString(2*cm, y, satir)
                 y -= 0.6*cm
 
-    # Alt Bilgi
     c.setFont(FONT_NAME, 9)
     c.setFillColor(grey)
     c.drawCentredString(width/2, 1*cm, f"© Nova Cast Ajans - {datetime.now().strftime('%d.%m.%Y')}")
@@ -1059,13 +1059,12 @@ def oyuncu_pdf(oyuncu_id):
     return send_file(buffer, as_attachment=True, download_name=f"CV_{oyuncu.get('isim', 'oyuncu')}.pdf", mimetype='application/pdf')
 
 
-# ----------------- AYARLAR (HOŞ GELDİN MESAJI) -----------------
 @app.route('/admin/ayarlar', methods=['GET', 'POST'])
 def admin_ayarlar():
     if session.get('role') != 'admin':
         flash('Yetkiniz yok!', 'danger')
         return redirect(url_for('index'))
-    
+
     if request.method == 'POST':
         mesaj = request.form.get('hos_geldin_mesaji')
         if mesaj:
@@ -1074,65 +1073,49 @@ def admin_ayarlar():
         else:
             flash('Mesaj boş olamaz.', 'warning')
         return redirect(url_for('admin_ayarlar'))
-    
+
     hos_mesaj = supabase.table('ayarlar').select('deger').eq('anahtar', 'hos_geldin_mesaji').execute()
     hos_mesaj = hos_mesaj.data[0]['deger'] if hos_mesaj.data else "Ajansımıza hoş geldiniz!"
     return render_template('admin_ayarlar.html', hos_mesaj=hos_mesaj)
 
-# ================= YENİ EKLENEN VİTRİN YÖNETİMİ ROUTE'LARI =================
 
-# ----------------- VİTRİN YÖNETİMİ (ADMİN PANELİ) -----------------
 @app.route('/admin/vitrin_yonetimi')
 def admin_vitrin_yonetimi():
     if session.get('role') != 'admin':
         flash('Yetkiniz yok!', 'danger')
         return redirect(url_for('index'))
-    
-    # Tüm oyuncuları çek
     oyuncular = supabase.table('oyuncular').select('id, isim, vitrin').order('isim').execute().data
     return render_template('admin_vitrin_yonetimi.html', oyuncular=oyuncular)
+
 
 @app.route('/admin/vitrin/toggle/<int:oyuncu_id>')
 def admin_vitrin_toggle(oyuncu_id):
     if session.get('role') != 'admin':
         flash('Yetkiniz yok!', 'danger')
         return redirect(url_for('index'))
-    
-    # Mevcut durumu al
     res = supabase.table('oyuncular').select('vitrin').eq('id', oyuncu_id).execute()
     if not res.data:
         flash('Oyuncu bulunamadı.', 'danger')
         return redirect(url_for('admin_vitrin_yonetimi'))
-    
     mevcut_durum = res.data[0]['vitrin']
-    yeni_durum = not mevcut_durum # True ise False, False ise True yap
-    
-    # Güncelle
+    yeni_durum = not mevcut_durum
     supabase.table('oyuncular').update({'vitrin': yeni_durum}).eq('id', oyuncu_id).execute()
-    
     flash(f"Vitrin durumu güncellendi!", "success")
     return redirect(url_for('admin_vitrin_yonetimi'))
 
-# ===================================================================
-# ==================== ÖZEL SAYFA SİSTEMİ ====================
 
 def slug_olustur(baslik):
-    """Başlıktan URL slug'ı üretir"""
     import unicodedata
     baslik = baslik.lower()
-    # Türkçe karakter dönüşümü
     ceviriler = {'ı': 'i', 'ğ': 'g', 'ü': 'u', 'ş': 's', 'ö': 'o', 'ç': 'c', 'İ': 'i'}
     for tr, en in ceviriler.items():
         baslik = baslik.replace(tr, en)
-    # Alfanumerik olmayanları tireye çevir
     baslik = ''.join(c if c.isalnum() else '-' for c in baslik)
-    # Çoklu tireleri teke indir
     while '--' in baslik:
         baslik = baslik.replace('--', '-')
     return baslik.strip('-')
 
 
-# --- Admin: Sayfa Listesi ---
 @app.route('/admin/sayfalar')
 def admin_sayfalar():
     if not session.get('logged_in') or session.get('role') != 'admin':
@@ -1143,13 +1126,12 @@ def admin_sayfalar():
     return render_template('admin_sayfalar.html', sayfalar=sayfalar)
 
 
-# --- Admin: Yeni Sayfa Ekle ---
 @app.route('/admin/sayfa/ekle', methods=['GET', 'POST'])
 def admin_sayfa_ekle():
     if not session.get('logged_in') or session.get('role') != 'admin':
         flash('Yetkiniz yok.', 'danger')
         return redirect(url_for('login'))
-    
+
     if request.method == 'POST':
         baslik = request.form.get('baslik', '').strip()
         slug = request.form.get('slug', '').strip() or slug_olustur(baslik)
@@ -1159,8 +1141,7 @@ def admin_sayfa_ekle():
         sira = safe_int(request.form.get('sira')) or 0
         meta_baslik = request.form.get('meta_baslik', '')
         meta_aciklama = request.form.get('meta_aciklama', '')
-        
-        # Kapak resmi yükleme
+
         kapak_url = None
         kapak = request.files.get('kapak_resmi')
         if kapak and kapak.filename != '':
@@ -1181,7 +1162,7 @@ def admin_sayfa_ekle():
                         kapak_url = res.get('publicUrl') or res.get('publicURL')
             except Exception as e:
                 print(f"Kapak yükleme hatası: {e}")
-        
+
         try:
             supabase.table('ozel_sayfalar').insert({
                 'slug': slug,
@@ -1198,24 +1179,23 @@ def admin_sayfa_ekle():
             return redirect(url_for('admin_sayfalar'))
         except Exception as e:
             flash(f'Hata: {str(e)}', 'danger')
-    
+
     return render_template('admin_sayfa_ekle.html')
 
 
-# --- Admin: Sayfa Düzenle ---
 @app.route('/admin/sayfa/duzenle/<int:sayfa_id>', methods=['GET', 'POST'])
 def admin_sayfa_duzenle(sayfa_id):
     if not session.get('logged_in') or session.get('role') != 'admin':
         flash('Yetkiniz yok.', 'danger')
         return redirect(url_for('login'))
-    
+
     res = supabase.table('ozel_sayfalar').select('*').eq('id', sayfa_id).execute()
     if not res.data:
         flash('Sayfa bulunamadı.', 'danger')
         return redirect(url_for('admin_sayfalar'))
-    
+
     sayfa = res.data[0]
-    
+
     if request.method == 'POST':
         baslik = request.form.get('baslik', '').strip()
         slug = request.form.get('slug', '').strip() or slug_olustur(baslik)
@@ -1225,7 +1205,7 @@ def admin_sayfa_duzenle(sayfa_id):
         sira = safe_int(request.form.get('sira')) or 0
         meta_baslik = request.form.get('meta_baslik', '')
         meta_aciklama = request.form.get('meta_aciklama', '')
-        
+
         guncelleme = {
             'slug': slug,
             'baslik': baslik,
@@ -1237,8 +1217,7 @@ def admin_sayfa_duzenle(sayfa_id):
             'meta_aciklama': meta_aciklama,
             'guncelleme_tarihi': datetime.now().isoformat()
         }
-        
-        # Kapak resmi yükleme
+
         kapak = request.files.get('kapak_resmi')
         if kapak and kapak.filename != '':
             try:
@@ -1258,34 +1237,30 @@ def admin_sayfa_duzenle(sayfa_id):
                         guncelleme['kapak_resmi'] = res_u.get('publicUrl') or res_u.get('publicURL')
             except Exception as e:
                 print(f"Kapak yükleme hatası: {e}")
-        
+
         try:
             supabase.table('ozel_sayfalar').update(guncelleme).eq('id', sayfa_id).execute()
             flash('Sayfa güncellendi!', 'success')
             return redirect(url_for('admin_sayfalar'))
         except Exception as e:
             flash(f'Hata: {str(e)}', 'danger')
-    
+
     return render_template('admin_sayfa_duzenle.html', sayfa=sayfa)
 
 
-# --- Admin: Sayfa Sil ---
 @app.route('/admin/sayfa/sil/<int:sayfa_id>', methods=['POST'])
 def admin_sayfa_sil(sayfa_id):
     if not session.get('logged_in') or session.get('role') != 'admin':
         flash('Yetkiniz yok.', 'danger')
         return redirect(url_for('login'))
-    
     try:
         supabase.table('ozel_sayfalar').delete().eq('id', sayfa_id).execute()
         flash('Sayfa silindi.', 'success')
     except Exception as e:
         flash(f'Hata: {str(e)}', 'danger')
-    
     return redirect(url_for('admin_sayfalar'))
 
 
-# --- Herkese Açık: Özel Sayfa Görüntüleme ---
 @app.route('/sayfa/<slug>')
 def ozel_sayfa_goruntule(slug):
     res = supabase.table('ozel_sayfalar').select('*').eq('slug', slug).eq('yayinda', True).execute()
@@ -1295,15 +1270,135 @@ def ozel_sayfa_goruntule(slug):
     return render_template('ozel_sayfa.html', sayfa=res.data[0])
 
 
-# --- Herkese Açık: Menü Linkleri (Jinja için) ---
 @app.context_processor
 def menu_sayfalari_enjekte():
-    """Her template'e menüde gösterilecek sayfaları enjekte eder"""
     try:
         res = supabase.table('ozel_sayfalar').select('slug,baslik').eq('menude_goster', True).eq('yayinda', True).order('sira').execute()
         return {'menu_sayfalari': res.data or []}
     except:
         return {'menu_sayfalari': []}
+
+
+# ==================== SERTİFİKA SİSTEMİ ====================
+
+@app.route('/admin/sertifika/ver/<int:oyuncu_id>', methods=['POST'])
+def admin_sertifika_ver(oyuncu_id):
+    if session.get('role') != 'admin':
+        flash('Yetkiniz yok!', 'danger')
+        return redirect(url_for('index'))
+
+    oyuncu_res = supabase.table('oyuncular').select('isim').eq('id', oyuncu_id).execute()
+    if not oyuncu_res.data:
+        flash('Oyuncu bulunamadı.', 'danger')
+        return redirect(url_for('index'))
+
+    mevcut = supabase.table('sertifikalar').select('sertifika_kodu').eq('oyuncu_id', oyuncu_id).eq('aktif', True).execute()
+    if mevcut.data:
+        flash(f"Bu oyuncunun zaten aktif bir sertifikası var: {mevcut.data[0]['sertifika_kodu']}", 'warning')
+        return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
+
+    kod = sertifika_kodu_uret()
+    gecerlilik = (datetime.now() + timedelta(days=365)).date().isoformat()
+
+    supabase.table('sertifikalar').insert({
+        'oyuncu_id': oyuncu_id,
+        'sertifika_kodu': kod,
+        'gecerlilik_tarihi': gecerlilik,
+        'veren_admin': session.get('kullanici_adi', 'Admin'),
+        'aktif': True
+    }).execute()
+
+    flash(f'Sertifika verildi! Kod: {kod}', 'success')
+    return redirect(url_for('oyuncu_detay', oyuncu_id=oyuncu_id))
+
+
+@app.route('/sertifika/pdf/<sertifika_kodu>')
+def sertifika_pdf(sertifika_kodu):
+    res = supabase.table('sertifikalar').select('*, oyuncular(isim, sehir)').eq('sertifika_kodu', sertifika_kodu).execute()
+    if not res.data:
+        flash('Sertifika bulunamadı.', 'danger')
+        return redirect(url_for('index'))
+
+    sertifika = res.data[0]
+    oyuncu_data = sertifika.get('oyuncular') or {}
+    oyuncu_isim = oyuncu_data.get('isim', 'İsimsiz')
+
+    qr_url = url_for('sertifika_dogrula', kod=sertifika_kodu, _external=True)
+    qr = qrcode.QRCode(version=1, box_size=10, border=1)
+    qr.add_data(qr_url)
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color="black", back_color="white")
+    qr_buffer = BytesIO()
+    qr_img.save(qr_buffer, format="PNG")
+    qr_buffer.seek(0)
+    qr_base64 = base64.b64encode(qr_buffer.read()).decode('utf-8')
+
+    bg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'images', 'sertifika_bg.png')
+    bg_base64 = ""
+    try:
+        with open(bg_path, 'rb') as f:
+            bg_data = f.read()
+            bg_base64 = base64.b64encode(bg_data).decode('utf-8')
+        print(f"Arka plan yuklendi: {len(bg_data)} byte")
+    except Exception as e:
+        print(f"Arka plan yuklenemedi: {e}")
+
+    from datetime import datetime as dt
+    verilis = sertifika.get('verilis_tarihi', '')
+    try:
+        tarih_str = dt.fromisoformat(verilis.replace('Z', '+00:00')).strftime('%d.%m.%Y')
+    except:
+        tarih_str = dt.now().strftime('%d.%m.%Y')
+
+    html = render_template(
+        'sertifika_sablon.html',
+        bg_base64=bg_base64,
+        oyuncu_isim=oyuncu_isim,
+        tarih=tarih_str,
+        sertifika_kodu=sertifika_kodu,
+        qr_base64=qr_base64
+    )
+
+    options = {
+        'page-size': 'A4',
+        'orientation': 'Landscape',
+        'margin-top': '0mm',
+        'margin-right': '0mm',
+        'margin-bottom': '0mm',
+        'margin-left': '0mm',
+        'encoding': 'UTF-8',
+        'enable-local-file-access': None,
+        'disable-smart-shrinking': None,
+        'print-media-type': None,
+    }
+
+    try:
+        pdf_bytes = pdfkit.from_string(html, False, configuration=PDFKIT_CONFIG, options=options)
+    except Exception as e:
+        flash(f'PDF oluşturma hatası: {str(e)}', 'danger')
+        return redirect(url_for('oyuncu_detay', oyuncu_id=sertifika['oyuncu_id']))
+
+    buffer = BytesIO(pdf_bytes)
+    buffer.seek(0)
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=f"Sertifika_{oyuncu_isim}_{sertifika_kodu}.pdf",
+        mimetype='application/pdf'
+    )
+
+
+@app.route('/sertifika/dogrula/<kod>')
+def sertifika_dogrula(kod):
+    res = supabase.table('sertifikalar').select('*, oyuncular(isim, resim_url, sehir)').eq('sertifika_kodu', kod).execute()
+    if not res.data:
+        return render_template('sertifika_dogrula.html', gecerli=False, kod=kod)
+
+    sertifika = res.data[0]
+    return render_template('sertifika_dogrula.html', gecerli=True, sertifika=sertifika, kod=kod)
+
+
+# ==================== /SERTİFİKA SİSTEMİ ====================
 
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 5000))

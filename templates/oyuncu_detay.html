@@ -7,25 +7,23 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-    .etiket {
-        display: inline-block;
-        padding: 3px 10px;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    .yonetici-etiketi {
-        background-color: #db4437; /* Kırmızı tonu, Admin hissi verir */
-        color: white;
-    }
-    .oyuncu-etiketi {
-        background-color: #e0e0e0; /* Gri tonu */
-        color: #555;
-    }
-</style>
-    <style>
+        .etiket {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .yonetici-etiketi {
+            background-color: #db4437;
+            color: white;
+        }
+        .oyuncu-etiketi {
+            background-color: #e0e0e0;
+            color: #555;
+        }
         body { background-color: #0b0c10 !important; color: #f1f5f9 !important; font-family: 'Inter', sans-serif !important; }
         .navbar { background-color: #0f172a !important; }
         .navbar-brand { color: #ffffff !important; font-weight: 800 !important; }
@@ -36,6 +34,15 @@
         .yorum-karti { background: #1e293b; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
         .yildiz { color: #f59e0b; }
         .yorum-form { background: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 1.5rem; }
+        .ozellik-item { background-color: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 1rem; text-align: center; }
+        .ozellik-baslik { font-size: 0.8rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 0.25rem; }
+        .ozellik-deger { font-size: 1.1rem; color: #ffffff; font-weight: 700; }
+        .deneyim-section { background-color: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 1.5rem; margin-top: 2rem; }
+        .deneyim-baslik { color: #3b82f6; font-weight: 700; margin-bottom: 1rem; }
+        .sertifika-ver-btn { background: linear-gradient(135deg, #10b981, #059669); border: none; color: white; font-weight: 700; padding: 0.7rem; border-radius: 10px; transition: all 0.3s ease; }
+        .sertifika-ver-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4); color: white; }
+        .sertifika-indir-btn { border: 2px solid #10b981; color: #10b981; font-weight: 700; padding: 0.7rem; border-radius: 10px; transition: all 0.3s ease; }
+        .sertifika-indir-btn:hover { background: #10b981; color: white; }
     </style>
 </head>
 <body>
@@ -82,7 +89,7 @@
                 {% else %}
                     <div class="no-img-box">👤</div>
                 {% endif %}
-                
+
                 <div class="text-center mt-3">
                     <img src="/oyuncu/{{ oyuncu.id }}/qr" alt="QR Kod" style="width: 150px; height: 150px; border: 2px solid #1e293b; border-radius: 12px; background: white; padding: 8px;">
                     <p class="text-muted small mt-2">Profili QR kod ile paylaş</p>
@@ -99,6 +106,15 @@
                 {% endif %}
 
                 <div class="d-grid gap-2 mt-3">
+                    {% if session.get('role') == 'admin' and not sertifika_var %}
+                        <form action="/admin/sertifika/ver/{{ oyuncu.id }}" method="post" onsubmit="return confirm('Bu oyuncuya sertifika vermek istediğinize emin misiniz?');" class="d-grid">
+                            <button type="submit" class="btn sertifika-ver-btn">🎓 Sertifika Ver</button>
+                        </form>
+                    {% endif %}
+                    {% if sertifika_var %}
+                        <a href="/sertifika/pdf/{{ sertifika_kodu }}" class="btn sertifika-indir-btn" target="_blank">📜 Sertifikayı İndir</a>
+                    {% endif %}
+
                     {% if session.get('role') == 'admin' or session.get('oyuncu_id') == oyuncu.id %}
                         <a href="/oyuncu/duzenle/{{ oyuncu.id }}" class="btn btn-warning fw-bold">Bilgileri Düzenle</a>
                     {% endif %}
@@ -114,8 +130,7 @@
 
             <div class="col-md-7">
                 <h1 class="oyuncu-isim">{{ oyuncu.isim or "İsimsiz Oyuncu" }}</h1>
-                
-                <!-- YENİ EKLENEN SAYAÇ -->
+
                 <div class="mb-3 text-muted small">
                     👁️ Bu profil <strong class="text-white">{{ goruntulenme_sayisi }}</strong> kez görüntülendi.
                 </div>
@@ -141,34 +156,23 @@
                 </div>
                 {% endif %}
 
-                <!-- YORUMLAR BÖLÜMÜ -->
                 <div class="mt-4">
                     <h4 class="text-white">💬 Yorumlar</h4>
                     {% if yorumlar %}
                         {% for yorum in yorumlar %}
                         <div class="yorum-karti" style="border-bottom: 1px solid #1e293b; padding: 10px 0;">
-                            
-                            <!-- Kullanıcı Adı ve Etiket (Kutucuk) Kısmı -->
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
                                 <strong>{{ yorum.kullanici_adi }}</strong>
-                                
-                                <!-- Yetki Durumuna Göre Etiket -->
                                 {% if yorum.yetki == 'admin' %}
                                     <span class="etiket yonetici-etiketi">Yönetici</span>
                                 {% else %}
                                     <span class="etiket oyuncu-etiketi">Oyuncu Yorumu</span>
                                 {% endif %}
-
-                                <!-- Puan varsa göster -->
                                 {% if yorum.puan %}
                                 <span style="color: #f5b342; font-size: 0.9rem; margin-left: 5px;">⭐ {{ yorum.puan }}</span>
                                 {% endif %}
                             </div>
-
-                            <!-- Yorum İçeriği -->
                             <p style="margin: 0; color: #cbd5e1;">{{ yorum.yorum }}</p>
-                            
-                            <!-- Yorum Tarihi -->
                             <small style="color: #94a3b8; font-size: 0.8rem;">{{ yorum.created_at[:10] }}</small>
                         </div>
                         {% endfor %}
@@ -176,7 +180,6 @@
                         <p class="text-muted">Bu oyuncu için henüz onaylanmış bir yorum yok.</p>
                     {% endif %}
 
-                    <!-- YORUM EKLEME FORM -->
                     {% if session.get('logged_in') %}
                     <div class="yorum-form mt-3">
                         <h6 class="text-white">Yorum Ekle</h6>
@@ -210,12 +213,5 @@
         </div>
     </div>
 
-    <style>
-        .ozellik-item { background-color: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 1rem; text-align: center; }
-        .ozellik-baslik { font-size: 0.8rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 0.25rem; }
-        .ozellik-deger { font-size: 1.1rem; color: #ffffff; font-weight: 700; }
-        .deneyim-section { background-color: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 1.5rem; margin-top: 2rem; }
-        .deneyim-baslik { color: #3b82f6; font-weight: 700; margin-bottom: 1rem; }
-    </style>
 </body>
 </html>

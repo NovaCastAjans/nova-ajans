@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page { size: A4 landscape; margin: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            width: 297mm;
+            height: 210mm;
+            position: relative;
+            overflow: hidden;
+        }
+        .arkaplan {
+            position: absolute;
+            top: 0; left: 0;
+            width: 297mm;
+            height: 210mm;
+            background-image: url('data:image/png;base64,{{ bg_base64 }}');
+            background-size: 100% 100%;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        .nokta-ortu {
+            position: absolute;
+            background: #f5edd6;
+            top: 100.5mm;
+            left: 110mm;
+            width: 78mm;
+            height: 6mm;
+        }
+        .dinamik-isim {
+            position: absolute;
+            top: 100mm;
+            left: 110mm;
+            width: 78mm;
+            height: 7mm;
+            font-size: 14pt;
+            font-weight: bold;
+            color: #1a1a1a;
+            text-align: left;
+            line-height: 7mm;
+            font-family: 'Georgia', serif;
+            font-style: italic;
+        }
+        .dinamik-tarih {
+            position: absolute;
+            top: 158mm;
+            left: 75mm;
+            width: 55mm;
+            height: 6mm;
+            font-size: 13pt;
+            color: #1a1a1a;
+            text-align: center;
+            line-height: 6mm;
+            font-family: 'Georgia', serif;
+            font-weight: bold;
+        }
+        .dinamik-kod {
+            position: absolute;
+            top: 158mm;
+            left: 155mm;
+            width: 55mm;
+            height: 6mm;
+            font-size: 13pt;
+            color: #1a1a1a;
+            text-align: center;
+            line-height: 6mm;
+            font-family: 'Georgia', serif;
+            font-weight: bold;
+        }
+        .qr-kod {
+            position: absolute;
+            top: 170mm;
+            right: 12mm;
+            width: 24mm;
+            height: 24mm;
+            background: white;
+            padding: 1mm;
+            border: 1px solid #d4af7a;
+            border-radius: 2mm;
+        }
+        .qr-kod img {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="arkaplan"></div>
+    <div class="nokta-ortu"></div>
+    <div class="dinamik-isim">{{ oyuncu_isim }}</div>
+    <div class="dinamik-tarih">{{ tarih }}</div>
+    <div class="dinamik-kod">{{ sertifika_kodu }}</div>
+    <div class="qr-kod">
+        <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR">
+    </div>
+</body>
+</html>
