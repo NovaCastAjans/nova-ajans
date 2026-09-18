@@ -5,7 +5,12 @@ import random
 import string
 import ssl
 import httpx
-import pdfkit
+try:
+    import pdfkit
+    PDFKIT_AVAILABLE = True
+except ImportError:
+    PDFKIT_AVAILABLE = False
+    print("⚠️ sertifika sistemi henüz eklenmedi- sertifika sistemi devre dışı")
 import base64
 import secrets
 from datetime import date, datetime, timedelta
