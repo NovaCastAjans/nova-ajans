@@ -66,7 +66,13 @@ if os.path.exists(FONT_PATH):
     except:
         pass
 
-WKHTMLTOPDF_PATH = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+import platform
+
+if platform.system() == "Windows":
+    WKHTMLTOPDF_PATH = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+else:
+    # Render (Linux) ortamı için wkhtmltopdf genellikle bu yoldadır
+    WKHTMLTOPDF_PATH = "/usr/bin/wkhtmltopdf" 
 PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
 
 
