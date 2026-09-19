@@ -36,8 +36,7 @@
             <div class="text-start">
                 <p><strong>Sertifika No:</strong> <code>{{ sertifika.sertifika_kodu }}</code></p>
                 <p><strong>Veriliş Tarihi:</strong> {{ sertifika.verilis_tarihi[:10] }}</p>
-                <p><strong>Geçerlilik:</strong> {{ sertifika.gecerlilik_tarihi }}</p>
-                <p><strong>Veren:</strong> {{ sertifika.veren_admin or 'Nova Cast Ajans' }}</p>
+                <p><strong>Veren:</strong> {{ 'Nova Cast Ajans' }}</p>
             </div>
         {% else %}
             <div class="ikon">❌</div>
