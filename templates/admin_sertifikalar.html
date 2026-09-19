@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sertifika Yönetimi | Nova Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { background: #0b0c10; color: #f1f5f9; font-family: 'Inter', sans-serif; }
+        .navbar { background: #0f172a; border-bottom: 1px solid #1e293b; }
+        .navbar-brand { color: #ffffff; font-weight: 800; }
+        .navbar-brand:hover { color: #3b82f6; }
+
+        .stat-card { background: #111827; border: 1px solid #1e293b; border-radius: 16px; padding: 1.2rem; text-align: center; }
+        .stat-number { font-size: 2rem; font-weight: 800; }
+        .stat-number.blue { color: #3b82f6; }
+        .stat-number.green { color: #10b981; }
+        .stat-number.orange { color: #f59e0b; }
+
+        /* --- TABLO KOYU TEMA DÜZELTMESİ --- */
+        .table-container { background: #111827; border: 1px solid #1e293b; border-radius: 16px; padding: 1.5rem; }
+
+        .table-custom {
+            color: #f1f5f9;
+            background-color: #111827 !important;
+            margin-bottom: 0;
+        }
+        .table-custom thead tr,
+        .table-custom tbody tr {
+            background-color: #111827 !important;
+            color: #e2e8f0 !important;
+        }
+        .table-custom tbody tr:hover {
+            background-color: rgba(59, 130, 246, 0.08) !important;
+        }
+        .table-custom th {
+            border-bottom: 2px solid #334155;
+            color: #94a3b8;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            background-color: #111827 !important;
+        }
+        .table-custom td {
+            border-bottom: 1px solid #1e293b;
+            vertical-align: middle;
+            color: #e2e8f0 !important;
+            background-color: transparent !important;
+        }
+
+        /* Oyuncu küçük resmi */
+        .oyuncu-thumb { width: 45px; height: 45px; object-fit: cover; border-radius: 50%; border: 2px solid #334155; }
+        .oyuncu-thumb-yok {
+            width: 45px; height: 45px; border-radius: 50%; background: #1e293b;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: #64748b; font-size: 1.1rem;
+        }
+
+        /* Durum etiketleri */
+        .badge-aktif { background: #10b981; color: #ffffff; padding: 0.4rem 0.9rem; border-radius: 20px; font-weight: 600; font-size: 0.8rem; }
+        .badge-pasif { background: #6b7280; color: #ffffff; padding: 0.4rem 0.9rem; border-radius: 20px; font-weight: 600; font-size: 0.8rem; }
+        .badge-yok   { background: #ef4444; color: #ffffff; padding: 0.4rem 0.9rem; border-radius: 20px; font-weight: 600; font-size: 0.8rem; }
+
+        .kod-box {
+            background: #0f172a; padding: 0.3rem 0.6rem; border-radius: 6px;
+            font-family: monospace; font-size: 0.85rem; color: #60a5fa;
+            border: 1px solid #1e293b;
+        }
+
+        .btn-mini { font-size: 0.75rem; padding: 0.3rem 0.7rem; font-weight: 700; border-radius: 6px; }
+
+        .section-title {
+            color: #ffffff;
+            font-weight: 700;
+            border-left: 4px solid #3b82f6;
+            padding-left: 0.8rem;
+            margin: 2rem 0 1rem 0;
+        }
+        .section-title.red { border-left-color: #ef4444; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark py-3">
+        <div class="container">
+            <a class="navbar-brand" href="/admin/dashboard">👑 Nova Admin - Sertifika Yönetimi</a>
+            <div>
+                <a href="/admin/dashboard" class="btn btn-outline-light btn-sm">Dashboard</a>
+                <a href="/" class="btn btn-outline-light btn-sm ms-2">Ana Sayfa</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for cat, msg in messages %}
+                    <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+                        {{ msg }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- İstatistikler -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-number blue">{{ toplam_oyuncu }}</div>
+                    <div class="text-muted small">Toplam Oyuncu</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-number green">{{ aktif_sayisi }}</div>
+                    <div class="text-muted small">Aktif Sertifika</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-number orange">{{ pasif_sayisi }}</div>
+                    <div class="text-muted small">İptal Edilmiş Sertifika</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sertifikası Olanlar -->
+        <h4 class="section-title">✅ Sertifikası Olan Oyuncular ({{ sertifikali|length }})</h4>
+        <div class="table-container">
+            {% if sertifikali %}
+            <div class="table-responsive">
+                <table class="table table-custom table-borderless align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Oyuncu</th>
+                            <th>Sertifika Kodu</th>
+                            <th>Veriliş Tarihi</th>
+                            <th>Geçerlilik</th>
+                            <th>Veren</th>
+                            <th>Durum</th>
+                            <th class="text-end">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for o in sertifikali %}
+                        {% set s = o.sertifika %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if o.resim_url %}
+                                        <img src="{{ o.resim_url }}" class="oyuncu-thumb" alt="{{ o.isim }}">
+                                    {% else %}
+                                        <div class="oyuncu-thumb-yok">👤</div>
+                                    {% endif %}
+                                    <div>
+                                        <a href="/oyuncu/{{ o.id }}" target="_blank" class="text-white fw-bold text-decoration-none">{{ o.isim }}</a>
+                                        <div class="text-muted small">{{ o.sehir or '-' }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="kod-box">{{ s.sertifika_kodu }}</span></td>
+                            <td>{{ s.verilis_tarihi[:10] if s.verilis_tarihi else '-' }}</td>
+                            <td>{{ s.gecerlilik_tarihi or '-' }}</td>
+                            <td><small class="text-muted">{{ s.veren_admin or 'Admin' }}</small></td>
+                            <td>
+                                {% if s.aktif %}
+                                    <span class="badge-aktif">Aktif</span>
+                                {% else %}
+                                    <span class="badge-pasif">İptal Edilmiş</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a href="/sertifika/pdf/{{ s.sertifika_kodu }}" target="_blank" class="btn btn-outline-info btn-mini">📜 PDF</a>
+                                {% if s.aktif %}
+                                <form action="/admin/sertifika/iptal/{{ s.id }}" method="POST" class="d-inline" onsubmit="return confirm('Sertifikayı iptal etmek istediğinize emin misiniz?');">
+                                    <button class="btn btn-outline-warning btn-mini">🚫 İptal Et</button>
+                                </form>
+                                {% endif %}
+                                <form action="/admin/sertifika/sil/{{ s.id }}" method="POST" class="d-inline" onsubmit="return confirm('Sertifika kaydını tamamen silmek istediğinize emin misiniz?');">
+                                    <button class="btn btn-outline-danger btn-mini">🗑️ Sil</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-4 mb-0">Henüz hiçbir oyuncuya sertifika verilmemiş.</p>
+            {% endif %}
+        </div>
+
+        <!-- Sertifikası Olmayanlar -->
+        <h4 class="section-title red">❌ Sertifikası Olmayan Oyuncular ({{ sertifikasiz|length }})</h4>
+        <div class="table-container">
+            {% if sertifikasiz %}
+            <div class="table-responsive">
+                <table class="table table-custom table-borderless align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Oyuncu</th>
+                            <th>Şehir</th>
+                            <th>Durum</th>
+                            <th class="text-end">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for o in sertifikasiz %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if o.resim_url %}
+                                        <img src="{{ o.resim_url }}" class="oyuncu-thumb" alt="{{ o.isim }}">
+                                    {% else %}
+                                        <div class="oyuncu-thumb-yok">👤</div>
+                                    {% endif %}
+                                    <a href="/oyuncu/{{ o.id }}" target="_blank" class="text-white fw-bold text-decoration-none">{{ o.isim }}</a>
+                                </div>
+                            </td>
+                            <td>{{ o.sehir or '-' }}</td>
+                            <td><span class="badge-yok">Sertifika Yok</span></td>
+                            <td class="text-end">
+                                <form action="/admin/sertifika/ver/{{ o.id }}" method="POST" onsubmit="return confirm('{{ o.isim }} adlı oyuncuya sertifika vermek istediğinize emin misiniz?');">
+                                    <button class="btn btn-outline-success btn-mini">🎓 Sertifika Ver</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-4 mb-0">Tüm oyuncuların sertifikası var. 🎉</p>
+            {% endif %}
+        </div>
+
+        <div class="mt-4">
+            <a href="/admin/dashboard" class="btn btn-secondary">← Dashboard'a Dön</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

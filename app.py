@@ -1405,7 +1405,80 @@ def sertifika_dogrula(kod):
 
 
 # ==================== /SERTİFİKA SİSTEMİ ====================
+@app.route('/admin/sertifikalar')
+def admin_sertifikalar():
+    if session.get('role') != 'admin':
+        flash('Yetkiniz yok!', 'danger')
+        return redirect(url_for('index'))
 
+    # Tüm oyuncuları çek
+    oyuncular_res = supabase.table('oyuncular').select('id, isim, resim_url, sehir').order('isim').execute()
+    oyuncular = oyuncular_res.data or []
+
+    # Tüm sertifikaları çek
+    sert_res = supabase.table('sertifikalar').select('*').order('verilis_tarihi', desc=True).execute()
+    sertifikalar = sert_res.data or []
+
+    # Oyuncu id -> sertifika eşlemesi (en güncel aktif sertifika)
+    sertifika_map = {}
+    for s in sertifikalar:
+        oid = s.get('oyuncu_id')
+        if oid not in sertifika_map or s.get('aktif'):
+            sertifika_map[oid] = s
+
+    # Ayır: sertifikası olanlar ve olmayanlar
+    sertifikali = []
+    sertifikasiz = []
+    for o in oyuncular:
+        oid = o.get('id')
+        if oid in sertifika_map:
+            o_copy = dict(o)
+            o_copy['sertifika'] = sertifika_map[oid]
+            sertifikali.append(o_copy)
+        else:
+            sertifikasiz.append(o)
+
+    # İstatistik
+    toplam = len(oyuncular)
+    aktif_sayisi = sum(1 for s in sertifikalar if s.get('aktif'))
+    pasif_sayisi = len(sertifikalar) - aktif_sayisi
+
+    return render_template(
+        'admin_sertifikalar.html',
+        sertifikali=sertifikali,
+        sertifikasiz=sertifikasiz,
+        toplam_oyuncu=toplam,
+        aktif_sayisi=aktif_sayisi,
+        pasif_sayisi=pasif_sayisi
+    )
+
+
+@app.route('/admin/sertifika/iptal/<int:sertifika_id>', methods=['POST'])
+def admin_sertifika_iptal(sertifika_id):
+    if session.get('role') != 'admin':
+        flash('Yetkiniz yok!', 'danger')
+        return redirect(url_for('index'))
+
+    # Önce sertifikayı bul (oyuncu_id'yi almak için)
+    res = supabase.table('sertifikalar').select('oyuncu_id, sertifika_kodu').eq('id', sertifika_id).execute()
+    if not res.data:
+        flash('Sertifika bulunamadı.', 'danger')
+        return redirect(url_for('admin_sertifikalar'))
+
+    supabase.table('sertifikalar').update({'aktif': False}).eq('id', sertifika_id).execute()
+    flash(f'Sertifika iptal edildi: {res.data[0]["sertifika_kodu"]}', 'success')
+    return redirect(url_for('admin_sertifikalar'))
+
+
+@app.route('/admin/sertifika/sil/<int:sertifika_id>', methods=['POST'])
+def admin_sertifika_sil(sertifika_id):
+    if session.get('role') != 'admin':
+        flash('Yetkiniz yok!', 'danger')
+        return redirect(url_for('index'))
+
+    supabase.table('sertifikalar').delete().eq('id', sertifika_id).execute()
+    flash('Sertifika kaydı silindi.', 'success')
+    return redirect(url_for('admin_sertifikalar'))
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 5000))
     app.run(host='0.0.0.0', debug=False, port=port)
